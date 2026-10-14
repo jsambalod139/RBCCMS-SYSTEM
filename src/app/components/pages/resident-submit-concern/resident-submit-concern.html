@@ -1,0 +1,295 @@
+
+<main class="submit-page">
+  <div class="page-heading">
+    <div>
+      <h1>Submit a Concern</h1>
+      <p>
+        Provide the details of the community concern you want
+        to report.
+      </p>
+    </div>
+  </div>
+
+  @if (showSuccess()) {
+    <div class="alert alert-success" role="status">
+      <span class="alert-icon">✓</span>
+
+      <div>
+        <strong>Form submitted successfully!</strong>
+        <p>
+          This is a frontend demonstration only. Your concern
+          has not been saved.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="alert-close"
+        aria-label="Dismiss message"
+        (click)="showSuccess.set(false)"
+      >
+        ×
+      </button>
+    </div>
+  }
+
+  <div class="submit-layout">
+    <section class="form-card">
+      <div class="card-heading">
+        <div class="heading-icon" aria-hidden="true">▤</div>
+
+        <div>
+          <h2>Concern Information</h2>
+          <p>Fields marked with an asterisk (*) are required.</p>
+        </div>
+      </div>
+
+      <form
+        [formGroup]="concernForm"
+        (ngSubmit)="submitConcern()"
+        novalidate
+      >
+        <!-- Category -->
+        <div class="form-field">
+          <label for="category">
+            Category <span class="required">*</span>
+          </label>
+
+          <select
+            id="category"
+            formControlName="category_id"
+            [class.invalid]="
+              categoryControl.invalid &&
+              (categoryControl.touched || isSubmitted())
+            "
+            [attr.aria-invalid]="
+              categoryControl.invalid &&
+              (categoryControl.touched || isSubmitted())
+            "
+          >
+            <option value="" disabled>
+              Select a concern category
+            </option>
+
+            @for (category of categories(); track category.category_id) {
+              <option [value]="category.category_id">
+                {{ category.category_name }}
+              </option>
+            }
+          </select>
+
+          @if (categories().length === 0) {
+            <small class="field-hint">
+              No categories are available yet. Categories will
+              appear here when they are provided.
+            </small>
+          }
+
+          @if (
+            categoryControl.invalid &&
+            (categoryControl.touched || isSubmitted())
+          ) {
+            <small class="field-error">
+              Please select a concern category.
+            </small>
+          }
+        </div>
+
+        <!-- Location -->
+        <div class="form-field">
+          <label for="location">
+            Location Description <span class="required">*</span>
+          </label>
+
+          <input
+            id="location"
+            type="text"
+            formControlName="location_description"
+            placeholder="e.g., Purok 2, near the barangay hall"
+            maxlength="255"
+            [class.invalid]="
+              locationControl.invalid &&
+              (locationControl.touched || isSubmitted())
+            "
+            [attr.aria-invalid]="
+              locationControl.invalid &&
+              (locationControl.touched || isSubmitted())
+            "
+          />
+
+          @if (
+            locationControl.invalid &&
+            (locationControl.touched || isSubmitted())
+          ) {
+            <small class="field-error">
+              @if (locationControl.hasError('required')) {
+                Please enter the location of the concern.
+              } @else if (locationControl.hasError('maxlength')) {
+                Location must not exceed 255 characters.
+              }
+            </small>
+          }
+
+          <small class="character-count">
+            {{ locationControl.value?.length ?? 0 }}/255
+          </small>
+        </div>
+
+        <!-- Description -->
+        <div class="form-field">
+          <label for="description">
+            Description <span class="required">*</span>
+          </label>
+
+          <textarea
+            id="description"
+            formControlName="description"
+            rows="5"
+            maxlength="5000"
+            placeholder="Describe the concern, its condition, and how it affects the community."
+            [class.invalid]="
+              descriptionControl.invalid &&
+              (descriptionControl.touched || isSubmitted())
+            "
+            [attr.aria-invalid]="
+              descriptionControl.invalid &&
+              (descriptionControl.touched || isSubmitted())
+            "
+          ></textarea>
+
+          @if (
+            descriptionControl.invalid &&
+            (descriptionControl.touched || isSubmitted())
+          ) {
+            <small class="field-error">
+              @if (descriptionControl.hasError('required')) {
+                Please provide a description of the concern.
+              } @else if (descriptionControl.hasError('maxlength')) {
+                Description must not exceed 5,000 characters.
+              }
+            </small>
+          }
+
+          <small class="character-count">
+            {{ descriptionControl.value?.length ?? 0 }}/5000
+          </small>
+        </div>
+
+        <!-- Optional photo -->
+        <div class="form-field">
+          <label for="photo">Attach Photo <span class="optional">(Optional)</span></label>
+
+          <p class="field-hint">
+            Upload an image that helps explain the concern.
+            Maximum file size: 5 MB.
+          </p>
+
+          <div class="upload-area">
+            @if (imagePreview(); as preview) {
+              <div class="preview-container">
+                <img
+                  [src]="preview"
+                  alt="Preview of selected concern photo"
+                  class="image-preview"
+                />
+
+                <div class="preview-info">
+                  <span class="file-name">
+                    {{ selectedFile()?.name }}
+                  </span>
+                  <small>
+                    {{ ((selectedFile()?.size ?? 0) / 1024 / 1024).toFixed(2) }}
+                    MB
+                  </small>
+                </div>
+
+                <button
+                  type="button"
+                  class="remove-photo"
+                  (click)="removePhoto(photoInput)"
+                >
+                  Remove photo
+                </button>
+              </div>
+            } @else {
+              <label for="photo" class="upload-prompt">
+                <span class="upload-icon" aria-hidden="true">↑</span>
+                <strong>Choose a photo</strong>
+                <span>JPG, PNG, WEBP, or another image format</span>
+                <span class="browse-text">Browse files</span>
+              </label>
+            }
+
+            <input
+              #photoInput
+              id="photo"
+              type="file"
+              accept="image/*"
+              class="visually-hidden"
+              (change)="onPhotoSelected($event)"
+            />
+          </div>
+
+          @if (fileError()) {
+            <small class="field-error" role="alert">
+              {{ fileError() }}
+            </small>
+          }
+        </div>
+
+        <!-- Form actions -->
+        <div class="form-actions">
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="categories().length === 0"
+          >
+            Submit Concern
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="cancel()"
+          >
+            Cancel
+          </button>
+        </div>
+
+        @if (categories().length === 0) {
+          <p class="form-note">
+            Submission is unavailable until concern categories
+            are provided.
+          </p>
+        }
+      </form>
+    </section>
+
+    <!-- Guidelines -->
+    <aside class="guidelines-card">
+      <div class="guidelines-heading">
+        <span class="guidelines-icon" aria-hidden="true">✓</span>
+        <h2>Guidelines</h2>
+      </div>
+
+      <p class="guidelines-intro">
+        Please follow these guidelines when reporting a concern.
+      </p>
+
+      <ol class="guidelines-list">
+        @for (guideline of guidelines; track guideline) {
+          <li>{{ guideline }}</li>
+        }
+      </ol>
+
+      <div class="guidelines-note">
+        <strong>Important reminder</strong>
+        <p>
+          This system is for non-emergency community concerns.
+          For emergencies, contact the appropriate emergency
+          services directly.
+        </p>
+      </div>
+    </aside>
+  </div>
+</main>

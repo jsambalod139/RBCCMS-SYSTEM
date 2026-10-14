@@ -1,0 +1,155 @@
+
+<main class="profile-page">
+  <div class="page-heading">
+    <div>
+      <h1>My Profile</h1>
+      <p>View your personal information and contact details.</p>
+    </div>
+
+    <button
+      type="button"
+      class="edit-button"
+      (click)="toggleEdit()"
+    >
+      {{ isEditing() ? 'Cancel Editing' : 'Edit Profile' }}
+    </button>
+  </div>
+
+  <section class="profile-card">
+    <!-- Profile Header -->
+    <div class="profile-header">
+      <div class="avatar">
+        <img
+          *ngIf="profile().profile_picture"
+          [src]="profile().profile_picture"
+          alt="Resident profile picture"
+        />
+
+        <span *ngIf="!profile().profile_picture">
+          {{ getInitials() }}
+        </span>
+      </div>
+
+      <div class="profile-heading-details">
+        <span class="resident-id">
+          Resident ID:
+          <strong>
+            {{ profile().resident_id || 'Not assigned' }}
+          </strong>
+        </span>
+
+        <h2>
+          {{ profile().full_name || 'Resident Name' }}
+        </h2>
+
+        <p>Barangay Resident</p>
+      </div>
+    </div>
+
+    <!-- Personal Information -->
+    <section class="information-section">
+      <h3>Personal Information</h3>
+
+      <div class="information-grid">
+        <div class="information-item">
+          <span class="label">Full Name</span>
+          <span class="value">
+            {{ profile().full_name || 'Not provided' }}
+          </span>
+        </div>
+
+        <div class="information-item">
+          <span class="label">Birthday</span>
+          <span class="value">
+            {{ formatBirthday(profile().birthday) }}
+          </span>
+        </div>
+
+        <div class="information-item">
+          <span class="label">Place of Birth</span>
+          <span class="value">
+            {{ profile().place_of_birth || 'Not provided' }}
+          </span>
+        </div>
+
+        <div class="information-item">
+          <span class="label">Birth Certificate Number</span>
+          <span class="value">
+            {{ profile().birth_certificate_number || 'Not provided' }}
+          </span>
+        </div>
+
+        <div class="information-item">
+          <span class="label">Blood Type</span>
+          <span class="value">
+            {{ profile().blood_type || 'Not provided' }}
+          </span>
+        </div>
+
+        <div class="information-item">
+          <span class="label">Gender</span>
+          <span class="value">
+            {{ profile().gender || 'Not provided' }}
+          </span>
+        </div>
+
+        <div class="information-item">
+          <span class="label">Civil Status</span>
+          <span class="value">
+            {{ profile().civil_status || 'Not provided' }}
+          </span>
+        </div>
+
+        <div class="information-item">
+          <span class="label">Nationality</span>
+          <span class="value">
+            {{ profile().nationality || 'Not provided' }}
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Information -->
+    <section class="information-section contact-section">
+      <h3>Contact Information</h3>
+
+      <div class="information-grid">
+        <div class="information-item">
+          <span class="label">Contact Number</span>
+          <span class="value">
+            {{ profile().contact_number || 'Not provided' }}
+          </span>
+        </div>
+
+        <div class="information-item">
+          <span class="label">Email Address</span>
+          <span class="value">
+            {{ profile().email || 'Not provided' }}
+          </span>
+        </div>
+
+        <div class="information-item">
+          <span class="label">Address</span>
+          <span class="value">
+            {{ profile().address || 'Not provided' }}
+          </span>
+        </div>
+
+        <div class="information-item">
+          <span class="label">Purok</span>
+          <span class="value">
+            {{ profile().purok || 'Not provided' }}
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Frontend-only notice -->
+    <div class="profile-note" *ngIf="isEditing()">
+      <span>
+        Profile editing is not connected yet. Your information
+        cannot be changed or saved at this stage.
+      </span>
+    </div>
+  </section>
+</main>

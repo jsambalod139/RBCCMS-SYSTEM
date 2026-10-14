@@ -1,0 +1,21 @@
+<nav class="dashboard-topbar">
+    <div class="topbar-left">
+        <h1>Welcome to BRIMS!</h1>
+    </div>
+    <div class="topbar-right">
+       <div class="profile-wrapper" (click)="toggleMenu()">
+
+  <img src="https://i.pravatar.cc/100" class="avatar" />
+  <div class="dropdown" *ngIf="isMenuOpen">
+    <div class="profile-info">
+      <img src="https://i.pravatar.cc/100" class="avatar" />
+      <span>Jon Charles</span>
+    </div>
+    <div class="menu-item logout" (click)="logout()">
+    <i class="pi pi-sign-out"></i> Log out
+       </div>
+      </div>
+    </div>
+  </div>
+</nav>
+

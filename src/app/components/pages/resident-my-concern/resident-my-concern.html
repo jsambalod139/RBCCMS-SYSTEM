@@ -1,0 +1,306 @@
+
+<section class="my-concerns-page">
+  <!-- Page heading -->
+  <header class="page-header">
+    <div>
+      <h1>My Concerns</h1>
+      <p>View and track the status of your submitted concerns.</p>
+    </div>
+  </header>
+
+  <!-- Search and filter -->
+  <div class="toolbar">
+    <div class="search-box">
+      <span class="search-icon" aria-hidden="true">⌕</span>
+
+      <input
+        type="search"
+        name="searchTerm"
+        [(ngModel)]="searchTerm"
+        placeholder="Search concerns..."
+        aria-label="Search by concern ID, category, location, or description"
+      />
+
+      <button
+        *ngIf="searchTerm"
+        type="button"
+        class="clear-search"
+        aria-label="Clear search"
+        (click)="searchTerm = ''"
+      >
+        &times;
+      </button>
+    </div>
+
+    <div class="filter-box">
+      <label for="statusFilter" class="visually-hidden">
+        Filter by status
+      </label>
+
+      <select
+        id="statusFilter"
+        name="selectedStatus"
+        [(ngModel)]="selectedStatus"
+      >
+        <option *ngFor="let status of statusOptions" [value]="status">
+          {{ status }}
+        </option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Concerns table -->
+  <div class="table-card" *ngIf="filteredConcerns.length > 0">
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Concern ID</th>
+            <th scope="col">Category</th>
+            <th scope="col">Location</th>
+            <th scope="col">Status</th>
+            <th scope="col">Date Submitted</th>
+            <th scope="col" class="action-column">Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let concern of filteredConcerns">
+            <td class="concern-id">
+              {{ concern.concern_id }}
+            </td>
+
+            <td>
+              {{
+                concern.category?.category_name ??
+                  ('Category ' + concern.category_id)
+              }}
+            </td>
+
+            <td>{{ concern.location_description }}</td>
+
+            <td>
+              <span
+                class="status-badge"
+                [ngClass]="getStatusClass(concern.current_status)"
+              >
+                {{ concern.current_status }}
+              </span>
+            </td>
+
+            <td>
+              {{ concern.reported_at | date: 'MMM d, y' }}
+            </td>
+
+            <td class="action-column">
+              <button
+                type="button"
+                class="view-button"
+                (click)="viewConcern(concern)"
+              >
+                View
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Empty state: no records exist -->
+  <section
+    class="empty-state"
+    *ngIf="concerns.length === 0"
+    aria-live="polite"
+  >
+    <div class="empty-icon" aria-hidden="true">
+      <svg
+        viewBox="0 0 48 48"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <rect
+          x="10"
+          y="6"
+          width="28"
+          height="36"
+          rx="4"
+          stroke="currentColor"
+          stroke-width="2"
+        />
+        <path
+          d="M17 17H31M17 24H31M17 31H26"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
+      </svg>
+    </div>
+
+    <h2>No concerns submitted yet</h2>
+
+    <p>
+      Your submitted community concerns will appear here.
+      You can check their status and view updates from this page.
+    </p>
+
+    <button
+      type="button"
+      class="primary-button"
+      (click)="onSubmitConcernClick()"
+    >
+      Submit a Concern
+    </button>
+
+    <p class="navigation-note" *ngIf="showNavigationPlaceholder">
+      Navigation is not connected yet. Link this button to your existing
+      Submit Concern route when it is available.
+    </p>
+  </section>
+
+  <!-- Empty search/filter results -->
+  <section
+    class="empty-state compact-empty"
+    *ngIf="concerns.length > 0 && filteredConcerns.length === 0"
+    aria-live="polite"
+  >
+    <h2>No matching concerns</h2>
+    <p>Try another search term or select a different status.</p>
+
+    <button
+      type="button"
+      class="secondary-button"
+      (click)="clearFilters()"
+    >
+      Clear Filters
+    </button>
+  </section>
+
+  <!-- Concern details modal -->
+  <div
+    class="modal-backdrop"
+    *ngIf="selectedConcern as concern"
+    (click)="closeDetails()"
+  >
+    <section
+      class="details-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="detailsTitle"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-header">
+        <div>
+          <p class="modal-eyebrow">Concern Details</p>
+          <h2 id="detailsTitle">{{ concern.concern_id }}</h2>
+        </div>
+
+        <button
+          type="button"
+          class="close-button"
+          aria-label="Close concern details"
+          (click)="closeDetails()"
+        >
+          &times;
+        </button>
+      </header>
+
+      <div class="modal-body">
+        <div class="detail-status">
+          <span class="detail-label">Current status</span>
+
+          <span
+            class="status-badge"
+            [ngClass]="getStatusClass(concern.current_status)"
+          >
+            {{ concern.current_status }}
+          </span>
+        </div>
+
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">Category</span>
+            <p>
+              {{
+                concern.category?.category_name ??
+                  ('Category ' + concern.category_id)
+              }}
+            </p>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">Date Submitted</span>
+            <p>{{ concern.reported_at | date: 'MMM d, y, h:mm a' }}</p>
+          </div>
+
+          <div class="detail-item full-width">
+            <span class="detail-label">Location</span>
+            <p>{{ concern.location_description }}</p>
+          </div>
+
+          <div class="detail-item full-width">
+            <span class="detail-label">Description</span>
+            <p class="description-text">{{ concern.description }}</p>
+          </div>
+
+          <div class="detail-item full-width">
+            <span class="detail-label">Last Updated</span>
+            <p>
+              {{
+                concern.updated_at
+                  ? (concern.updated_at | date: 'MMM d, y, h:mm a')
+                  : 'No updates recorded'
+              }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Status history from related concern_Update records -->
+        <section class="history-section">
+          <h3>Status History &amp; Remarks</h3>
+
+          <div
+            class="history-empty"
+            *ngIf="!concern.updates || concern.updates.length === 0"
+          >
+            No status updates or remarks are available yet.
+          </div>
+
+          <div class="history-list" *ngIf="concern.updates?.length">
+            <article
+              class="history-item"
+              *ngFor="let update of concern.updates"
+            >
+              <div class="history-marker" aria-hidden="true"></div>
+
+              <div class="history-content">
+                <div class="history-heading">
+                  <strong>{{ update.new_status }}</strong>
+                  <time>{{ update.created_at | date: 'MMM d, y, h:mm a' }}</time>
+                </div>
+
+                <p *ngIf="update.previous_status">
+                  Previous status: {{ update.previous_status }}
+                </p>
+
+                <p class="history-remarks">
+                  {{ update.remarks || 'No remarks provided.' }}
+                </p>
+              </div>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <footer class="modal-footer">
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="closeDetails()"
+        >
+          Close
+        </button>
+      </footer>
+    </section>
+  </div>
+</section>

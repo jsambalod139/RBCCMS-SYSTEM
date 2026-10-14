@@ -1,0 +1,105 @@
+.dashboard-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background: #fff;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+}
+
+.profile-wrapper {
+  position: relative;
+  cursor: pointer;
+  border-radius: 50%;
+  padding: 3px;
+  transition: 0.3s;
+}
+
+.profile-wrapper:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.profile-wrapper:hover .avatar {
+  border-color: #3b82f6;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.profile-wrapper:active .avatar {
+  transform: scale(0.95);
+}
+
+.dropdown {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  width: 260px;
+  background: #ffffff;
+  color: #000000;
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  z-index: 999;
+
+  opacity: 0;
+  transform: translateY(-10px);
+  animation: dropdownFade 0.25s ease forwards;
+}
+
+@keyframes dropdownFade {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: #f3f4f6;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.profile-info img {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid transparent;
+  transition: 0.3s;
+}
+
+.profile-info img:hover {
+  border-color: #000000;
+}
+
+.menu-item {
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.menu-item:hover {
+  background: #e5e7eb;
+}
+
+.logout {
+  color: #f87171;
+}
