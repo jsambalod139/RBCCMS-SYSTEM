@@ -39,14 +39,14 @@ export class LoginComponents {
       return;
     }
 
-    if (this.email === 'staff@gmail.com' && this.password === 'staff123') {
+    if (this.email === 'personnel@gmail.com' && this.password === 'perso123') {
       Swal.fire({
         icon: 'success',
-        title: 'Welcome Staff!',
+        title: 'Welcome Personnel!',
         timer: 1500,
         showConfirmButton: false
       }).then(() => {
-        this.router.navigate(['/sta-dashboard']);
+        this.router.navigate(['/perso-dashboard']);
       });
       return;
     }

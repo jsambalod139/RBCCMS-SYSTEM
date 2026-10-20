@@ -1,0 +1,166 @@
+:host {
+  display: block;
+  min-width: 0;
+  font-family: 'Inter', sans-serif;
+  color: #243044;
+}
+
+.profile-page {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 22px 28px;
+  background: #f6f8fb;
+}
+
+/* Page title */
+.page-header {
+  margin-bottom: 20px;
+
+  h1 {
+    margin: 0;
+    color: #243044;
+    font-size: 21px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+}
+
+/* Horizontal profile card */
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 16px 20px;
+  background: #ffffff;
+  border: 1px solid #e9edf2;
+  border-radius: 11px;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.035);
+}
+
+/* Circular avatar */
+.profile-avatar {
+  display: flex;
+  flex: 0 0 64px;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  box-sizing: border-box;
+  border: 1px solid #e2e8f0;
+  border-radius: 50%;
+  background: #edf1f5;
+  color: #64748b;
+}
+
+.avatar-icon {
+  display: block;
+  width: 32px;
+  height: 32px;
+}
+
+/* Profile text */
+.profile-information {
+  flex: 1;
+  min-width: 0;
+
+  h2 {
+    margin: 0 0 5px;
+    color: #172033;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+}
+
+.profile-email {
+  margin: 0 0 4px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.profile-role {
+  display: inline-block;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* Empty state */
+.empty-profile {
+  margin-top: 16px;
+  padding: 20px;
+  text-align: center;
+  background: #ffffff;
+  border: 1px solid #e9edf2;
+  border-radius: 11px;
+
+  h3 {
+    margin: 0 0 6px;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+}
+
+/* Tablet */
+@media (max-width: 768px) {
+  .profile-page {
+    padding: 20px;
+  }
+
+  .profile-card {
+    gap: 16px;
+    padding: 16px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .profile-page {
+    padding: 16px 12px;
+  }
+
+  .page-header {
+    margin-bottom: 16px;
+
+    h1 {
+      font-size: 19px;
+    }
+  }
+
+  .profile-card {
+    gap: 14px;
+    padding: 14px;
+  }
+
+  .profile-avatar {
+    flex-basis: 54px;
+    width: 54px;
+    height: 54px;
+  }
+
+  .avatar-icon {
+    width: 27px;
+    height: 27px;
+  }
+
+  .profile-information h2 {
+    font-size: 15px;
+  }
+}

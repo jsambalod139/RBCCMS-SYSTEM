@@ -1,0 +1,49 @@
+<main class="profile-page">
+  <header class="page-header">
+    <h1>My Profile</h1>
+  </header>
+
+  <section class="profile-card" aria-label="Personnel profile">
+    <!-- Neutral avatar placeholder -->
+    <div class="profile-avatar" aria-hidden="true">
+      <svg
+        class="avatar-icon"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+      >
+        <circle
+          cx="12"
+          cy="8"
+          r="4"
+          stroke="currentColor"
+          stroke-width="1.7"
+        />
+        <path
+          d="M4.5 20a7.5 7.5 0 0 1 15 0"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+        />
+      </svg>
+    </div>
+
+    <div class="profile-information">
+      <h2>{{ displayName }}</h2>
+      <p class="profile-email">{{ displayEmail }}</p>
+      <span class="profile-role">{{ displayRole }}</span>
+    </div>
+  </section>
+
+  <section
+    class="empty-profile"
+    *ngIf="!profile"
+    aria-live="polite"
+  >
+    <h3>Profile information unavailable</h3>
+    <p>
+      Your personnel profile information will appear here when
+      the actual account data becomes available.
+    </p>
+  </section>
+</main>

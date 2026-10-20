@@ -1,0 +1,371 @@
+<main class="concerns-page">
+  <!-- Page heading -->
+  <section class="page-heading">
+    <div class="heading-copy">
+      <h1>All Concerns</h1>
+      <p>
+        View and manage community concern reports submitted by residents.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="add-button"
+      (click)="addConcern()"
+      aria-label="Add concern"
+    >
+      <span class="add-icon" aria-hidden="true">+</span>
+      Add Concern
+    </button>
+  </section>
+
+  <!-- Summary cards -->
+  <section class="summary-grid" aria-label="Concern status summary">
+    <article class="summary-card">
+      <div class="summary-icon total-icon" aria-hidden="true">
+        <span class="pi pi-file"></span>
+      </div>
+      <div class="summary-information">
+        <span class="summary-label">Total Concerns</span>
+        <strong>{{ concerns.length }}</strong>
+      </div>
+    </article>
+
+    <article class="summary-card">
+      <div class="summary-icon pending-icon" aria-hidden="true">
+        <span class="pi pi-clock"></span>
+      </div>
+      <div class="summary-information">
+        <span class="summary-label">Pending</span>
+        <strong>{{ pendingCount }}</strong>
+      </div>
+    </article>
+
+    <article class="summary-card">
+      <div class="summary-icon progress-icon" aria-hidden="true">
+        <span class="pi pi-sync"></span>
+      </div>
+      <div class="summary-information">
+        <span class="summary-label">In Progress</span>
+        <strong>{{ inProgressCount }}</strong>
+      </div>
+    </article>
+
+    <article class="summary-card">
+      <div class="summary-icon resolved-icon" aria-hidden="true">
+        <span class="pi pi-check-circle"></span>
+      </div>
+      <div class="summary-information">
+        <span class="summary-label">Resolved</span>
+        <strong>{{ resolvedCount }}</strong>
+      </div>
+    </article>
+  </section>
+
+  <!-- Concerns table card -->
+  <section class="table-card">
+    <div class="table-heading">
+      <div>
+        <h2>Concern Reports</h2>
+        <p>Review reported concerns and their current status.</p>
+      </div>
+      <span class="record-count">
+        {{ filteredConcerns.length }} records
+      </span>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+      <div class="search-control">
+        <label for="concern-search">Search concerns</label>
+        <div class="search-input-wrapper">
+          <span class="pi pi-search" aria-hidden="true"></span>
+          <input
+            id="concern-search"
+            type="search"
+            placeholder="Search ID, category, location..."
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="onFilterChange()"
+          />
+        </div>
+      </div>
+
+      <div class="filter-control">
+        <label for="category-filter">Category</label>
+        <select
+          id="category-filter"
+          [(ngModel)]="selectedCategory"
+          (ngModelChange)="onFilterChange()"
+        >
+          <option value="">All Categories</option>
+          <option
+            *ngFor="let category of categories"
+            [value]="category.category_id"
+          >
+            {{ category.category_name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-control">
+        <label for="office-filter">Office</label>
+        <select
+          id="office-filter"
+          [(ngModel)]="selectedOffice"
+          (ngModelChange)="onFilterChange()"
+        >
+          <option value="">All Offices</option>
+          <option
+            *ngFor="let office of offices"
+            [value]="office.office_id"
+          >
+            {{ office.office_name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-control">
+        <label for="status-filter">Status</label>
+        <select
+          id="status-filter"
+          [(ngModel)]="selectedStatus"
+          (ngModelChange)="onFilterChange()"
+        >
+          <option value="">All Statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Resolved">Resolved</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Concern ID</th>
+            <th scope="col">Category</th>
+            <th scope="col">Location</th>
+            <th scope="col">Status</th>
+            <th scope="col">Assigned Office</th>
+            <th scope="col">Date Submitted</th>
+            <th scope="col" class="action-column">Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let concern of paginatedConcerns">
+            <td>
+              <span class="concern-id">{{ concern.concern_id }}</span>
+            </td>
+
+            <td>{{ getCategoryName(concern) }}</td>
+
+            <td>
+              <span class="location-text">
+                {{ concern.location_description || 'Location unavailable' }}
+              </span>
+            </td>
+
+            <td>
+              <span
+                class="status-badge"
+                [ngClass]="getStatusClass(concern.current_status)"
+              >
+                {{ concern.current_status }}
+              </span>
+            </td>
+
+            <td>{{ getOfficeName(concern) }}</td>
+
+            <td>{{ formatDate(concern.reported_at) }}</td>
+
+            <td class="action-column">
+              <button
+                type="button"
+                class="view-button"
+                (click)="openDetails(concern)"
+              >
+                View
+              </button>
+            </td>
+          </tr>
+
+          <!-- No concerns at all -->
+          <tr *ngIf="concerns.length === 0">
+            <td colspan="7">
+              <div class="empty-state">
+                <div class="empty-icon" aria-hidden="true">
+                  <span class="pi pi-inbox"></span>
+                </div>
+                <h3>No concerns available yet</h3>
+                <p>
+                  Concern reports will appear here when data becomes available.
+                </p>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Filters returned no matches -->
+          <tr *ngIf="concerns.length > 0 && filteredConcerns.length === 0">
+            <td colspan="7">
+              <div class="empty-state compact-empty-state">
+                <h3>No matching concerns</h3>
+                <p>Try changing your search or filter selections.</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      <div class="pagination-summary">
+        Showing {{ firstRecordNumber }}–{{ lastRecordNumber }}
+        of {{ filteredConcerns.length }}
+      </div>
+
+      <div class="pagination-controls">
+        <label for="page-size">Rows</label>
+        <select
+          id="page-size"
+          [(ngModel)]="pageSize"
+          (ngModelChange)="onPageSizeChange()"
+        >
+          <option [ngValue]="5">5</option>
+          <option [ngValue]="10">10</option>
+          <option [ngValue]="25">25</option>
+        </select>
+
+        <button
+          type="button"
+          class="page-button"
+          (click)="changePage(currentPage - 1)"
+          [disabled]="currentPage <= 1"
+          aria-label="Previous page"
+        >
+          <span class="pi pi-chevron-left" aria-hidden="true"></span>
+        </button>
+
+        <span class="page-indicator">
+          Page {{ currentPage }} of {{ totalPages }}
+        </span>
+
+        <button
+          type="button"
+          class="page-button"
+          (click)="changePage(currentPage + 1)"
+          [disabled]="currentPage >= totalPages"
+          aria-label="Next page"
+        >
+          <span class="pi pi-chevron-right" aria-hidden="true"></span>
+        </button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Frontend-only concern details modal -->
+<div
+  class="modal-backdrop"
+  *ngIf="showDetailsModal && selectedConcern as concern"
+  (click)="closeDetails()"
+>
+  <section
+    class="details-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="details-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="modal-header">
+      <div>
+        <span class="modal-eyebrow">Concern details</span>
+        <h2 id="details-title">{{ concern.concern_id }}</h2>
+      </div>
+
+      <button
+        type="button"
+        class="modal-close"
+        aria-label="Close details"
+        (click)="closeDetails()"
+      >
+        &times;
+      </button>
+    </header>
+
+    <div class="modal-body">
+      <div class="detail-row">
+        <span>Category</span>
+        <strong>{{ getCategoryName(concern) }}</strong>
+      </div>
+
+      <div class="detail-row">
+        <span>Location</span>
+        <strong>
+          {{ concern.location_description || 'Location unavailable' }}
+        </strong>
+      </div>
+
+      <div class="detail-row">
+        <span>Current Status</span>
+        <span
+          class="status-badge"
+          [ngClass]="getStatusClass(concern.current_status)"
+        >
+          {{ concern.current_status }}
+        </span>
+      </div>
+
+      <div class="detail-row">
+        <span>Assigned Office</span>
+        <strong>{{ getOfficeName(concern) }}</strong>
+      </div>
+
+      <div class="detail-row">
+        <span>Date Submitted</span>
+        <strong>{{ formatDate(concern.reported_at) }}</strong>
+      </div>
+
+      <div class="description-section">
+        <h3>Description</h3>
+        <p>{{ concern.description || 'No description available.' }}</p>
+      </div>
+
+      <div class="history-section">
+        <h3>Status History and Remarks</h3>
+
+        <div
+          class="history-entry"
+          *ngFor="let update of selectedConcernUpdates"
+        >
+          <div class="history-status">
+            <span>{{ update.previous_status || 'Initial status' }}</span>
+            <span class="pi pi-arrow-right" aria-hidden="true"></span>
+            <strong>{{ update.new_status }}</strong>
+          </div>
+
+          <p>{{ update.remarks || 'No remarks provided.' }}</p>
+
+          <small>{{ formatDate(update.created_at) }}</small>
+        </div>
+
+        <p
+          class="history-empty"
+          *ngIf="selectedConcernUpdates.length === 0"
+        >
+          No status history is available.
+        </p>
+      </div>
+    </div>
+
+    <footer class="modal-footer">
+      <button type="button" class="close-button" (click)="closeDetails()">
+        Close
+      </button>
+    </footer>
+  </section>
+</div>

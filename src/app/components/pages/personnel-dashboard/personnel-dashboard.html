@@ -1,0 +1,336 @@
+<main class="personnel-dashboard">
+  <!-- Page heading -->
+  <section class="page-heading">
+    <div>
+      <p class="eyebrow">PERSONNEL WORKSPACE</p>
+      <h1>Dashboard</h1>
+      <p class="page-subtitle">
+        Monitor and manage your assigned community concerns.
+      </p>
+    </div>
+  </section>
+
+  <!-- Summary cards -->
+  <section class="summary-grid" aria-label="Concern summary">
+
+    <!-- Assigned to Me -->
+    <article class="summary-card assigned-card">
+      <div class="summary-icon">
+        <i class="pi pi-file" aria-hidden="true"></i>
+      </div>
+
+      <div class="summary-content">
+        <p class="summary-label">Assigned to Me</p>
+        <h2>{{ assignedCount }}</h2>
+        <span class="summary-description">
+          Total assigned concerns
+        </span>
+      </div>
+    </article>
+
+    <!-- Pending -->
+    <article class="summary-card pending-card">
+      <div class="summary-icon">
+        <i class="pi pi-clock" aria-hidden="true"></i>
+      </div>
+
+      <div class="summary-content">
+        <p class="summary-label">Pending</p>
+        <h2>{{ pendingCount }}</h2>
+        <span class="summary-description">
+          Awaiting action
+        </span>
+      </div>
+    </article>
+
+    <!-- In Progress -->
+    <article class="summary-card progress-card">
+      <div class="summary-icon">
+        <i class="pi pi-cog" aria-hidden="true"></i>
+      </div>
+
+      <div class="summary-content">
+        <p class="summary-label">In Progress</p>
+        <h2>{{ inProgressCount }}</h2>
+        <span class="summary-description">
+          Currently being handled
+        </span>
+      </div>
+    </article>
+
+    <!-- Resolved -->
+    <article class="summary-card resolved-card">
+      <div class="summary-icon">
+        <i class="pi pi-check-circle" aria-hidden="true"></i>
+      </div>
+
+      <div class="summary-content">
+        <p class="summary-label">Resolved</p>
+        <h2>{{ resolvedCount }}</h2>
+        <span class="summary-description">
+          Successfully addressed
+        </span>
+      </div>
+    </article>
+
+  </section>
+
+  <!-- Assigned concerns -->
+  <section class="concerns-section">
+    <div class="section-heading">
+      <div>
+        <h2>My Assigned Concerns</h2>
+        <p>
+          Review the concerns assigned to your office or account.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="view-all-button"
+        (click)="onViewAllClick()"
+      >
+        View All
+        <i class="pi pi-arrow-right" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+      <table class="concerns-table">
+        <thead>
+          <tr>
+            <th scope="col">Concern ID</th>
+            <th scope="col">Category</th>
+            <th scope="col">Location</th>
+            <th scope="col">Status</th>
+            <th scope="col">Date Submitted</th>
+            <th scope="col" class="action-column">Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (concern of concerns; track concern.concern_id) {
+            <tr>
+              <td>
+                <span class="concern-id">
+                  {{ concern.concern_id }}
+                </span>
+              </td>
+
+              <td>
+                {{ getCategoryName(concern) }}
+              </td>
+
+              <td>
+                <span class="location-text">
+                  {{ concern.location_description }}
+                </span>
+              </td>
+
+              <td>
+                <span
+                  class="status-badge"
+                  [ngClass]="getStatusClass(concern.current_status)"
+                >
+                  <span class="status-dot"></span>
+                  {{ concern.current_status }}
+                </span>
+              </td>
+
+              <td>
+                {{ formatDate(concern.reported_at) }}
+              </td>
+
+              <td class="action-column">
+                <button
+                  type="button"
+                  class="view-button"
+                  (click)="viewConcern(concern)"
+                  [attr.aria-label]="'View concern ' + concern.concern_id"
+                >
+                  View
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="empty-cell">
+                <div class="empty-state">
+                  <div class="empty-icon">
+                    <i class="pi pi-inbox" aria-hidden="true"></i>
+                  </div>
+
+                  <h3>No assigned concerns yet</h3>
+
+                  <p>
+                    Concerns assigned to you will appear here when
+                    records are available.
+                  </p>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table footer -->
+    <div class="table-footer">
+      <span>
+        Showing {{ concerns.length }}
+        {{ concerns.length === 1 ? 'concern' : 'concerns' }}
+      </span>
+    </div>
+  </section>
+
+  <!-- Concern details modal -->
+  @if (selectedConcern; as concern) {
+    <div
+      class="modal-backdrop"
+      (click)="closeConcernDetails()"
+    >
+      <section
+        class="details-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="concern-modal-title"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="modal-header">
+          <div>
+            <p class="modal-eyebrow">CONCERN DETAILS</p>
+            <h2 id="concern-modal-title">
+              {{ concern.concern_id }}
+            </h2>
+          </div>
+
+          <button
+            type="button"
+            class="close-button"
+            aria-label="Close concern details"
+            (click)="closeConcernDetails()"
+          >
+            <i class="pi pi-times" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="detail-row">
+            <span>Category</span>
+            <strong>{{ getCategoryName(concern) }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Location</span>
+            <strong>{{ concern.location_description }}</strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Current Status</span>
+            <strong>
+              <span
+                class="status-badge"
+                [ngClass]="getStatusClass(concern.current_status)"
+              >
+                <span class="status-dot"></span>
+                {{ concern.current_status }}
+              </span>
+            </strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Date Submitted</span>
+            <strong>{{ formatDate(concern.reported_at) }}</strong>
+          </div>
+
+          <div class="detail-description">
+            <h3>Description</h3>
+            <p>{{ concern.description }}</p>
+          </div>
+
+          <!-- Status history, when related records are available -->
+          <div class="history-section">
+            <h3>Status History and Remarks</h3>
+
+            @if (concern.updates?.length) {
+              <div class="history-list">
+                @for (
+                  update of concern.updates;
+                  track update.update_id
+                ) {
+                  <article class="history-item">
+                    <div class="history-marker"></div>
+
+                    <div class="history-content">
+                      <div class="history-heading">
+                        <strong>{{ update.new_status }}</strong>
+                        <time>
+                          {{ formatDate(update.created_at) }}
+                        </time>
+                      </div>
+
+                      @if (update.remarks) {
+                        <p>{{ update.remarks }}</p>
+                      }
+                    </div>
+                  </article>
+                }
+              </div>
+            } @else {
+              <p class="history-empty">
+                No status history is available for this concern.
+              </p>
+            }
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="close-modal-button"
+            (click)="closeConcernDetails()"
+          >
+            Close
+          </button>
+        </div>
+      </section>
+    </div>
+  }
+
+  <!-- View All placeholder -->
+  @if (showViewAllPlaceholder) {
+    <div
+      class="modal-backdrop"
+      (click)="closeViewAllPlaceholder()"
+    >
+      <section
+        class="placeholder-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="view-all-title"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="placeholder-icon">
+          <i class="pi pi-info-circle" aria-hidden="true"></i>
+        </div>
+
+        <h2 id="view-all-title">Assigned Concerns</h2>
+
+        <p>
+          The View All navigation has not been connected yet.
+          Connect it to your existing concerns page when the route
+          is available.
+        </p>
+
+        <button
+          type="button"
+          class="close-modal-button"
+          (click)="closeViewAllPlaceholder()"
+        >
+          Close
+        </button>
+      </section>
+    </div>
+  }
+</main>
