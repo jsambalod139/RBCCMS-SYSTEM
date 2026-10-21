@@ -4,20 +4,27 @@
       <div class="logo-icon">
         <i class=""></i>
       </div>
-      <h1>Remote Barangay Communication Concern Reporting and Monitoring System</h1>
+
+      <h1>
+        Remote Barangay Community Concern Reporting and Monitoring System
+      </h1>
     </div>
 
-    <form (ngSubmit)="login()">
+    <form #loginForm="ngForm" (ngSubmit)="login()">
       <div class="form-group">
         <div class="input-wrapper">
           <i class="email-input"></i>
+
           <input
             type="email"
             id="email"
             name="email"
             [(ngModel)]="email"
             placeholder="Email Address"
-            autocomplete="emailng"
+            autocomplete="email"
+            required
+            email
+            [disabled]="loading()"
           />
         </div>
       </div>
@@ -25,18 +32,27 @@
       <div class="form-group">
         <div class="input-wrapper">
           <i class="password-input"></i>
+
           <input
-            type="password"
+            [type]="showPassword ? 'text' : 'password'"
             id="password"
             name="password"
             [(ngModel)]="password"
             placeholder="Password"
             autocomplete="current-password"
+            required
+            [disabled]="loading()"
           />
         </div>
       </div>
-      
-       <button type="submit" class="btn-login">Sign In</button>
+
+      <button
+        type="submit"
+        class="btn-login"
+        [disabled]="loading() || loginForm.invalid"
+      >
+        {{ loading() ? 'Signing in...' : 'Sign In' }}
+      </button>
     </form>
   </div>
 </div>

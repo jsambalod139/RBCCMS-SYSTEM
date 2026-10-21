@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { roleGuard } from './core/guard/role.guard';
 // For Log 
 import { LoginComponents } from './components/auth/login-components/login-components';
 // For Resident
@@ -15,6 +16,9 @@ import { PersonnelMyprofile } from './components/pages/personnel-myprofile/perso
 import { PersonnelReports } from './components/pages/personnel-reports/personnel-reports';
 import { PersonnelResidents } from './components/pages/personnel-residents/personnel-residents';
 
+// For Admin
+import { AdDashboard } from './components/layout/admin-layout/ad-dashboard/ad-dashboard';
+
 
 export const routes: Routes = [
 
@@ -23,6 +27,8 @@ export const routes: Routes = [
 
     {path: 'res-dashboard', 
     component: ResDashboard, 
+    canActivate: [roleGuard('resident')],
+    canActivateChild: [roleGuard('resident')],
     children: [
         {path: '', redirectTo: 'resident-dashboard', pathMatch: 'full'},
         {path: 'resident-dashboard', component: ResidentDashboard},
@@ -34,10 +40,23 @@ export const routes: Routes = [
 
     {path: 'perso-dashboard', 
     component: PersoDashboard, 
+    canActivate: [roleGuard('personnel')],
+    canActivateChild: [roleGuard('personnel')],
     children: [
         {path: '', redirectTo: 'personnel-dashboard', pathMatch: 'full'},
   
-    ]
-}
+    ],
+},
+    {path: 'ad-dashboard', 
+    component: AdDashboard, 
+    canActivate: [roleGuard('admin')],
+    canActivateChild: [roleGuard('admin')],
+    children: [
+        {path: '', redirectTo: 'admin-dashboard', pathMatch: 'full'},
+  
+    ],
+},
 
+
+    {path: '**', redirectTo: 'login-components',},
 ];

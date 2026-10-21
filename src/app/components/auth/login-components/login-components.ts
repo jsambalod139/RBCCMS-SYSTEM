@@ -1,9 +1,13 @@
-
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
+
+import {
+  AuthService,
+  UserRole,
+} from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-login-components',
@@ -14,63 +18,93 @@ import Swal from 'sweetalert2';
 export class LoginComponents {
   email = '';
   password = '';
+  showPassword = false;
 
-  constructor(private router: Router) {}
+  readonly loading = signal(false);
 
-  login() {
-    if (!this.email || !this.password) {
-      Swal.fire({
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+
+  async login(): Promise<void> {
+    if (this.loading()) {
+      return;
+    }
+
+    if (!this.email.trim() || !this.password) {
+      await Swal.fire({
         icon: 'warning',
         title: 'Missing Fields',
-        text: 'Please fill all fields',
+        text: 'Please enter your email and password.',
       });
+
       return;
     }
 
-    if (this.email === 'admin@gmail.com' && this.password === 'admin123') {
-      Swal.fire({
-        icon: 'success',
-        title: 'Welcome Admin!',
-        timer: 1500,
-        showConfirmButton: false
-      }).then(() => {
-        this.router.navigate(['/ad-dashboard']);
-      });
-      return;
-    }
+    this.loading.set(true);
 
-    if (this.email === 'personnel@gmail.com' && this.password === 'perso123') {
-      Swal.fire({
-        icon: 'success',
-        title: 'Welcome Personnel!',
-        timer: 1500,
-        showConfirmButton: false
-      }).then(() => {
-        this.router.navigate(['/perso-dashboard']);
-      });
-      return;
-    }
+    try {
+      const profile = await this.auth.login(this.email, this.password);
 
-    if (this.email === 'resident@gmail.com' && this.password === 'res123') {
-      Swal.fire({
-        icon: 'success',
-        title: 'Welcome Resident!',
-        timer: 1500,
-        showConfirmButton: false
-      }).then(() => {
-        this.router.navigate(['/res-dashboard']);
-      });
-      return;
-    }
+      const destinations: Record<UserRole, string> = {
+        resident: '/res-dashboard',
+        personnel: '/perso-dashboard',
+        admin: '/ad-dashboard',
+      };
 
-    Swal.fire({
-      icon: 'error',
-      title: 'Login Failed',
-      text: 'Invalid email or password',
-    });  
+      await this.router.navigateByUrl(destinations[profile.role]);
+    } catch (error: unknown) {
+      const code =
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error
+          ? String(error.code)
+          : '';
+
+      const reason = error instanceof Error ? error.message : '';
+
+      let message = 'Unable to sign in. Please try again.';
+
+      if (
+        [
+          'auth/invalid-credential',
+          'auth/invalid-login-credentials',
+          'auth/user-not-found',
+          'auth/wrong-password',
+          'auth/invalid-email',
+        ].includes(code)
+      ) {
+        message = 'Invalid email or password.';
+      } else if (code === 'auth/too-many-requests') {
+        message = 'Too many attempts. Please wait before trying again.';
+      } else if (code === 'auth/network-request-failed') {
+        message = 'Please check your internet connection.';
+      } else if (code === 'auth/user-disabled') {
+        message = 'This account is unavailable. Contact the administrator.';
+      } else if (reason === 'account/not-approved') {
+        message =
+          'Your account is not approved for access. Contact the administrator.';
+      } else if (reason === 'account/profile-missing') {
+        message =
+          'Your user profile is missing. Contact the administrator.';
+      } else if (reason === 'account/invalid-role') {
+        message = 'Your account role needs administrator attention.';
+      } else if (code === 'permission-denied') {
+        message =
+          'Your profile could not be accessed. Check the Firestore rules.';
+      }
+
+      await Swal.fire({
+        icon: 'error',
+        title: 'Login Failed',
+        text: message,
+      });
+    } finally {
+      this.password = '';
+      this.loading.set(false);
+    }
   }
-    showPassword: boolean = false;
-    togglePassword() {
-      this.showPassword = !this.showPassword;
-    }
-    }
+
+  togglePassword(): void {
+    this.showPassword = !this.showPassword;
+  }
+}
