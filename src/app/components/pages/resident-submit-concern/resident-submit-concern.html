@@ -1,4 +1,3 @@
-
 <main class="submit-page">
   <div class="page-heading">
     <div>
@@ -15,10 +14,10 @@
       <span class="alert-icon">✓</span>
 
       <div>
-        <strong>Form submitted successfully!</strong>
+        <strong>Concern submitted successfully!</strong>
         <p>
-          This is a frontend demonstration only. Your concern
-          has not been saved.
+          Thank you. Your concern has been received and will
+          be reviewed.
         </p>
       </div>
 
@@ -27,6 +26,26 @@
         class="alert-close"
         aria-label="Dismiss message"
         (click)="showSuccess.set(false)"
+      >
+        ×
+      </button>
+    </div>
+  }
+
+  @if (submitError()) {
+    <div class="alert alert-error" role="alert">
+      <span class="alert-icon">!</span>
+
+      <div>
+        <strong>Submission failed</strong>
+        <p>{{ submitError() }}</p>
+      </div>
+
+      <button
+        type="button"
+        class="alert-close"
+        aria-label="Dismiss message"
+        (click)="submitError.set('')"
       >
         ×
       </button>
@@ -206,7 +225,7 @@
                 <button
                   type="button"
                   class="remove-photo"
-                  (click)="removePhoto(photoInput)"
+                  (click)="removePhoto()"
                 >
                   Remove photo
                 </button>
@@ -242,14 +261,15 @@
           <button
             type="submit"
             class="btn btn-primary"
-            [disabled]="categories().length === 0"
+            [disabled]="categories().length === 0 || isLoading()"
           >
-            Submit Concern
+            {{ isLoading() ? 'Submitting...' : 'Submit Concern' }}
           </button>
 
           <button
             type="button"
             class="btn btn-secondary"
+            [disabled]="isLoading()"
             (click)="cancel()"
           >
             Cancel

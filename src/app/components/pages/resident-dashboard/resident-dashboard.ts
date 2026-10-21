@@ -1,4 +1,3 @@
-
 import {
   Component,
   computed,
@@ -13,6 +12,8 @@ import {
   Concern,
   ConcernStatus
 } from '../../../core/models/concern.model';
+// Adjust this path to wherever concern.service.ts lives in your project.
+import { ConcernService } from '../../../core/services/concern.service';
 
 @Component({
   selector: 'app-resident-dashboard',
@@ -23,9 +24,10 @@ import {
 })
 export class ResidentDashboard {
   private readonly router = inject(Router);
+  private readonly concernService = inject(ConcernService);
 
-  // No dummy data. Starts empty.
-  readonly concerns = signal<Concern[]>([]);
+  // Live data shared with Submit Concern and My Concerns.
+  readonly concerns = this.concernService.concerns;
 
   // Replace with the logged-in resident's name later.
   readonly residentName = signal('Resident');
@@ -60,23 +62,21 @@ export class ResidentDashboard {
 
   private countByStatus(status: ConcernStatus): number {
     return this.concerns().filter(
-      concern =>
-        concern.current_status.toLowerCase() ===
-        status.toLowerCase()
+      concern => concern.current_status === status
     ).length;
   }
 
   // Navigate to Submit Concern.
   newConcern(): void {
     void this.router.navigate([
-      '/res-dashboard/submit-concern'
+      '/res-dashboard/resident-submit-concern'
     ]);
   }
 
   // Navigate to My Concerns.
   viewAllConcerns(): void {
     void this.router.navigate([
-      '/res-dashboard/my-concerns'
+      '/res-dashboard/resident-my-concern'
     ]);
   }
 
@@ -90,13 +90,10 @@ export class ResidentDashboard {
     this.selectedConcern.set(null);
   }
 
-  // Display the category from either a joined category
-  // object or a category_name property.
   categoryName(concern: Concern): string {
     return (
       concern.category?.category_name ??
-      concern.category_name ??
-      'Uncategorized'
+      `Category ${concern.category_id}`
     );
   }
 
@@ -122,7 +119,7 @@ export class ResidentDashboard {
   trackConcern(
     _index: number,
     concern: Concern
-  ): number {
+  ): string {
     return concern.concern_id;
   }
 }

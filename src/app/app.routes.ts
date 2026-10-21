@@ -9,8 +9,8 @@ import { ResidentSubmitConcern } from './components/pages/resident-submit-concer
 import { ResidentMyConcern } from './components/pages/resident-my-concern/resident-my-concern';
 // For Personnel
 import { PersoDashboard } from './components/layout/personnel-layout/perso-dashboard/perso-dashboard';
-import { PersonnelConcern } from './components/pages/personnel-concern/personnel-concern';
-import { PersonnelDashboard } from './components/pages/personnel-dashboard/personnel-dashboard';
+
+
 import { PersonnelMyprofile } from './components/pages/personnel-myprofile/personnel-myprofile';
 import { PersonnelReports } from './components/pages/personnel-reports/personnel-reports';
 import { PersonnelResidents } from './components/pages/personnel-residents/personnel-residents';
@@ -36,11 +36,7 @@ export const routes: Routes = [
     component: PersoDashboard, 
     children: [
         {path: '', redirectTo: 'personnel-dashboard', pathMatch: 'full'},
-        {path: 'personnel-dashboard', component: PersonnelDashboard},
-        {path: 'personnel-myprofile', component: PersonnelMyprofile},
-        {path: 'personnel-concern', component: PersonnelConcern},
-        {path: 'personnel-reports', component: PersonnelReports},
-        {path: 'personnel-residents', component: PersonnelResidents},
+  
     ]
 }
 
