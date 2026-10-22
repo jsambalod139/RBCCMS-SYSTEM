@@ -1,0 +1,263 @@
+<main class="personnel-dashboard">
+  <section class="page-heading">
+    <div>
+      <p class="eyebrow">PERSONNEL PORTAL</p>
+      <h1>Personnel Dashboard</h1>
+      <p class="page-description">
+        Monitor community concerns handled by your office.
+      </p>
+    </div>
+  </section>
+
+  <section class="summary-grid" aria-label="Concern statistics">
+    <article class="summary-card total-card">
+      <div class="summary-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M7 3h7l5 5v13H7z" />
+          <path d="M14 3v5h5M10 13h6M10 17h6" />
+        </svg>
+      </div>
+
+      <div class="summary-info">
+        <p>Total Concerns</p>
+        <h2>{{ totalConcerns() }}</h2>
+      </div>
+    </article>
+
+    <article class="summary-card pending-card">
+      <div class="summary-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 2" />
+        </svg>
+      </div>
+
+      <div class="summary-info">
+        <p>Pending</p>
+        <h2>{{ pendingCount() }}</h2>
+      </div>
+    </article>
+
+    <article class="summary-card progress-card">
+      <div class="summary-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 2" />
+          <path d="M5.6 5.6 7 7" />
+        </svg>
+      </div>
+
+      <div class="summary-info">
+        <p>In Progress</p>
+        <h2>{{ inProgressCount() }}</h2>
+      </div>
+    </article>
+
+    <article class="summary-card resolved-card">
+      <div class="summary-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="m12 3 8 3v5c0 5-3.4 8-8 10-4.6-2-8-5-8-10V6z" />
+          <path d="m8.5 12 2.3 2.3 4.8-5" />
+        </svg>
+      </div>
+
+      <div class="summary-info">
+        <p>Resolved</p>
+        <h2>{{ resolvedCount() }}</h2>
+      </div>
+    </article>
+  </section>
+
+  <section class="concerns-section">
+    <div class="section-heading">
+      <div>
+        <h2>Recent Assigned Concerns</h2>
+        <p>Review the latest concerns assigned to your office.</p>
+      </div>
+
+      <span class="record-count">
+        {{ totalConcerns() }} record(s)
+      </span>
+    </div>
+
+    @if (recentConcerns().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M7 3h7l5 5v13H7z" />
+            <path d="M14 3v5h5M10 13h6M10 17h6" />
+          </svg>
+        </div>
+
+        <h3>Concern Records Not Connected Yet</h3>
+        <p>
+          Office-assigned concerns will appear here after data access
+          is configured.
+        </p>
+      </div>
+    } @else {
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Concern ID</th>
+              <th scope="col">Category</th>
+              <th scope="col">Date Submitted</th>
+              <th scope="col">Status</th>
+              <th scope="col" class="action-column">Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (concern of recentConcerns(); track concern.concern_id) {
+              <tr>
+                <td class="concern-id">
+                  C-{{ concern.concern_id }}
+                </td>
+
+                <td>{{ categoryName(concern) }}</td>
+
+                <td>
+                  {{ concern.reported_at | date:'MMM d, y' }}
+                </td>
+
+                <td>
+                  <span
+                    class="status-badge"
+                    [ngClass]="statusClass(concern.current_status)"
+                  >
+                    {{ concern.current_status }}
+                  </span>
+                </td>
+
+                <td class="action-column">
+                  <button
+                    type="button"
+                    class="btn-view"
+                    (click)="viewConcern(concern)"
+                    [attr.aria-label]="'View concern ' + concern.concern_id"
+                  >
+                    View Details
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  @if (selectedConcern(); as concern) {
+    <div
+      class="dialog-backdrop"
+      (click)="closeConcernDetails()"
+      (keydown.escape)="closeConcernDetails()"
+    >
+      <section
+        class="details-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="concern-dialog-title"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="dialog-heading">
+          <div>
+            <p class="eyebrow">CONCERN DETAILS</p>
+            <h2 id="concern-dialog-title">
+              Concern C-{{ concern.concern_id }}
+            </h2>
+          </div>
+
+          <button
+            type="button"
+            class="dialog-close"
+            aria-label="Close concern details"
+            (click)="closeConcernDetails()"
+          >
+            ×
+          </button>
+        </header>
+
+        <div class="detail-row">
+          <span>Category</span>
+          <strong>{{ categoryName(concern) }}</strong>
+        </div>
+
+        <div class="detail-row">
+          <span>Location</span>
+          <strong>{{ concern.location_description }}</strong>
+        </div>
+
+        <div class="detail-row">
+          <span>Date Submitted</span>
+          <strong>
+            {{ concern.reported_at | date:'MMMM d, y, h:mm a' }}
+          </strong>
+        </div>
+
+        <div class="detail-row">
+          <span>Last Updated</span>
+          <strong>
+            {{
+              concern.updated_at
+                ? (concern.updated_at | date:'MMMM d, y, h:mm a')
+                : 'No updates recorded'
+            }}
+          </strong>
+        </div>
+
+        <div class="detail-row">
+          <span>Status</span>
+          <span
+            class="status-badge"
+            [ngClass]="statusClass(concern.current_status)"
+          >
+            {{ concern.current_status }}
+          </span>
+        </div>
+
+        <div class="description-block">
+          <h3>Description</h3>
+          <p>{{ concern.description }}</p>
+        </div>
+
+        @if (concern.updates.length > 0) {
+          <div class="updates-block">
+            <h3>Status History</h3>
+
+            @for (update of concern.updates; track update.update_id) {
+              <div class="update-item">
+                <span
+                  class="status-dot"
+                  [ngClass]="statusClass(update.new_status)"
+                  aria-hidden="true"
+                ></span>
+
+                <div>
+                  <strong>{{ update.new_status }}</strong>
+                  <p>
+                    {{ update.remarks || 'No remarks provided.' }}
+                  </p>
+                  <small>
+                    {{ update.created_at | date:'MMM d, y, h:mm a' }}
+                  </small>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <footer class="dialog-actions">
+          <button
+            type="button"
+            class="btn-primary"
+            (click)="closeConcernDetails()"
+          >
+            Close
+          </button>
+        </footer>
+      </section>
+    </div>
+  }
+</main>

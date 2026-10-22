@@ -2,7 +2,8 @@ import { CommonModule } from '@angular/common';
 import {
   Component,
   OnInit,
-  inject
+  inject,
+  effect
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -35,8 +36,19 @@ export class ResidentMyConcern implements OnInit {
 
   selectedConcern: ConcernWithRelations | null = null;
 
-  isLoading = false;
-  errorMessage = '';
+  get isLoading(): boolean { return this.concernService.loading(); }
+  get errorMessage(): string { return this.concernService.error(); }
+  readonly photoError = this.concernService.photoError;
+
+  constructor() {
+    effect(() => {
+      const records = this.concernService.concerns();
+      if (this.selectedConcern) {
+        this.selectedConcern = records.find(item =>
+          item.concern_id === this.selectedConcern?.concern_id) ?? null;
+      }
+    });
+  }
 
   readonly statusOptions: string[] = [
     'All Status',
@@ -66,11 +78,7 @@ export class ResidentMyConcern implements OnInit {
    * this method requires no additional API request.
    */
   loadConcerns(): void {
-    this.errorMessage = '';
-
-    // The shared service currently exposes a synchronous signal.
-    // Do not show a loading state while reading it.
-    this.isLoading = false;
+    this.concernService.reload();
   }
 
   retryLoad(): void {

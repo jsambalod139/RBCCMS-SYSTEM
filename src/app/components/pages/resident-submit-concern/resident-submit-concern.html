@@ -196,14 +196,26 @@
 
         <!-- Optional photo -->
         <div class="form-field">
-          <label for="photo">Attach Photo <span class="optional">(Optional)</span></label>
+          <label id="photo-label">
+            Attach Photo <span class="optional">(Optional)</span>
+          </label>
 
-          <p class="field-hint">
+          <p class="field-hint" id="photo-hint">
             Upload an image that helps explain the concern.
             Maximum file size: 5 MB.
           </p>
 
           <div class="upload-area">
+            <input
+              #photoInput
+              id="photo"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              hidden
+              [disabled]="isLoading()"
+              (change)="onPhotoSelected($event)"
+            />
+
             @if (imagePreview(); as preview) {
               <div class="preview-container">
                 <img
@@ -216,6 +228,7 @@
                   <span class="file-name">
                     {{ selectedFile()?.name }}
                   </span>
+
                   <small>
                     {{ ((selectedFile()?.size ?? 0) / 1024 / 1024).toFixed(2) }}
                     MB
@@ -225,28 +238,33 @@
                 <button
                   type="button"
                   class="remove-photo"
+                  [disabled]="isLoading()"
                   (click)="removePhoto()"
                 >
                   Remove photo
                 </button>
               </div>
             } @else {
-              <label for="photo" class="upload-prompt">
+              <button
+                type="button"
+                class="upload-prompt"
+                style="
+                  width: 100%;
+                  border: 0;
+                  background: transparent;
+                  font: inherit;
+                "
+                aria-label="Choose a concern photo"
+                aria-describedby="photo-hint"
+                [disabled]="isLoading()"
+                (click)="photoInput.click()"
+              >
                 <span class="upload-icon" aria-hidden="true">↑</span>
                 <strong>Choose a photo</strong>
-                <span>JPG, PNG, WEBP, or another image format</span>
+                <span>JPG, PNG, or WEBP</span>
                 <span class="browse-text">Browse files</span>
-              </label>
+              </button>
             }
-
-            <input
-              #photoInput
-              id="photo"
-              type="file"
-              accept="image/*"
-              class="visually-hidden"
-              (change)="onPhotoSelected($event)"
-            />
           </div>
 
           @if (fileError()) {

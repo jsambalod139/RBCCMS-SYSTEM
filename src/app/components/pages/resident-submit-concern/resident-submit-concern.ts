@@ -1,5 +1,4 @@
 import { CommonModule } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   ElementRef,
@@ -78,8 +77,8 @@ export class ResidentSubmitConcern {
 
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      this.fileError.set('Please select a valid image file.');
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      this.fileError.set('Please select a JPG, PNG, or WebP image.');
       input.value = '';
       return;
     }
@@ -143,10 +142,11 @@ export class ResidentSubmitConcern {
           this.showSuccess.set(true);
           this.resetForm();
         },
-        error: (err: HttpErrorResponse) => {
+        error: (err: unknown) => {
           this.submitError.set(
-            err.error?.message ??
-              'Unable to submit your concern. Please try again.'
+            err instanceof Error
+              ? err.message
+              : 'Unable to submit your concern. Please try again.'
           );
         }
       });
