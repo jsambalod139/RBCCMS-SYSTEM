@@ -1,7 +1,7 @@
 <main class="personnel-concerns-page">
   @if (loading()) {
     <p class="page-notice" role="status">
-      Loading assigned concerns...
+      Loading community concerns...
     </p>
   }
 
@@ -26,7 +26,6 @@
   }
 
   @if (selectedConcern; as concern) {
-    <!-- Full-width details page -->
     <article class="details-page" aria-labelledby="details-title">
       <header class="details-header">
         <div>
@@ -50,7 +49,6 @@
         </p>
       }
 
-      <!-- Concern information -->
       <section aria-labelledby="information-title">
         <h2 id="information-title" class="information-heading">
           Concern Information
@@ -59,7 +57,10 @@
         <dl class="detail-grid">
           <div class="detail-item">
             <dt>Concern ID</dt>
-            <dd class="reference-id">{{ concern.concern_id }}</dd>
+
+            <dd class="reference-id">
+              {{ concern.concern_number ?? 'Not numbered' }}
+            </dd>
           </div>
 
           <div class="detail-item">
@@ -74,6 +75,7 @@
 
           <div class="detail-item">
             <dt>Date Reported</dt>
+
             <dd>
               {{ concern.reported_at | date:'MMMM d, y, h:mm a' }}
             </dd>
@@ -81,6 +83,7 @@
 
           <div class="detail-item">
             <dt>Current Status</dt>
+
             <dd>
               <span
                 class="status-badge"
@@ -93,6 +96,7 @@
 
           <div class="detail-item">
             <dt>Last Updated</dt>
+
             <dd>
               {{
                 concern.updated_at
@@ -101,16 +105,41 @@
               }}
             </dd>
           </div>
+
+          <div class="detail-item">
+            <dt>Responsible Office</dt>
+
+            <dd>
+              {{
+                concern.office?.office_name ||
+                  (
+                    concern.office_id
+                      ? 'Office information unavailable'
+                      : 'Not assigned'
+                  )
+              }}
+            </dd>
+          </div>
+
+          <div class="detail-item">
+            <dt>Last Updated By</dt>
+
+            <dd>
+              {{
+                concern.last_updated_by
+                  ? 'Personnel'
+                  : 'Not recorded'
+              }}
+            </dd>
+          </div>
         </dl>
       </section>
 
-      <!-- Description -->
       <section class="description-section">
         <h2>Description</h2>
         <p>{{ concern.description }}</p>
       </section>
 
-      <!-- Photo -->
       @if (concern.photo_url) {
         <section class="photo-section">
           <h2>Attached Photo</h2>
@@ -129,12 +158,16 @@
             class="concern-photo"
           />
         </section>
+      } @else if (concern.photo_path && !photoError()) {
+        <p role="status">Loading attached photo...</p>
       }
 
-      <!-- Status update controls -->
       <section class="update-section" aria-labelledby="update-title">
         <h2 id="update-title">Update Concern Status</h2>
-        <p>Status changes and remarks are saved to Firebase.</p>
+
+        <p>
+          Record progress and explain the reason for the status change.
+        </p>
 
         <div class="update-grid">
           <div class="update-field">
@@ -147,7 +180,9 @@
               [disabled]="saving()"
             >
               @for (status of availableStatuses; track status) {
-                <option [ngValue]="status">{{ status }}</option>
+                <option [ngValue]="status">
+                  {{ status }}
+                </option>
               }
             </select>
           </div>
@@ -189,9 +224,8 @@
         </div>
       </section>
 
-      <!-- Status history -->
       <section class="history-section">
-        <h2>Status History</h2>
+        <h2>Status History &amp; Remarks</h2>
 
         @if (concern.updates.length > 0) {
           @for (update of concern.updates; track update.update_id) {
@@ -209,7 +243,17 @@
                   → {{ update.new_status }}
                 </p>
 
-                <p>{{ update.remarks || 'No remarks provided.' }}</p>
+                <p>
+                  {{
+                    update.updated_by
+                      ? 'Updated by Personnel'
+                      : 'Updater not recorded'
+                  }}
+                </p>
+
+                <p>
+                  {{ update.remarks || 'No remarks provided.' }}
+                </p>
               </div>
 
               <time [attr.datetime]="update.created_at">
@@ -225,13 +269,13 @@
       </section>
     </article>
   } @else {
-    <!-- Original concern list -->
     <header class="page-header">
       <div>
         <p class="eyebrow">PERSONNEL PORTAL</p>
         <h1>Concern Reports</h1>
+
         <p class="page-description">
-          Review community concerns and manage their current status.
+          Review all community concerns and manage their status.
         </p>
       </div>
     </header>
@@ -245,7 +289,7 @@
           name="searchTerm"
           [ngModel]="searchTerm()"
           (ngModelChange)="searchTerm.set($event)"
-          placeholder="Search ID, category, location, or description..."
+          placeholder="Search concern ID, category, location, or description..."
           aria-label="Search concerns"
         />
 
@@ -271,7 +315,9 @@
           (ngModelChange)="selectedStatus.set($event)"
         >
           @for (status of statusOptions; track status) {
-            <option [ngValue]="status">{{ status }}</option>
+            <option [ngValue]="status">
+              {{ status }}
+            </option>
           }
         </select>
       </div>
@@ -286,7 +332,7 @@
     </section>
 
     <div class="results-heading">
-      <h2>Assigned Concerns</h2>
+      <h2>Community Concerns</h2>
       <span>{{ filteredConcerns().length }} record(s)</span>
     </div>
 
@@ -298,7 +344,7 @@
           <h3>
             {{
               concerns().length === 0
-                ? 'No Assigned Concerns'
+                ? 'No Concerns Yet'
                 : 'No Matching Concerns'
             }}
           </h3>
@@ -306,7 +352,7 @@
           <p>
             {{
               concerns().length === 0
-                ? 'No concerns have been assigned to your account yet.'
+                ? 'No community concerns have been submitted yet.'
                 : 'Try a different search term or status filter.'
             }}
           </p>
@@ -343,7 +389,7 @@
                 ) {
                   <tr>
                     <td class="concern-id">
-                      {{ concern.concern_id }}
+                      {{ concern.concern_number ?? 'Not numbered' }}
                     </td>
 
                     <td>{{ categoryName(concern) }}</td>

@@ -664,9 +664,12 @@ a:focus-visible {
     width: 100%;
   }
 
-  .information-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
+ .information-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+}
 
   .status-banner {
     align-items: flex-start;
@@ -679,3 +682,4 @@ a:focus-visible {
     animation: none;
   }
 }
+

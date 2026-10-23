@@ -1,15 +1,20 @@
 <section class="my-concerns-page">
   @if (photoError()) {
-    <p class="photo-message" role="status">{{ photoError() }}</p>
+    <p class="photo-message" role="status">
+      {{ photoError() }}
+    </p>
   }
 
   @if (selectedConcern; as concern) {
-    <!-- Full-width concern details -->
     <article class="concern-details-page">
       <header class="details-page-header">
         <div>
           <h1>Concern Details</h1>
-          <p class="reference-tag">ID: {{ concern.concern_id }}</p>
+
+          <p class="reference-tag">
+            Concern ID:
+            {{ concern.concern_number ?? 'Not numbered' }}
+          </p>
         </div>
 
         <button
@@ -22,7 +27,6 @@
         </button>
       </header>
 
-      <!-- Status banner -->
       <section
         class="status-banner"
         [ngClass]="getStatusClass(concern.current_status)"
@@ -52,12 +56,15 @@
               @case ('Pending') {
                 Your concern is awaiting review.
               }
+
               @case ('In Progress') {
                 Personnel are working on your concern.
               }
+
               @case ('Resolved') {
                 Your concern has been marked as resolved.
               }
+
               @case ('Rejected') {
                 Your concern has been marked as rejected.
                 Review the remarks below.
@@ -67,13 +74,13 @@
         </div>
       </section>
 
-      <!-- Information cards -->
       <section class="details-section">
         <h2>Concern Information</h2>
 
         <dl class="information-grid">
           <div class="information-card">
             <dt>Category</dt>
+
             <dd>
               {{
                 concern.category?.category_name ??
@@ -89,18 +96,42 @@
 
           <div class="information-card">
             <dt>Date Submitted</dt>
+
             <dd>
               {{ concern.reported_at | date:'MMM d, y, h:mm a' }}
             </dd>
           </div>
 
           <div class="information-card">
-            <dt>Concern ID</dt>
-            <dd class="id-value">{{ concern.concern_id }}</dd>
+            <dt>Responsible Office</dt>
+
+            <dd>
+              {{
+                concern.office?.office_name ||
+                  (
+                    concern.office_id
+                      ? 'Office information unavailable'
+                      : 'Not assigned'
+                  )
+              }}
+            </dd>
+          </div>
+
+          <div class="information-card">
+            <dt>Last Updated By</dt>
+
+            <dd>
+              {{
+                concern.last_updated_by
+                  ? 'Personnel'
+                  : 'Not recorded'
+              }}
+            </dd>
           </div>
 
           <div class="information-card">
             <dt>Last Updated</dt>
+
             <dd>
               {{
                 concern.updated_at
@@ -112,7 +143,6 @@
         </dl>
       </section>
 
-      <!-- Description -->
       <section class="details-section">
         <h2>Description</h2>
 
@@ -121,7 +151,6 @@
         </div>
       </section>
 
-      <!-- Photo -->
       @if (concern.photo_url) {
         <section class="details-section">
           <h2>Attached Photo</h2>
@@ -145,7 +174,6 @@
         <p role="status">Loading attached photo...</p>
       }
 
-      <!-- History -->
       <section class="details-section">
         <h2>Status History &amp; Remarks</h2>
 
@@ -180,6 +208,14 @@
                     </p>
                   }
 
+                  <p>
+                    {{
+                      update.updated_by
+                        ? 'Updated by Personnel'
+                        : 'Updater not recorded'
+                    }}
+                  </p>
+
                   <p class="remarks">
                     {{ update.remarks || 'No remarks provided.' }}
                   </p>
@@ -195,7 +231,6 @@
       </section>
     </article>
   } @else {
-    <!-- Original concern list -->
     <header class="page-header">
       <div>
         <h1>My Concerns</h1>
@@ -211,8 +246,8 @@
           type="search"
           name="searchTerm"
           [(ngModel)]="searchTerm"
-          placeholder="Search concerns..."
-          aria-label="Search by concern ID, category, location, or description"
+          placeholder="Search concern ID, category, location, or description..."
+          aria-label="Search concerns"
         />
 
         <button
@@ -284,7 +319,7 @@
               *ngFor="let concern of filteredConcerns; trackBy: trackConcern"
             >
               <td class="concern-id">
-                {{ concern.concern_id }}
+                {{ concern.concern_number ?? 'Not numbered' }}
               </td>
 
               <td>
@@ -328,11 +363,7 @@
 
     <div
       class="empty-state"
-      *ngIf="
-        !isLoading &&
-        !errorMessage &&
-        filteredConcerns.length === 0
-      "
+      *ngIf="!isLoading && !errorMessage && filteredConcerns.length === 0"
     >
       <div class="empty-icon" aria-hidden="true">▤</div>
 

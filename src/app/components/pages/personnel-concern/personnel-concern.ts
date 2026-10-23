@@ -1,13 +1,23 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, effect, inject, signal } from '@angular/core';
+
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  signal
+} from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 
 import {
   Concern,
-  ConcernStatus,
+  ConcernStatus
 } from '../../../core/models/concern.model';
 
-import { ConcernService } from '../../../core/services/concern.service';
+import {
+  ConcernService
+} from '../../../core/services/concern.service';
 
 type StatusFilter = 'All Status' | ConcernStatus;
 
@@ -16,7 +26,7 @@ type StatusFilter = 'All Status' | ConcernStatus;
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './personnel-concern.html',
-  styleUrl: './personnel-concern.scss',
+  styleUrl: './personnel-concern.scss'
 })
 export class PersonnelConcerns {
   private readonly concernService = inject(ConcernService);
@@ -25,20 +35,9 @@ export class PersonnelConcerns {
   readonly loading = this.concernService.loading;
   readonly loadError = this.concernService.error;
   readonly photoError = this.concernService.photoError;
+
   readonly saving = signal(false);
   readonly feedback = signal('');
-
-  retryLoad(): void { this.concernService.reload(); }
-
-  constructor() {
-    effect(() => {
-      const records = this.concerns();
-      if (this.selectedConcern && !records.some(item =>
-          item.concern_id === this.selectedConcern?.concern_id)) {
-        this.closeDetails();
-      }
-    });
-  }
 
   readonly searchTerm = signal('');
   readonly selectedStatus = signal<StatusFilter>('All Status');
@@ -52,15 +51,34 @@ export class PersonnelConcerns {
     'Pending',
     'In Progress',
     'Resolved',
-    'Rejected',
+    'Rejected'
   ];
 
   readonly availableStatuses: ConcernStatus[] = [
     'Pending',
     'In Progress',
     'Resolved',
-    'Rejected',
+    'Rejected'
   ];
+
+  constructor() {
+    effect(() => {
+      const records = this.concerns();
+      const selected = this.selectedConcern;
+
+      if (!selected) return;
+
+      const current = records.find(
+        item => item.concern_id === selected.concern_id
+      );
+
+      if (current) {
+        this.selectedConcern = current;
+      } else {
+        this.closeDetails();
+      }
+    });
+  }
 
   readonly filteredConcerns = computed(() => {
     const search = this.searchTerm().trim().toLowerCase();
@@ -68,11 +86,14 @@ export class PersonnelConcerns {
 
     return this.concerns().filter(concern => {
       const matchesSearch = [
-        concern.concern_id,
+        String(concern.concern_number ?? ''),
         this.categoryName(concern),
         concern.location_description,
         concern.description,
-      ].some(value => value.toLowerCase().includes(search));
+        concern.office?.office_name ?? ''
+      ].some(value =>
+        (value ?? '').toLowerCase().includes(search)
+      );
 
       const matchesStatus =
         status === 'All Status' ||
@@ -81,6 +102,10 @@ export class PersonnelConcerns {
       return matchesSearch && matchesStatus;
     });
   });
+
+  retryLoad(): void {
+    this.concernService.reload();
+  }
 
   categoryName(concern: Concern): string {
     return (
@@ -123,24 +148,45 @@ export class PersonnelConcerns {
 
   async saveStatus(): Promise<void> {
     const concern = this.selectedConcern;
+
     if (!concern || this.saving()) return;
+
     if (this.statusDraft === concern.current_status) {
-      this.feedback.set('Select a different status before updating.');
+      this.feedback.set(
+        'Select a different status before updating.'
+      );
       return;
     }
+
     this.saving.set(true);
     this.feedback.set('');
+
     try {
       const updated = await this.concernService.updateStatus(
-        concern.concern_id, this.statusDraft, this.remarks
+        concern.concern_id,
+        this.statusDraft,
+        this.remarks
       );
-      if (this.selectedConcern?.concern_id !== concern.concern_id) return;
+
+      if (
+        this.selectedConcern?.concern_id !== concern.concern_id
+      ) {
+        return;
+      }
+
       this.selectedConcern = updated;
       this.statusDraft = updated.current_status;
       this.remarks = '';
-      this.feedback.set('Status and history saved to Firebase.');
+
+      this.feedback.set(
+        'Status and history saved to Firebase.'
+      );
     } catch (error: unknown) {
-      this.feedback.set(error instanceof Error ? error.message : 'Unable to save the status.');
+      this.feedback.set(
+        error instanceof Error
+          ? error.message
+          : 'Unable to save the status.'
+      );
     } finally {
       this.saving.set(false);
     }
@@ -151,7 +197,10 @@ export class PersonnelConcerns {
     this.selectedStatus.set('All Status');
   }
 
-  trackConcern(_index: number, concern: Concern): string {
+  trackConcern(
+    _index: number,
+    concern: Concern
+  ): string {
     return concern.concern_id;
   }
 }
