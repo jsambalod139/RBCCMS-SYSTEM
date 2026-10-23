@@ -1,272 +1,130 @@
 <section class="my-concerns-page">
-  <!-- Page heading -->
-  <header class="page-header">
-    <div>
-      <h1>My Concerns</h1>
-      <p>View and track the status of your submitted concerns.</p>
-    </div>
-  </header>
+  @if (photoError()) {
+    <p class="photo-message" role="status">{{ photoError() }}</p>
+  }
 
-  <!-- Search and filter -->
-  <div class="toolbar">
-    <div class="search-box">
-      <span class="search-icon" aria-hidden="true">⌕</span>
-
-      <input
-        type="search"
-        name="searchTerm"
-        [(ngModel)]="searchTerm"
-        placeholder="Search concerns..."
-        aria-label="Search by concern ID, category, location, or description"
-      />
-
-      <button
-        *ngIf="searchTerm"
-        type="button"
-        class="clear-search"
-        aria-label="Clear search"
-        (click)="searchTerm = ''"
-      >
-        &times;
-      </button>
-    </div>
-
-    <div class="filter-box">
-      <label for="statusFilter" class="visually-hidden">
-        Filter by status
-      </label>
-
-      <select
-        id="statusFilter"
-        name="selectedStatus"
-        [(ngModel)]="selectedStatus"
-      >
-        <option
-          *ngFor="let status of statusOptions"
-          [value]="status"
-        >
-          {{ status }}
-        </option>
-      </select>
-    </div>
-  </div>
-
-  <!-- Loading indicator -->
-  <div class="loading-state" *ngIf="isLoading">
-    <span class="loading-spinner" aria-hidden="true"></span>
-    <p>Loading your concerns...</p>
-  </div>
-
-  <!-- Error message -->
-  <div class="error-state" *ngIf="!isLoading && errorMessage">
-    <p>{{ errorMessage }}</p>
-
-    <button
-      type="button"
-      class="btn-retry"
-      (click)="retryLoad()"
-    >
-      Try Again
-    </button>
-  </div>
-
-  <!-- Concerns table -->
-  <div
-    class="table-card"
-    *ngIf="!isLoading && !errorMessage && filteredConcerns.length > 0"
-  >
-    <div class="table-responsive">
-      <table>
-        <thead>
-          <tr>
-            <th scope="col">Concern ID</th>
-            <th scope="col">Category</th>
-            <th scope="col">Status</th>
-            <th scope="col">Date Only</th>
-            <th scope="col" class="action-column">Action</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr *ngFor="let concern of filteredConcerns; trackBy: trackConcern">
-            <td class="concern-id">
-              {{ concern.concern_id }}
-            </td>
-
-            <td>
-              {{
-                concern.category?.category_name ??
-                  ('Category ' + concern.category_id)
-              }}
-            </td>
-
-            <td>
-              <span
-                class="status-badge"
-                [ngClass]="getStatusClass(concern.current_status)"
-              >
-                {{ concern.current_status }}
-              </span>
-            </td>
-
-            <td class="date-cell">
-              {{
-                concern.reported_at
-                  ? (concern.reported_at | date:'MMM d, y')
-                  : 'N/A'
-              }}
-            </td>
-
-            <td class="action-column">
-              <button
-                type="button"
-                class="btn-view-details"
-                (click)="viewConcern(concern)"
-              >
-                View Details
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Empty state -->
-  <div
-    class="empty-state"
-    *ngIf="
-      !isLoading &&
-      !errorMessage &&
-      filteredConcerns.length === 0
-    "
-  >
-    <div class="empty-icon" aria-hidden="true">▤</div>
-
-    <h2>
-      {{
-        searchTerm || selectedStatus !== 'All Status'
-          ? 'No matching concerns'
-          : 'No concerns yet'
-      }}
-    </h2>
-
-    <p>
-      {{
-        searchTerm || selectedStatus !== 'All Status'
-          ? 'Try changing your search term or status filter.'
-          : 'You have not submitted any community concerns yet.'
-      }}
-    </p>
-
-    <button
-      *ngIf="searchTerm || selectedStatus !== 'All Status'"
-      type="button"
-      class="btn-reset"
-      (click)="clearFilters()"
-    >
-      Clear Filters
-    </button>
-
-    <button
-      *ngIf="!searchTerm && selectedStatus === 'All Status'"
-      type="button"
-      class="btn-primary"
-      (click)="onSubmitConcernClick()"
-    >
-      Submit a Concern
-    </button>
-  </div>
-
-  <!-- Concern details modal -->
-  <div
-    class="details-overlay"
-    *ngIf="selectedConcern as concern"
-    (click)="closeDetails()"
-  >
-    <section
-      class="details-modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="details-title"
-      (click)="$event.stopPropagation()"
-    >
-      <header class="details-header">
+  @if (selectedConcern; as concern) {
+    <!-- Full-width concern details -->
+    <article class="concern-details-page">
+      <header class="details-page-header">
         <div>
-          <h2 id="details-title">Concern Details</h2>
-          <p>Review the information about your submitted concern.</p>
+          <h1>Concern Details</h1>
+          <p class="reference-tag">ID: {{ concern.concern_id }}</p>
         </div>
 
         <button
           type="button"
-          class="close-button"
-          aria-label="Close concern details"
+          class="btn-back"
           (click)="closeDetails()"
         >
-          &times;
+          <span aria-hidden="true">←</span>
+          Back to My Concerns
         </button>
       </header>
 
-      <div class="details-body">
-        <div class="detail-item">
-          <span class="detail-label">Concern ID</span>
-          <strong>{{ concern.concern_id }}</strong>
-        </div>
+      <!-- Status banner -->
+      <section
+        class="status-banner"
+        [ngClass]="getStatusClass(concern.current_status)"
+        aria-label="Current concern status"
+      >
+        <span class="banner-icon" aria-hidden="true">
+          @switch (concern.current_status) {
+            @case ('Pending') { ◷ }
+            @case ('In Progress') { ↻ }
+            @case ('Resolved') { ✓ }
+            @case ('Rejected') { × }
+          }
+        </span>
 
-        <div class="detail-item">
-          <span class="detail-label">Category</span>
-          <strong>
-            {{
-              concern.category?.category_name ??
-                ('Category ' + concern.category_id)
-            }}
-          </strong>
-        </div>
+        <div>
+          <p class="banner-label">Current Status</p>
 
-        <div class="detail-item">
-          <span class="detail-label">Status</span>
-          <div>
-            <span
-              class="status-badge"
-              [ngClass]="getStatusClass(concern.current_status)"
-            >
-              {{ concern.current_status }}
-            </span>
-          </div>
-        </div>
+          <span
+            class="status-badge"
+            [ngClass]="getStatusClass(concern.current_status)"
+          >
+            {{ concern.current_status }}
+          </span>
 
-        <div class="detail-item">
-          <span class="detail-label">Date Only</span>
-          <strong>
-            {{
-              concern.reported_at
-                ? (concern.reported_at | date:'MMMM d, y')
-                : 'N/A'
-            }}
-          </strong>
-        </div>
-
-        <div class="detail-item">
-          <span class="detail-label">Location</span>
-          <p>{{ concern.location_description || 'No location provided.' }}</p>
-        </div>
-
-        <div class="detail-item">
-          <span class="detail-label">Description</span>
-          <p class="details-description">
-            {{ concern.description || 'No description provided.' }}
+          <p class="status-description">
+            @switch (concern.current_status) {
+              @case ('Pending') {
+                Your concern is awaiting review.
+              }
+              @case ('In Progress') {
+                Personnel are working on your concern.
+              }
+              @case ('Resolved') {
+                Your concern has been marked as resolved.
+              }
+              @case ('Rejected') {
+                Your concern has been marked as rejected.
+                Review the remarks below.
+              }
+            }
           </p>
         </div>
+      </section>
 
-        <div class="detail-item" *ngIf="concern.updated_at">
-          <span class="detail-label">Last Updated</span>
-          <strong>
-            {{ concern.updated_at | date:'MMMM d, y' }}
-          </strong>
+      <!-- Information cards -->
+      <section class="details-section">
+        <h2>Concern Information</h2>
+
+        <dl class="information-grid">
+          <div class="information-card">
+            <dt>Category</dt>
+            <dd>
+              {{
+                concern.category?.category_name ??
+                  ('Category ' + concern.category_id)
+              }}
+            </dd>
+          </div>
+
+          <div class="information-card">
+            <dt>Location</dt>
+            <dd>{{ concern.location_description }}</dd>
+          </div>
+
+          <div class="information-card">
+            <dt>Date Submitted</dt>
+            <dd>
+              {{ concern.reported_at | date:'MMM d, y, h:mm a' }}
+            </dd>
+          </div>
+
+          <div class="information-card">
+            <dt>Concern ID</dt>
+            <dd class="id-value">{{ concern.concern_id }}</dd>
+          </div>
+
+          <div class="information-card">
+            <dt>Last Updated</dt>
+            <dd>
+              {{
+                concern.updated_at
+                  ? (concern.updated_at | date:'MMM d, y, h:mm a')
+                  : 'No updates yet'
+              }}
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <!-- Description -->
+      <section class="details-section">
+        <h2>Description</h2>
+
+        <div class="description-card">
+          <p>{{ concern.description }}</p>
         </div>
+      </section>
 
-        <div class="detail-item" *ngIf="concern.photo_url">
-          <span class="detail-label">Attached Photo</span>
+      <!-- Photo -->
+      @if (concern.photo_url) {
+        <section class="details-section">
+          <h2>Attached Photo</h2>
 
           <a
             [href]="concern.photo_url"
@@ -274,53 +132,243 @@
             rel="noopener noreferrer"
             class="photo-link"
           >
-            Open attached photo
+            Open full photo
           </a>
 
           <img
             [src]="concern.photo_url"
-            alt="Photo attached to the submitted concern"
+            alt="Photo attached to your concern"
             class="concern-photo"
           />
-        </div>
+        </section>
+      } @else if (concern.photo_path && !photoError()) {
+        <p role="status">Loading attached photo...</p>
+      }
 
-        <!-- Status update history -->
-        <div
-          class="updates-section"
-          *ngIf="concern.updates.length"
+      <!-- History -->
+      <section class="details-section">
+        <h2>Status History &amp; Remarks</h2>
+
+        @if (concern.updates.length > 0) {
+          <ol class="history-list">
+            @for (update of concern.updates; track update.update_id) {
+              <li class="history-entry">
+                <span
+                  class="history-dot"
+                  [ngClass]="getStatusClass(update.new_status)"
+                  aria-hidden="true"
+                ></span>
+
+                <div class="history-card">
+                  <div class="history-heading">
+                    <span
+                      class="status-badge"
+                      [ngClass]="getStatusClass(update.new_status)"
+                    >
+                      {{ update.new_status }}
+                    </span>
+
+                    <time [attr.datetime]="update.created_at">
+                      {{ update.created_at | date:'MMM d, y, h:mm a' }}
+                    </time>
+                  </div>
+
+                  @if (update.previous_status) {
+                    <p class="status-transition">
+                      {{ update.previous_status }}
+                      → {{ update.new_status }}
+                    </p>
+                  }
+
+                  <p class="remarks">
+                    {{ update.remarks || 'No remarks provided.' }}
+                  </p>
+                </div>
+              </li>
+            }
+          </ol>
+        } @else {
+          <p class="history-empty">
+            No status updates have been recorded yet.
+          </p>
+        }
+      </section>
+    </article>
+  } @else {
+    <!-- Original concern list -->
+    <header class="page-header">
+      <div>
+        <h1>My Concerns</h1>
+        <p>View and track the status of your submitted concerns.</p>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <div class="search-box">
+        <span class="search-icon" aria-hidden="true">⌕</span>
+
+        <input
+          type="search"
+          name="searchTerm"
+          [(ngModel)]="searchTerm"
+          placeholder="Search concerns..."
+          aria-label="Search by concern ID, category, location, or description"
+        />
+
+        <button
+          *ngIf="searchTerm"
+          type="button"
+          class="clear-search"
+          aria-label="Clear search"
+          (click)="searchTerm = ''"
         >
-          <h3>Status History</h3>
-
-          <div
-            class="update-item"
-            *ngFor="let update of concern.updates"
-          >
-            <div class="update-indicator"></div>
-
-            <div class="update-content">
-              <strong>{{ update.new_status }}</strong>
-
-              <p *ngIf="update.remarks">
-                {{ update.remarks }}
-              </p>
-
-              <small>
-                {{ update.created_at | date:'MMM d, y, h:mm a' }}
-              </small>
-            </div>
-          </div>
-        </div>
+          &times;
+        </button>
       </div>
 
-      <footer class="details-footer">
-        <button
-          type="button"
-          class="btn-close-details"
-          (click)="closeDetails()"
+      <div class="filter-box">
+        <label for="statusFilter" class="visually-hidden">
+          Filter by status
+        </label>
+
+        <select
+          id="statusFilter"
+          name="selectedStatus"
+          [(ngModel)]="selectedStatus"
         >
-          Close
-        </button>
-      </footer>
-    </section>
-  </div>
+          <option
+            *ngFor="let status of statusOptions"
+            [value]="status"
+          >
+            {{ status }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <div class="loading-state" *ngIf="isLoading">
+      <span class="loading-spinner" aria-hidden="true"></span>
+      <p>Loading your concerns...</p>
+    </div>
+
+    <div class="error-state" *ngIf="!isLoading && errorMessage">
+      <p>{{ errorMessage }}</p>
+
+      <button
+        type="button"
+        class="btn-retry"
+        (click)="retryLoad()"
+      >
+        Try Again
+      </button>
+    </div>
+
+    <div
+      class="table-card"
+      *ngIf="!isLoading && !errorMessage && filteredConcerns.length > 0"
+    >
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Concern ID</th>
+              <th scope="col">Category</th>
+              <th scope="col">Status</th>
+              <th scope="col">Date Only</th>
+              <th scope="col" class="action-column">Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr
+              *ngFor="let concern of filteredConcerns; trackBy: trackConcern"
+            >
+              <td class="concern-id">
+                {{ concern.concern_id }}
+              </td>
+
+              <td>
+                {{
+                  concern.category?.category_name ??
+                    ('Category ' + concern.category_id)
+                }}
+              </td>
+
+              <td>
+                <span
+                  class="status-badge"
+                  [ngClass]="getStatusClass(concern.current_status)"
+                >
+                  {{ concern.current_status }}
+                </span>
+              </td>
+
+              <td class="date-cell">
+                {{
+                  concern.reported_at
+                    ? (concern.reported_at | date:'MMM d, y')
+                    : 'N/A'
+                }}
+              </td>
+
+              <td class="action-column">
+                <button
+                  type="button"
+                  class="btn-view-details"
+                  (click)="viewConcern(concern)"
+                >
+                  View Details
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div
+      class="empty-state"
+      *ngIf="
+        !isLoading &&
+        !errorMessage &&
+        filteredConcerns.length === 0
+      "
+    >
+      <div class="empty-icon" aria-hidden="true">▤</div>
+
+      <h2>
+        {{
+          searchTerm || selectedStatus !== 'All Status'
+            ? 'No matching concerns'
+            : 'No concerns yet'
+        }}
+      </h2>
+
+      <p>
+        {{
+          searchTerm || selectedStatus !== 'All Status'
+            ? 'Try changing your search term or status filter.'
+            : 'You have not submitted any community concerns yet.'
+        }}
+      </p>
+
+      <button
+        *ngIf="searchTerm || selectedStatus !== 'All Status'"
+        type="button"
+        class="btn-reset"
+        (click)="clearFilters()"
+      >
+        Clear Filters
+      </button>
+
+      <button
+        *ngIf="!searchTerm && selectedStatus === 'All Status'"
+        type="button"
+        class="btn-primary"
+        (click)="onSubmitConcernClick()"
+      >
+        Submit a Concern
+      </button>
+    </div>
+  }
 </section>

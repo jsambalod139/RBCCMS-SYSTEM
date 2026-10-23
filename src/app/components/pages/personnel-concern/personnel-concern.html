@@ -1,278 +1,142 @@
 <main class="personnel-concerns-page">
-  <header class="page-header">
-    <div>
-      <p class="eyebrow">PERSONNEL PORTAL</p>
-      <h1>Concern Reports</h1>
-      <p class="page-description">
-        Review community concerns and manage their current status.
-      </p>
-    </div>
-  </header>
-
   @if (loading()) {
-    <p role="status">Loading assigned concerns...</p>
+    <p class="page-notice" role="status">
+      Loading assigned concerns...
+    </p>
   }
 
   @if (loadError()) {
-    <p role="alert">{{ loadError() }}</p>
+    <div class="page-notice error-notice" role="alert">
+      <p>{{ loadError() }}</p>
 
-    <button
-      type="button"
-      class="primary-button"
-      (click)="retryLoad()"
-    >
-      Try Again
-    </button>
+      <button
+        type="button"
+        class="primary-button"
+        (click)="retryLoad()"
+      >
+        Try Again
+      </button>
+    </div>
   }
 
   @if (photoError()) {
-    <p role="status">{{ photoError() }}</p>
-  }
-
-  <section class="toolbar" aria-label="Concern filters">
-    <div class="search-box">
-      <span aria-hidden="true">⌕</span>
-
-      <input
-        type="search"
-        name="searchTerm"
-        [ngModel]="searchTerm()"
-        (ngModelChange)="searchTerm.set($event)"
-        placeholder="Search ID, category, location, or description..."
-        aria-label="Search concerns"
-      />
-
-      @if (searchTerm()) {
-        <button
-          type="button"
-          class="clear-button"
-          aria-label="Clear search"
-          (click)="searchTerm.set('')"
-        >
-          ×
-        </button>
-      }
-    </div>
-
-    <div class="filter-box">
-      <label for="statusFilter">Status</label>
-
-      <select
-        id="statusFilter"
-        name="selectedStatus"
-        [ngModel]="selectedStatus()"
-        (ngModelChange)="selectedStatus.set($event)"
-      >
-        @for (status of statusOptions; track status) {
-          <option [ngValue]="status">{{ status }}</option>
-        }
-      </select>
-    </div>
-
-    <button
-      type="button"
-      class="reset-button"
-      (click)="clearFilters()"
-    >
-      Reset
-    </button>
-  </section>
-
-  <div class="results-heading">
-    <h2>Assigned Concerns</h2>
-    <span>{{ filteredConcerns().length }} record(s)</span>
-  </div>
-
-  @if (!loading() && !loadError()) {
-    @if (filteredConcerns().length === 0) {
-      <section class="empty-state">
-        <div class="empty-icon" aria-hidden="true">▤</div>
-
-        <h3>
-          {{
-            concerns().length === 0
-              ? 'No Assigned Concerns'
-              : 'No Matching Concerns'
-          }}
-        </h3>
-
-        <p>
-          {{
-            concerns().length === 0
-              ? 'No concerns have been assigned to your account yet.'
-              : 'Try a different search term or status filter.'
-          }}
-        </p>
-
-        @if (searchTerm() || selectedStatus() !== 'All Status') {
-          <button
-            type="button"
-            class="primary-button"
-            (click)="clearFilters()"
-          >
-            Clear Filters
-          </button>
-        }
-      </section>
-    } @else {
-      <section class="table-card">
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">Concern ID</th>
-                <th scope="col">Category</th>
-                <th scope="col">Location</th>
-                <th scope="col">Date Reported</th>
-                <th scope="col">Status</th>
-                <th scope="col">Action</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              @for (
-                concern of filteredConcerns();
-                track concern.concern_id
-              ) {
-                <tr>
-                  <td class="concern-id">
-                    {{ concern.concern_id }}
-                  </td>
-
-                  <td>{{ categoryName(concern) }}</td>
-
-                  <td class="location-cell">
-                    {{ concern.location_description }}
-                  </td>
-
-                  <td>
-                    {{ concern.reported_at | date:'MMM d, y' }}
-                  </td>
-
-                  <td>
-                    <span
-                      class="status-badge"
-                      [ngClass]="statusClass(concern.current_status)"
-                    >
-                      {{ concern.current_status }}
-                    </span>
-                  </td>
-
-                  <td>
-                    <button
-                      type="button"
-                      class="view-button"
-                      (click)="viewDetails(concern)"
-                    >
-                      View Details
-                    </button>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </section>
-    }
+    <p class="page-notice" role="status">
+      {{ photoError() }}
+    </p>
   }
 
   @if (selectedConcern; as concern) {
-    <div
-      class="dialog-backdrop"
-      (click)="closeDetails()"
-      (keydown.escape)="closeDetails()"
-    >
-      <section
-        class="details-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="details-title"
-        (click)="$event.stopPropagation()"
-      >
-        <header class="dialog-header">
-          <div>
-            <p class="eyebrow">CONCERN DETAILS</p>
-            <h2 id="details-title">
-              Concern {{ concern.concern_id }}
-            </h2>
-          </div>
-
-          <button
-            type="button"
-            class="close-button"
-            aria-label="Close details"
-            (click)="closeDetails()"
-          >
-            ×
-          </button>
-        </header>
-
-        @if (feedback()) {
-          <p class="feedback-message" role="status">
-            {{ feedback() }}
-          </p>
-        }
-
-        <div class="detail-grid">
-          <div class="detail-item">
-            <span>Category</span>
-            <strong>{{ categoryName(concern) }}</strong>
-          </div>
-
-          <div class="detail-item">
-            <span>Location</span>
-            <strong>{{ concern.location_description }}</strong>
-          </div>
-
-          <div class="detail-item">
-            <span>Date Reported</span>
-            <strong>
-              {{ concern.reported_at | date:'MMMM d, y, h:mm a' }}
-            </strong>
-          </div>
-
-          <div class="detail-item">
-            <span>Current Status</span>
-            <span
-              class="status-badge"
-              [ngClass]="statusClass(concern.current_status)"
-            >
-              {{ concern.current_status }}
-            </span>
-          </div>
-
-          @if (concern.updated_at) {
-            <div class="detail-item">
-              <span>Last Updated</span>
-              <strong>
-                {{ concern.updated_at | date:'MMM d, y, h:mm a' }}
-              </strong>
-            </div>
-          }
+    <!-- Full-width details page -->
+    <article class="details-page" aria-labelledby="details-title">
+      <header class="details-header">
+        <div>
+          <p class="eyebrow">PERSONNEL PORTAL</p>
+          <h1 id="details-title">Concern Details</h1>
         </div>
 
-        <section class="description-section">
-          <h3>Description</h3>
-          <p>{{ concern.description }}</p>
+        <button
+          type="button"
+          class="secondary-button back-button"
+          (click)="closeDetails()"
+        >
+          <span aria-hidden="true">←</span>
+          Back to Concerns
+        </button>
+      </header>
+
+      @if (feedback()) {
+        <p class="feedback-message" role="status">
+          {{ feedback() }}
+        </p>
+      }
+
+      <!-- Concern information -->
+      <section aria-labelledby="information-title">
+        <h2 id="information-title" class="information-heading">
+          Concern Information
+        </h2>
+
+        <dl class="detail-grid">
+          <div class="detail-item">
+            <dt>Concern ID</dt>
+            <dd class="reference-id">{{ concern.concern_id }}</dd>
+          </div>
+
+          <div class="detail-item">
+            <dt>Category</dt>
+            <dd>{{ categoryName(concern) }}</dd>
+          </div>
+
+          <div class="detail-item">
+            <dt>Location</dt>
+            <dd>{{ concern.location_description }}</dd>
+          </div>
+
+          <div class="detail-item">
+            <dt>Date Reported</dt>
+            <dd>
+              {{ concern.reported_at | date:'MMMM d, y, h:mm a' }}
+            </dd>
+          </div>
+
+          <div class="detail-item">
+            <dt>Current Status</dt>
+            <dd>
+              <span
+                class="status-badge"
+                [ngClass]="statusClass(concern.current_status)"
+              >
+                {{ concern.current_status }}
+              </span>
+            </dd>
+          </div>
+
+          <div class="detail-item">
+            <dt>Last Updated</dt>
+            <dd>
+              {{
+                concern.updated_at
+                  ? (concern.updated_at | date:'MMM d, y, h:mm a')
+                  : 'No updates yet'
+              }}
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <!-- Description -->
+      <section class="description-section">
+        <h2>Description</h2>
+        <p>{{ concern.description }}</p>
+      </section>
+
+      <!-- Photo -->
+      @if (concern.photo_url) {
+        <section class="photo-section">
+          <h2>Attached Photo</h2>
+
+          <a
+            [href]="concern.photo_url"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Open full photo
+          </a>
+
+          <img
+            [src]="concern.photo_url"
+            alt="Photo attached to this concern"
+            class="concern-photo"
+          />
         </section>
+      }
 
-        @if (concern.photo_url) {
-          <section class="photo-section">
-            <h3>Attached Photo</h3>
-            <a
-              [href]="concern.photo_url"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              View attached photo
-            </a>
-          </section>
-        }
+      <!-- Status update controls -->
+      <section class="update-section" aria-labelledby="update-title">
+        <h2 id="update-title">Update Concern Status</h2>
+        <p>Status changes and remarks are saved to Firebase.</p>
 
-        <section class="update-section">
-          <h3>Update Concern Status</h3>
-          <p>Status changes and remarks are saved to Firebase.</p>
-
+        <div class="update-grid">
           <div class="update-field">
             <label for="statusDraft">New Status</label>
 
@@ -296,57 +160,227 @@
               name="remarks"
               [(ngModel)]="remarks"
               [disabled]="saving()"
-              rows="3"
+              rows="4"
               maxlength="2000"
               placeholder="Enter progress notes or the reason for the status change..."
             ></textarea>
 
             <small>{{ remarks.length }}/2000 characters</small>
           </div>
+        </div>
 
-          <div class="dialog-actions">
-            <button
-              type="button"
-              class="secondary-button"
-              (click)="closeDetails()"
-            >
-              Close
-            </button>
+        <div class="details-actions">
+          <button
+            type="button"
+            class="secondary-button"
+            (click)="closeDetails()"
+          >
+            Back to Concerns
+          </button>
 
+          <button
+            type="button"
+            class="primary-button"
+            [disabled]="saving() || statusDraft === concern.current_status"
+            (click)="saveStatus()"
+          >
+            {{ saving() ? 'Saving...' : 'Update Status' }}
+          </button>
+        </div>
+      </section>
+
+      <!-- Status history -->
+      <section class="history-section">
+        <h2>Status History</h2>
+
+        @if (concern.updates.length > 0) {
+          @for (update of concern.updates; track update.update_id) {
+            <article class="history-item">
+              <div>
+                <span
+                  class="status-badge"
+                  [ngClass]="statusClass(update.new_status)"
+                >
+                  {{ update.new_status }}
+                </span>
+
+                <p class="status-transition">
+                  {{ update.previous_status || 'Created' }}
+                  → {{ update.new_status }}
+                </p>
+
+                <p>{{ update.remarks || 'No remarks provided.' }}</p>
+              </div>
+
+              <time [attr.datetime]="update.created_at">
+                {{ update.created_at | date:'MMM d, y, h:mm a' }}
+              </time>
+            </article>
+          }
+        } @else {
+          <p class="history-empty">
+            No status updates have been recorded yet.
+          </p>
+        }
+      </section>
+    </article>
+  } @else {
+    <!-- Original concern list -->
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">PERSONNEL PORTAL</p>
+        <h1>Concern Reports</h1>
+        <p class="page-description">
+          Review community concerns and manage their current status.
+        </p>
+      </div>
+    </header>
+
+    <section class="toolbar" aria-label="Concern filters">
+      <div class="search-box">
+        <span aria-hidden="true">⌕</span>
+
+        <input
+          type="search"
+          name="searchTerm"
+          [ngModel]="searchTerm()"
+          (ngModelChange)="searchTerm.set($event)"
+          placeholder="Search ID, category, location, or description..."
+          aria-label="Search concerns"
+        />
+
+        @if (searchTerm()) {
+          <button
+            type="button"
+            class="clear-button"
+            aria-label="Clear search"
+            (click)="searchTerm.set('')"
+          >
+            ×
+          </button>
+        }
+      </div>
+
+      <div class="filter-box">
+        <label for="statusFilter">Status</label>
+
+        <select
+          id="statusFilter"
+          name="selectedStatus"
+          [ngModel]="selectedStatus()"
+          (ngModelChange)="selectedStatus.set($event)"
+        >
+          @for (status of statusOptions; track status) {
+            <option [ngValue]="status">{{ status }}</option>
+          }
+        </select>
+      </div>
+
+      <button
+        type="button"
+        class="reset-button"
+        (click)="clearFilters()"
+      >
+        Reset
+      </button>
+    </section>
+
+    <div class="results-heading">
+      <h2>Assigned Concerns</h2>
+      <span>{{ filteredConcerns().length }} record(s)</span>
+    </div>
+
+    @if (!loading() && !loadError()) {
+      @if (filteredConcerns().length === 0) {
+        <section class="empty-state">
+          <div class="empty-icon" aria-hidden="true">▤</div>
+
+          <h3>
+            {{
+              concerns().length === 0
+                ? 'No Assigned Concerns'
+                : 'No Matching Concerns'
+            }}
+          </h3>
+
+          <p>
+            {{
+              concerns().length === 0
+                ? 'No concerns have been assigned to your account yet.'
+                : 'Try a different search term or status filter.'
+            }}
+          </p>
+
+          @if (searchTerm() || selectedStatus() !== 'All Status') {
             <button
               type="button"
               class="primary-button"
-              [disabled]="saving() || statusDraft === concern.current_status"
-              (click)="saveStatus()"
+              (click)="clearFilters()"
             >
-              {{ saving() ? 'Saving...' : 'Update Status' }}
+              Clear Filters
             </button>
+          }
+        </section>
+      } @else {
+        <section class="table-card">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Concern ID</th>
+                  <th scope="col">Category</th>
+                  <th scope="col">Location</th>
+                  <th scope="col">Date Reported</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Action</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                @for (
+                  concern of filteredConcerns();
+                  track concern.concern_id
+                ) {
+                  <tr>
+                    <td class="concern-id">
+                      {{ concern.concern_id }}
+                    </td>
+
+                    <td>{{ categoryName(concern) }}</td>
+
+                    <td class="location-cell">
+                      {{ concern.location_description }}
+                    </td>
+
+                    <td>
+                      {{ concern.reported_at | date:'MMM d, y' }}
+                    </td>
+
+                    <td>
+                      <span
+                        class="status-badge"
+                        [ngClass]="statusClass(concern.current_status)"
+                      >
+                        {{ concern.current_status }}
+                      </span>
+                    </td>
+
+                    <td>
+                      <button
+                        type="button"
+                        class="view-button"
+                        (click)="viewDetails(concern)"
+                      >
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
         </section>
-
-        @if (concern.updates.length > 0) {
-          <section class="history-section">
-            <h3>Status History</h3>
-
-            @for (update of concern.updates; track update.update_id) {
-              <article class="history-item">
-                <div>
-                  <strong>
-                    {{ update.previous_status || 'Created' }}
-                    → {{ update.new_status }}
-                  </strong>
-
-                  <p>{{ update.remarks || 'No remarks provided.' }}</p>
-                </div>
-
-                <time>
-                  {{ update.created_at | date:'MMM d, y, h:mm a' }}
-                </time>
-              </article>
-            }
-          </section>
-        }
-      </section>
-    </div>
+      }
+    }
   }
 </main>

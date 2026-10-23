@@ -1,22 +1,25 @@
-
 import { CommonModule } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, OnDestroy, signal } from '@angular/core';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import {
+  Timestamp,
+  doc,
+  getFirestore,
+  onSnapshot,
+} from 'firebase/firestore';
+
+import { firebaseApp } from '../../../core/firebase.config';
 
 interface ResidentProfile {
-  resident_id: string;
-  profile_picture: string;
-  full_name: string;
-  birthday: string;
-  place_of_birth: string;
-  birth_certificate_number: string;
-  blood_type: string;
-  gender: string;
-  civil_status: string;
-  nationality: string;
-  contact_number: string;
+  residentId: string;
+  name: string;
   email: string;
+  contactNumber: string;
   address: string;
   purok: string;
+  accountStatus: string;
+  verificationStatus: string;
+  verifiedAt: string | null;
 }
 
 @Component({
@@ -24,35 +27,100 @@ interface ResidentProfile {
   standalone: true,
   imports: [CommonModule],
   templateUrl: './resident-myprofile.html',
-  styleUrl: './resident-myprofile.scss'
+  styleUrl: './resident-myprofile.scss',
 })
-export class ResidentMyprofile {
-  readonly isEditing = signal(false);
+export class ResidentMyprofile implements OnDestroy {
+  private readonly auth = getAuth(firebaseApp);
+  private readonly db = getFirestore(firebaseApp);
 
-  // Empty until real resident information is connected.
-  readonly profile = signal<ResidentProfile>({
-    resident_id: '',
-    profile_picture: '',
-    full_name: '',
-    birthday: '',
-    place_of_birth: '',
-    birth_certificate_number: '',
-    blood_type: '',
-    gender: '',
-    civil_status: '',
-    nationality: '',
-    contact_number: '',
-    email: '',
-    address: '',
-    purok: ''
-  });
+  private stopAuth?: () => void;
+  private stopProfile?: () => void;
+  private generation = 0;
 
-  toggleEdit(): void {
-    this.isEditing.update(value => !value);
+  readonly profile = signal<ResidentProfile | null>(null);
+  readonly loading = signal(true);
+  readonly errorMessage = signal('');
+
+  constructor() {
+    this.stopAuth = onAuthStateChanged(this.auth, () => {
+      this.loadProfile();
+    });
+  }
+
+  loadProfile(): void {
+    const generation = ++this.generation;
+
+    this.stopProfile?.();
+    this.profile.set(null);
+    this.errorMessage.set('');
+    this.loading.set(true);
+
+    const user = this.auth.currentUser;
+
+    if (!user) {
+      this.loading.set(false);
+      this.errorMessage.set('Please sign in to view your profile.');
+      return;
+    }
+
+    this.stopProfile = onSnapshot(
+      doc(this.db, 'users', user.uid),
+      snapshot => {
+        if (generation !== this.generation) {
+          return;
+        }
+
+        this.loading.set(false);
+
+        const data = snapshot.data();
+
+        if (!data || data['role'] !== 'resident') {
+          this.profile.set(null);
+          this.errorMessage.set(
+            'Your resident profile is unavailable. Contact the barangay.'
+          );
+          return;
+        }
+
+        this.errorMessage.set('');
+
+        this.profile.set({
+          residentId: this.text(data['residentId']),
+          name: this.text(data['name']),
+          email: user.email ?? '',
+          contactNumber: this.text(data['contactNumber']),
+          address: this.text(data['address']),
+          purok: this.text(data['purok']),
+          accountStatus:
+            this.text(data['accountStatus']) || 'Not recorded',
+          verificationStatus:
+            data['residencyVerified'] === true
+              ? 'Verified'
+              : data['residencyVerified'] === false
+                ? 'Not verified'
+                : 'Not recorded',
+          verifiedAt:
+            data['verifiedAt'] instanceof Timestamp
+              ? data['verifiedAt'].toDate().toISOString()
+              : null,
+        });
+      },
+      () => {
+        if (generation !== this.generation) {
+          return;
+        }
+
+        this.profile.set(null);
+        this.loading.set(false);
+        this.errorMessage.set(
+          'Unable to load your profile. Check your connection and try again.'
+        );
+      }
+    );
   }
 
   getInitials(): string {
-    const name = this.profile().full_name.trim();
+    const name = this.profile()?.name.trim();
 
     if (!name) {
       return 'R';
@@ -65,21 +133,13 @@ export class ResidentMyprofile {
       .join('');
   }
 
-  formatBirthday(value: string): string {
-    if (!value) {
-      return 'Not provided';
-    }
+  private text(value: unknown): string {
+    return typeof value === 'string' ? value.trim() : '';
+  }
 
-    const date = new Date(`${value}T00:00:00`);
-
-    if (Number.isNaN(date.getTime())) {
-      return value;
-    }
-
-    return date.toLocaleDateString('en-PH', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+  ngOnDestroy(): void {
+    ++this.generation;
+    this.stopAuth?.();
+    this.stopProfile?.();
   }
 }
