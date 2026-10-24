@@ -1,14 +1,10 @@
-
 <main class="dashboard-content">
-
-  <!-- Welcome section -->
+  <!-- Welcome -->
   <section class="welcome-section">
     <div class="welcome-text">
       <p class="welcome-label">RESIDENT DASHBOARD</p>
 
-      <h1>
-        Good day, {{ residentName() }}!
-      </h1>
+      <h1>Good day, {{ residentName() }}!</h1>
 
       <p class="welcome-description">
         Here is the summary of your community concerns.
@@ -25,251 +21,287 @@
     </button>
   </section>
 
-  <!-- Summary cards -->
-  <section
-    class="summary-grid"
-    aria-label="Concern summary"
-  >
-    <article class="summary-card total-card">
-      <div class="summary-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <path d="M7 3h7l5 5v13H7z" />
-          <path d="M14 3v5h5M10 13h6M10 17h6" />
-        </svg>
-      </div>
-
-      <div class="summary-info">
-        <p>Total Concerns</p>
-        <h2>{{ totalConcerns() }}</h2>
-      </div>
-    </article>
-
-    <article class="summary-card pending-card">
-      <div class="summary-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="9" />
-          <path d="M12 7v5l3 2" />
-        </svg>
-      </div>
-
-      <div class="summary-info">
-        <p>Pending</p>
-        <h2>{{ pendingCount() }}</h2>
-      </div>
-    </article>
-
-    <article class="summary-card progress-card">
-      <div class="summary-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="3" />
-          <path
-            d="m19.4 15 .1.1 1.4 1.1-1.5 2.6-1.7-.7a8 8 0 0 1-1.8 1l-.3 1.9h-3l-.3-1.9a8 8 0 0 1-1.8-1l-1.7.7-1.5-2.6 1.4-1.1a7 7 0 0 1 0-2l-1.4-1.1 1.5-2.6 1.7.7a8 8 0 0 1 1.8-1l.3-1.9h3l.3 1.9a8 8 0 0 1 1.8 1l1.7-.7 1.5 2.6-1.4 1.1a7 7 0 0 1 0 1.9Z"
-            transform="translate(-1 -1) scale(1.08)"
-          />
-        </svg>
-      </div>
-
-      <div class="summary-info">
-        <p>In Progress</p>
-        <h2>{{ inProgressCount() }}</h2>
-      </div>
-    </article>
-
-    <article class="summary-card resolved-card">
-      <div class="summary-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <path d="m12 3 8 3v5c0 5-3.4 8-8 10-4.6-2-8-5-8-10V6z" />
-          <path d="m8.5 12 2.3 2.3 4.8-5" />
-        </svg>
-      </div>
-
-      <div class="summary-info">
-        <p>Resolved</p>
-        <h2>{{ resolvedCount() }}</h2>
-      </div>
-    </article>
-  </section>
-
-  <!-- Recent concerns -->
-  <section class="recent-section">
-    <div class="section-heading">
-      <div>
-        <h2>Recent Concerns</h2>
-        <p>Track the latest updates on your submitted concerns.</p>
-      </div>
+  @if (loading()) {
+    <p class="dashboard-notice" role="status">
+      Loading your dashboard...
+    </p>
+  } @else if (loadError()) {
+    <div class="dashboard-notice error-notice" role="alert">
+      <p>{{ loadError() }}</p>
 
       <button
         type="button"
-        class="view-all-btn"
-        (click)="viewAllConcerns()"
+        class="btn-primary"
+        (click)="retryLoad()"
       >
-        View All
-        <span aria-hidden="true">→</span>
+        Try Again
       </button>
     </div>
-
-    <!-- Empty state -->
-    @if (totalConcerns() === 0) {
-      <div class="empty-state">
-        <div class="empty-icon" aria-hidden="true">
+  } @else {
+    <!-- Summary cards -->
+    <section class="summary-grid" aria-label="Concern summary">
+      <article class="summary-card total-card">
+        <div class="summary-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24">
             <path d="M7 3h7l5 5v13H7z" />
             <path d="M14 3v5h5M10 13h6M10 17h6" />
           </svg>
         </div>
 
-        <h3>No Concerns Yet</h3>
+        <div class="summary-info">
+          <p>Total Concerns</p>
+          <h2>{{ totalConcerns() }}</h2>
+        </div>
+      </article>
 
-        <p>
-          You haven't submitted any community concerns.
-          When you submit a concern, its status and updates
-          will appear here.
+      <article class="summary-card pending-card">
+        <div class="summary-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 2" />
+          </svg>
+        </div>
+
+        <div class="summary-info">
+          <p>Pending</p>
+          <h2>{{ pendingCount() }}</h2>
+        </div>
+      </article>
+
+      <article class="summary-card progress-card">
+        <div class="summary-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+            <path d="m5 5 2 2m10 10 2 2M5 19l2-2M17 7l2-2" />
+          </svg>
+        </div>
+
+        <div class="summary-info">
+          <p>In Progress</p>
+          <h2>{{ inProgressCount() }}</h2>
+        </div>
+      </article>
+
+      <article class="summary-card resolved-card">
+        <div class="summary-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="m12 3 8 3v5c0 5-3.4 8-8 10-4.6-2-8-5-8-10V6z"
+            />
+            <path d="m8.5 12 2.3 2.3 4.8-5" />
+          </svg>
+        </div>
+
+        <div class="summary-info">
+          <p>Resolved</p>
+          <h2>{{ resolvedCount() }}</h2>
+        </div>
+      </article>
+    </section>
+
+    <!-- Analytics -->
+    <section
+      class="analytics-grid"
+      aria-label="Your concern analytics"
+    >
+      <!-- Monthly submissions -->
+      <article class="chart-card">
+        <header class="chart-heading">
+          <div>
+            <h2>Monthly Concern Submissions</h2>
+            <p>Number of concerns you submitted</p>
+          </div>
+
+          <div class="period-filter">
+            <label for="month-range">Period</label>
+
+            <select
+              id="month-range"
+              [value]="monthRange()"
+              (change)="changeMonthRange($event)"
+            >
+              <option value="6">Last 6 months</option>
+              <option value="12">Last 12 months</option>
+            </select>
+          </div>
+        </header>
+
+        <div class="chart-scroll">
+          <div
+            class="monthly-chart"
+            [class.twelve-months]="monthRange() === 12"
+            role="img"
+            [attr.aria-label]="chartDescription()"
+          >
+            <div class="chart-y-axis" aria-hidden="true">
+              @for (tick of chartTicks(); track tick) {
+                <span>{{ tick }}</span>
+              }
+            </div>
+
+            <div
+              class="plot-area"
+              aria-hidden="true"
+              [style.grid-template-columns]="
+                'repeat(' + monthRange() + ', minmax(0, 1fr))'
+              "
+            >
+              @for (
+                month of monthlyConcerns();
+                track month.key
+              ) {
+                <div class="bar-column">
+                  <div
+                    class="month-bar"
+                    [style.height.%]="
+                      month.count / chartMaximum() * 100
+                    "
+                  >
+                    <span class="bar-value">
+                      {{ month.count }}
+                    </span>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <div
+              class="chart-months"
+              aria-hidden="true"
+              [style.grid-template-columns]="
+                'repeat(' + monthRange() + ', minmax(0, 1fr))'
+              "
+            >
+              @for (
+                month of monthlyConcerns();
+                track month.key
+              ) {
+                <span>{{ month.label }}</span>
+              }
+            </div>
+          </div>
+        </div>
+
+        <p class="chart-footnote">
+          Your concerns only. Months without submissions show 0.
         </p>
+      </article>
 
-        <button
-          type="button"
-          class="btn-primary empty-action"
-          (click)="newConcern()"
-        >
-          Submit Your First Concern
-        </button>
-      </div>
-    } @else {
-      <!-- Desktop and tablet table -->
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th scope="col">Concern ID</th>
-              <th scope="col">Category</th>
-              <th scope="col">Location</th>
-              <th scope="col">Status</th>
-              <th scope="col">Date Submitted</th>
-              <th scope="col">Action</th>
-            </tr>
-          </thead>
+      <!-- Category breakdown -->
+      <article class="chart-card">
+        <header class="chart-heading">
+          <div>
+            <h2>Concerns by Category</h2>
+            <p>All concerns you have submitted</p>
+          </div>
+        </header>
 
-          <tbody>
+        @if (categoryBreakdown().length > 0) {
+          <ul class="category-chart">
             @for (
-              concern of recentConcerns();
-              track concern.concern_id
+              category of categoryBreakdown();
+              track category.category_id
             ) {
-              <tr>
-                <td class="concern-id">
-                  C-{{ concern.concern_id }}
-                </td>
+              <li class="category-row">
+                <span class="category-label">
+                  {{ category.label }}
+                </span>
 
-                <td>{{ categoryName(concern) }}</td>
+                <span
+                  class="category-track"
+                  aria-hidden="true"
+                >
+                  <span
+                    class="category-fill"
+                    [style.width.%]="
+                      category.count / categoryMaximum() * 100
+                    "
+                  ></span>
+                </span>
 
-                <td class="location-cell">
-                  {{ concern.location_description }}
-                </td>
+                <strong class="category-count">
+                  {{ category.count }}
+                </strong>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="chart-empty">
+            Your category breakdown will appear after you
+            submit a concern.
+          </p>
+        }
 
-                <td>
+        <p class="chart-footnote">
+          Each number represents submitted concerns,
+          regardless of status.
+        </p>
+      </article>
+    </section>
+
+    <!-- My concerns -->
+    <section class="recent-section">
+      <div class="section-heading">
+        <h2>My Concerns</h2>
+      </div>
+
+      @if (totalConcerns() === 0) {
+        <div class="empty-state">
+          <h3>No Concerns Yet</h3>
+
+          <p>
+            You haven't submitted any community concerns yet.
+          </p>
+
+          <button
+            type="button"
+            class="btn-primary empty-action"
+            (click)="newConcern()"
+          >
+            Submit Your First Concern
+          </button>
+        </div>
+      } @else {
+        <ul class="dashboard-concern-list">
+          @for (
+            concern of recentConcerns();
+            track concern.concern_id
+          ) {
+            <li class="dashboard-concern-row">
+              <div class="concern-row-details">
+                <h3 class="concern-row-title">
+                  {{ categoryName(concern) }}
+                </h3>
+
+                <div class="concern-row-meta">
                   <span
                     class="status-badge"
                     [ngClass]="statusClass(concern.current_status)"
                   >
                     {{ concern.current_status }}
                   </span>
-                </td>
 
-                <td>
-                  {{ concern.reported_at | date:'MMM d, y' }}
-                </td>
+                  <time [attr.datetime]="concern.reported_at">
+                    {{ concern.reported_at | date:'MMM d, y' }}
+                  </time>
+                </div>
+              </div>
 
-                <td>
-                  <button
-                    type="button"
-                    class="btn-view"
-                    (click)="viewConcern(concern)"
-                    [attr.aria-label]="'View concern ' + concern.concern_id"
-                  >
-                    View
-                  </button>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    }
-  </section>
-
-  <!-- Concern details dialog -->
-  @if (selectedConcern(); as concern) {
-    <div
-      class="dialog-backdrop"
-      (click)="closeConcernDetails()"
-      (keydown.escape)="closeConcernDetails()"
-    >
-      <section
-        class="details-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="concern-dialog-title"
-        (click)="$event.stopPropagation()"
-      >
-        <div class="dialog-heading">
-          <div>
-            <p class="dialog-eyebrow">CONCERN DETAILS</p>
-            <h2 id="concern-dialog-title">
-              Concern C-{{ concern.concern_id }}
-            </h2>
-          </div>
-
-          <button
-            type="button"
-            class="dialog-close"
-            aria-label="Close concern details"
-            (click)="closeConcernDetails()"
-          >
-            ×
-          </button>
-        </div>
-
-        <div class="detail-row">
-          <span>Category</span>
-          <strong>{{ categoryName(concern) }}</strong>
-        </div>
-
-        <div class="detail-row">
-          <span>Location</span>
-          <strong>{{ concern.location_description }}</strong>
-        </div>
-
-        <div class="detail-row">
-          <span>Status</span>
-          <span
-            class="status-badge"
-            [ngClass]="statusClass(concern.current_status)"
-          >
-            {{ concern.current_status }}
-          </span>
-        </div>
-
-        <div class="detail-row">
-          <span>Date Submitted</span>
-          <strong>
-            {{ concern.reported_at | date:'MMMM d, y, h:mm a' }}
-          </strong>
-        </div>
-
-        <div class="description-block">
-          <h3>Description</h3>
-          <p>{{ concern.description }}</p>
-        </div>
-
-        <button
-          type="button"
-          class="btn-primary dialog-done"
-          (click)="closeConcernDetails()"
-        >
-          Close
-        </button>
-      </section>
-    </div>
+              <button
+                type="button"
+                class="see-status-btn"
+                (click)="viewAllConcerns()"
+                [attr.aria-label]="
+                  'See status for ' + categoryName(concern)
+                "
+              >
+                See Status
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
   }
-
 </main>
-

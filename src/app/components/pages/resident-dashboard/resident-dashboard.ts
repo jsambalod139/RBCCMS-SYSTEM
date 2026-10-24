@@ -12,8 +12,22 @@ import {
   Concern,
   ConcernStatus
 } from '../../../core/models/concern.model';
-// Adjust this path to wherever concern.service.ts lives in your project.
-import { ConcernService } from '../../../core/services/concern.service';
+
+import {
+  ConcernService
+} from '../../../core/services/concern.service';
+
+interface MonthSummary {
+  key: string;
+  label: string;
+  count: number;
+}
+
+interface CategorySummary {
+  category_id: number;
+  label: string;
+  count: number;
+}
 
 @Component({
   selector: 'app-resident-dashboard',
@@ -26,13 +40,20 @@ export class ResidentDashboard {
   private readonly router = inject(Router);
   private readonly concernService = inject(ConcernService);
 
-  // Live data shared with Submit Concern and My Concerns.
   readonly concerns = this.concernService.concerns;
+  readonly loading = this.concernService.loading;
+  readonly loadError = this.concernService.error;
 
-  // Replace with the logged-in resident's name later.
   readonly residentName = signal('Resident');
+  readonly monthRange = signal(6);
 
-  readonly selectedConcern = signal<Concern | null>(null);
+  private readonly selectedConcernId = signal<string | null>(null);
+
+  readonly selectedConcern = computed(() =>
+    this.concerns().find(
+      concern => concern.concern_id === this.selectedConcernId()
+    ) ?? null
+  );
 
   readonly totalConcerns = computed(
     () => this.concerns().length
@@ -48,6 +69,47 @@ export class ResidentDashboard {
 
   readonly resolvedCount = computed(
     () => this.countByStatus('Resolved')
+  );
+
+  readonly monthlyConcerns = computed(() =>
+    buildMonthlySeries(
+      this.concerns(),
+      this.monthRange(),
+      new Date()
+    )
+  );
+
+  readonly chartMaximum = computed(() => {
+    const maximum = Math.max(
+      0,
+      ...this.monthlyConcerns().map(month => month.count)
+    );
+
+    return Math.max(1, Math.ceil(maximum / 5)) * 5;
+  });
+
+  readonly chartTicks = computed(() =>
+    Array.from(
+      { length: 6 },
+      (_, index) => this.chartMaximum() * (5 - index) / 5
+    )
+  );
+
+  readonly chartDescription = computed(() =>
+    this.monthlyConcerns()
+      .map(month => `${month.label}: ${month.count} concerns`)
+      .join('; ')
+  );
+
+  readonly categoryBreakdown = computed(() =>
+    buildCategoryBreakdown(this.concerns())
+  );
+
+  readonly categoryMaximum = computed(() =>
+    Math.max(
+      1,
+      ...this.categoryBreakdown().map(category => category.count)
+    )
   );
 
   readonly recentConcerns = computed(() =>
@@ -66,28 +128,38 @@ export class ResidentDashboard {
     ).length;
   }
 
-  // Navigate to Submit Concern.
+  changeMonthRange(event: Event): void {
+    const value = Number(
+      (event.target as HTMLSelectElement).value
+    );
+
+    if (value === 6 || value === 12) {
+      this.monthRange.set(value);
+    }
+  }
+
+  retryLoad(): void {
+    this.concernService.reload();
+  }
+
   newConcern(): void {
     void this.router.navigate([
       '/res-dashboard/resident-submit-concern'
     ]);
   }
 
-  // Navigate to My Concerns.
   viewAllConcerns(): void {
     void this.router.navigate([
       '/res-dashboard/resident-my-concern'
     ]);
   }
 
-  // Open the selected concern's details.
   viewConcern(concern: Concern): void {
-    this.selectedConcern.set(concern);
+    this.selectedConcernId.set(concern.concern_id);
   }
 
-  // Close the details dialog.
   closeConcernDetails(): void {
-    this.selectedConcern.set(null);
+    this.selectedConcernId.set(null);
   }
 
   categoryName(concern: Concern): string {
@@ -122,4 +194,95 @@ export class ResidentDashboard {
   ): string {
     return concern.concern_id;
   }
+}
+
+// Use Philippine calendar months when grouping timestamps.
+function monthKey(date: Date): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: '2-digit'
+  }).formatToParts(date);
+
+  const year = parts.find(part => part.type === 'year')!.value;
+  const month = parts.find(part => part.type === 'month')!.value;
+
+  return `${year}-${month}`;
+}
+
+export function buildMonthlySeries(
+  concerns: readonly Concern[],
+  months: number,
+  now: Date
+): MonthSummary[] {
+  const [year, month] = monthKey(now)
+    .split('-')
+    .map(Number);
+
+  const result = Array.from(
+    { length: months },
+    (_, index) => {
+      const date = new Date(
+        Date.UTC(year, month - months + index, 1)
+      );
+
+      return {
+        key: monthKey(date),
+        label: new Intl.DateTimeFormat('en-PH', {
+          timeZone: 'Asia/Manila',
+          month: 'short',
+          year: 'numeric'
+        }).format(date),
+        count: 0
+      };
+    }
+  );
+
+  const lookup = new Map(
+    result.map(item => [item.key, item])
+  );
+
+  for (const concern of concerns) {
+    const date = new Date(concern.reported_at);
+
+    if (!Number.isFinite(date.getTime())) {
+      continue;
+    }
+
+    const bucket = lookup.get(monthKey(date));
+
+    if (bucket) {
+      bucket.count++;
+    }
+  }
+
+  return result;
+}
+
+export function buildCategoryBreakdown(
+  concerns: readonly Concern[]
+): CategorySummary[] {
+  const groups = new Map<number, CategorySummary>();
+
+  for (const concern of concerns) {
+    const existing = groups.get(concern.category_id);
+
+    if (existing) {
+      existing.count++;
+    } else {
+      groups.set(concern.category_id, {
+        category_id: concern.category_id,
+        label:
+          concern.category?.category_name ??
+          `Category ${concern.category_id}`,
+        count: 1
+      });
+    }
+  }
+
+  return [...groups.values()].sort(
+    (a, b) =>
+      b.count - a.count ||
+      a.category_id - b.category_id
+  );
 }

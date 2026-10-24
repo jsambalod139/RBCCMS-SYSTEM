@@ -2,6 +2,7 @@
   <div class="page-heading">
     <div>
       <h1>Submit a Concern</h1>
+
       <p>
         Provide the details of the community concern you want
         to report.
@@ -15,6 +16,7 @@
 
       <div>
         <strong>Concern submitted successfully!</strong>
+
         <p>
           Thank you. Your concern has been received and will
           be reviewed.
@@ -55,7 +57,9 @@
   <div class="submit-layout">
     <section class="form-card">
       <div class="card-heading">
-        <div class="heading-icon" aria-hidden="true">▤</div>
+        <div class="heading-icon" aria-hidden="true">
+          ▤
+        </div>
 
         <div>
           <h2>Concern Information</h2>
@@ -68,7 +72,6 @@
         (ngSubmit)="submitConcern()"
         novalidate
       >
-        <!-- Category -->
         <div class="form-field">
           <label for="category">
             Category <span class="required">*</span>
@@ -90,7 +93,10 @@
               Select a concern category
             </option>
 
-            @for (category of categories(); track category.category_id) {
+            @for (
+              category of categories();
+              track category.category_id
+            ) {
               <option [value]="category.category_id">
                 {{ category.category_name }}
               </option>
@@ -114,10 +120,10 @@
           }
         </div>
 
-        <!-- Location -->
         <div class="form-field">
           <label for="location">
-            Location Description <span class="required">*</span>
+            Location Description
+            <span class="required">*</span>
           </label>
 
           <input
@@ -143,7 +149,9 @@
             <small class="field-error">
               @if (locationControl.hasError('required')) {
                 Please enter the location of the concern.
-              } @else if (locationControl.hasError('maxlength')) {
+              } @else if (
+                locationControl.hasError('maxlength')
+              ) {
                 Location must not exceed 255 characters.
               }
             </small>
@@ -154,10 +162,10 @@
           </small>
         </div>
 
-        <!-- Description -->
         <div class="form-field">
           <label for="description">
-            Description <span class="required">*</span>
+            Description
+            <span class="required">*</span>
           </label>
 
           <textarea
@@ -181,9 +189,13 @@
             (descriptionControl.touched || isSubmitted())
           ) {
             <small class="field-error">
-              @if (descriptionControl.hasError('required')) {
+              @if (
+                descriptionControl.hasError('required')
+              ) {
                 Please provide a description of the concern.
-              } @else if (descriptionControl.hasError('maxlength')) {
+              } @else if (
+                descriptionControl.hasError('maxlength')
+              ) {
                 Description must not exceed 5,000 characters.
               }
             </small>
@@ -194,15 +206,16 @@
           </small>
         </div>
 
-        <!-- Optional photo -->
         <div class="form-field">
           <label id="photo-label">
-            Attach Photo <span class="optional">(Optional)</span>
+            Attach Photo
+            <span class="optional">(Optional)</span>
           </label>
 
           <p class="field-hint" id="photo-hint">
             Upload an image that helps explain the concern.
-            Maximum file size: 5 MB.
+            Maximum original size: 5 MB. Photos are resized
+            and compressed before upload.
           </p>
 
           <div class="upload-area">
@@ -216,11 +229,19 @@
               (change)="onPhotoSelected($event)"
             />
 
-            @if (imagePreview(); as preview) {
+            @if (isProcessingPhoto()) {
+              <p
+                class="field-hint"
+                role="status"
+                aria-live="polite"
+              >
+                Compressing photo…
+              </p>
+            } @else if (imagePreview(); as preview) {
               <div class="preview-container">
                 <img
                   [src]="preview"
-                  alt="Preview of selected concern photo"
+                  alt="Preview of compressed concern photo"
                   class="image-preview"
                 />
 
@@ -230,7 +251,13 @@
                   </span>
 
                   <small>
-                    {{ ((selectedFile()?.size ?? 0) / 1024 / 1024).toFixed(2) }}
+                    {{
+                      (
+                        (selectedFile()?.size ?? 0) /
+                        1024 /
+                        1024
+                      ).toFixed(2)
+                    }}
                     MB
                   </small>
                 </div>
@@ -259,7 +286,13 @@
                 [disabled]="isLoading()"
                 (click)="photoInput.click()"
               >
-                <span class="upload-icon" aria-hidden="true">↑</span>
+                <span
+                  class="upload-icon"
+                  aria-hidden="true"
+                >
+                  ↑
+                </span>
+
                 <strong>Choose a photo</strong>
                 <span>JPG, PNG, or WEBP</span>
                 <span class="browse-text">Browse files</span>
@@ -268,19 +301,25 @@
           </div>
 
           @if (fileError()) {
-            <small class="field-error" role="alert">
+            <small
+              class="field-error"
+              role="alert"
+            >
               {{ fileError() }}
             </small>
           }
         </div>
 
-        <!-- Form actions -->
         <div class="form-actions">
           <button
             type="submit"
             class="btn btn-primary btn-submit"
             [class.is-loading]="isLoading()"
-            [disabled]="categories().length === 0 || isLoading()"
+            [disabled]="
+              categories().length === 0 ||
+              isLoading() ||
+              isProcessingPhoto()
+            "
             [attr.aria-busy]="isLoading()"
           >
             @if (isLoading()) {
@@ -291,7 +330,11 @@
             }
 
             <span aria-live="polite">
-              {{ isLoading() ? 'Submitting...' : 'Submit Concern' }}
+              {{
+                isLoading()
+                  ? 'Submitting...'
+                  : 'Submit Concern'
+              }}
             </span>
           </button>
 
@@ -314,10 +357,15 @@
       </form>
     </section>
 
-    <!-- Guidelines -->
     <aside class="guidelines-card">
       <div class="guidelines-heading">
-        <span class="guidelines-icon" aria-hidden="true">✓</span>
+        <span
+          class="guidelines-icon"
+          aria-hidden="true"
+        >
+          ✓
+        </span>
+
         <h2>Guidelines</h2>
       </div>
 
@@ -333,6 +381,7 @@
 
       <div class="guidelines-note">
         <strong>Important reminder</strong>
+
         <p>
           This system is for non-emergency community concerns.
           For emergencies, contact the appropriate emergency
