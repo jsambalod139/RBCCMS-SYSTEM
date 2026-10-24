@@ -1,4 +1,3 @@
-
 :host {
   display: block;
   width: 100%;
@@ -15,7 +14,8 @@
   box-sizing: border-box;
 }
 
-/* Main page: let the content determine its natural height. */
+/* Main page */
+
 .submit-page {
   display: flow-root;
   width: 100%;
@@ -26,8 +26,6 @@
   margin: 0 auto;
   padding: 28px 32px 24px;
   background: #f6f8f7;
-
-  /* Do not create a second scrolling container. */
   overflow: visible;
 }
 
@@ -104,6 +102,8 @@
   color: #21372a;
   font-size: 23px;
 }
+
+/* Form fields */
 
 .form-field {
   display: flex;
@@ -189,6 +189,8 @@
   color: #89928b;
   font-size: 11px;
 }
+
+/* Photo upload */
 
 .upload-area {
   width: 100%;
@@ -305,6 +307,8 @@
   }
 }
 
+/* Buttons */
+
 .form-actions {
   display: flex;
   gap: 10px;
@@ -353,12 +357,42 @@
   }
 }
 
+/* Submit loading state */
+
+.btn-submit {
+  gap: 8px;
+}
+
+.btn-submit.is-loading {
+  opacity: 1;
+  cursor: wait;
+}
+
+.submit-spinner {
+  display: inline-block;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: submit-spin 0.75s linear infinite;
+}
+
+@keyframes submit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .form-note {
   margin: 12px 0 0;
   color: #758078;
   font-size: 12px;
   line-height: 1.5;
 }
+
+/* Guidelines */
 
 .guidelines-card {
   padding: 22px;
@@ -436,6 +470,8 @@
   }
 }
 
+/* Messages */
+
 .alert {
   display: flex;
   align-items: flex-start;
@@ -463,6 +499,12 @@
   color: #245b34;
 }
 
+.alert-error {
+  background: #fdecea;
+  border: 1px solid #f5c2c0;
+  color: #8a1c14;
+}
+
 .alert-icon {
   display: grid;
   flex: 0 0 25px;
@@ -484,6 +526,7 @@
 }
 
 /* Tablet */
+
 @media (max-width: 900px) {
   .submit-page {
     padding: 24px 20px;
@@ -500,6 +543,7 @@
 }
 
 /* Mobile */
+
 @media (max-width: 600px) {
   .submit-page {
     padding: 20px 13px;
@@ -549,16 +593,16 @@
   }
 }
 
+/* Reduced motion */
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     transition: none !important;
   }
-}
 
-.alert-error {
-  background: #fdecea;
-  border: 1px solid #f5c2c0;
-  color: #8a1c14;
+  .submit-spinner {
+    animation: none;
+  }
 }

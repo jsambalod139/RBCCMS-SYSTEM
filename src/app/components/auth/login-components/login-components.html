@@ -1,6 +1,5 @@
 <main class="login-container">
   <div class="login-layout">
-    <!-- System title -->
     <section class="system-introduction" aria-label="About the system">
       <h1>
         Remote Barangay<br />
@@ -10,7 +9,6 @@
       </h1>
     </section>
 
-    <!-- Login card -->
     <section class="login-card" aria-labelledby="login-title">
       <header class="login-header">
         <img
@@ -26,7 +24,6 @@
       </header>
 
       <form #loginForm="ngForm" (ngSubmit)="login()">
-        <!-- Email -->
         <div class="form-group">
           <label for="email" class="visually-hidden">
             Email address
@@ -61,7 +58,6 @@
           </div>
         </div>
 
-        <!-- Password -->
         <div class="form-group">
           <label for="password" class="visually-hidden">
             Password
@@ -97,15 +93,28 @@
         <button
           type="submit"
           class="btn-login"
+          [class.is-loading]="loading()"
           [disabled]="loading() || loginForm.invalid"
           [attr.aria-busy]="loading()"
         >
-          {{ loading() ? 'Signing in...' : 'Login' }}
+          @if (loading()) {
+            <span
+              class="login-spinner"
+              aria-hidden="true"
+            ></span>
+          }
+
+          <span aria-live="polite">
+            {{ loading() ? 'Signing in...' : 'Login' }}
+          </span>
         </button>
       </form>
 
       <footer class="login-footer">
-        <p>Need help? <strong>Contact the barangay.</strong></p>
+        <p>
+          Need help?
+          <strong>Contact the barangay.</strong>
+        </p>
       </footer>
     </section>
   </div>

@@ -169,6 +169,10 @@ form {
 /* Login button */
 
 .btn-login {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   width: 100%;
   min-height: 50px;
   margin-top: 4px;
@@ -196,9 +200,33 @@ form {
   cursor: not-allowed;
 }
 
+.btn-login.is-loading {
+  opacity: 1;
+  cursor: wait;
+}
+
 .btn-login:focus-visible {
   outline: 3px solid #6dbb93;
   outline-offset: 3px;
+}
+
+/* Loading spinner */
+
+.login-spinner {
+  display: inline-block;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: login-spin 0.75s linear infinite;
+}
+
+@keyframes login-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Help text */
@@ -287,10 +315,16 @@ form {
   }
 }
 
+/* Reduced motion */
+
 @media (prefers-reduced-motion: reduce) {
   .input-wrapper,
   .btn-login {
     transition: none;
+  }
+
+  .login-spinner {
+    animation: none;
   }
 }
 
