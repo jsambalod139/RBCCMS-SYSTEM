@@ -27,17 +27,21 @@ import {
   styleUrl: './resident-my-concern.scss'
 })
 export class ResidentMyConcern implements OnInit {
-  private readonly concernService = inject(ConcernService);
-  private readonly router = inject(Router);
+  private readonly concernService =
+    inject(ConcernService);
+
+  private readonly router =
+    inject(Router);
 
   searchTerm = '';
   selectedStatus = 'All Status';
 
   selectedConcern: ConcernWithRelations | null = null;
 
-  readonly photoError = this.concernService.photoError;
+  readonly photoError =
+    this.concernService.photoError;
 
-  readonly statusOptions: string[] = [
+  readonly statusOptions = [
     'All Status',
     'Pending',
     'In Progress',
@@ -47,12 +51,16 @@ export class ResidentMyConcern implements OnInit {
 
   constructor() {
     effect(() => {
-      const records = this.concernService.concerns();
-      const selected = this.selectedConcern;
+      const records =
+        this.concernService.concerns();
+
+      const selected =
+        this.selectedConcern;
 
       if (selected) {
         this.selectedConcern = records.find(
-          item => item.concern_id === selected.concern_id
+          item =>
+            item.concern_id === selected.concern_id
         ) ?? null;
       }
     });
@@ -83,31 +91,48 @@ export class ResidentMyConcern implements OnInit {
   }
 
   get filteredConcerns(): ConcernWithRelations[] {
-    const search = this.searchTerm.trim().toLowerCase();
+    const search =
+      this.searchTerm.trim().toLowerCase();
 
-    return this.concerns.filter(concern => {
-      const categoryName =
-        concern.category?.category_name ??
-        `Category ${concern.category_id}`;
+    return this.concerns
+      .filter(concern => {
+        const categoryName =
+          concern.category?.category_name ??
+          `Category ${concern.category_id}`;
 
-      const matchesSearch = [
-        String(concern.concern_number ?? ''),
-        categoryName,
-        concern.location_description,
-        concern.description
-      ].some(value =>
-        (value ?? '').toLowerCase().includes(search)
+        const matchesSearch = [
+          String(
+            concern.resident_concern_number ?? ''
+          ),
+          categoryName,
+          concern.location_description,
+          concern.description
+        ].some(value =>
+          (value ?? '').toLowerCase().includes(search)
+        );
+
+        const matchesStatus =
+          this.selectedStatus === 'All Status' ||
+          concern.current_status === this.selectedStatus;
+
+        return matchesSearch && matchesStatus;
+      })
+      .sort(
+        (a, b) =>
+          (
+            a.resident_concern_number ??
+            Number.MAX_SAFE_INTEGER
+          ) -
+          (
+            b.resident_concern_number ??
+            Number.MAX_SAFE_INTEGER
+          )
       );
-
-      const matchesStatus =
-        this.selectedStatus === 'All Status' ||
-        concern.current_status === this.selectedStatus;
-
-      return matchesSearch && matchesStatus;
-    });
   }
 
-  getStatusClass(status: ConcernStatus): string {
+  getStatusClass(
+    status: ConcernStatus
+  ): string {
     switch (status) {
       case 'Pending':
         return 'status-pending';
@@ -126,7 +151,9 @@ export class ResidentMyConcern implements OnInit {
     }
   }
 
-  viewConcern(concern: ConcernWithRelations): void {
+  viewConcern(
+    concern: ConcernWithRelations
+  ): void {
     this.selectedConcern = concern;
   }
 

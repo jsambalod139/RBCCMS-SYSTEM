@@ -34,8 +34,11 @@ export interface ConcernWithRelations {
   // Internal Firebase document ID.
   concern_id: string;
 
-  // Sequential number displayed to users.
+  // Shared reference displayed to personnel.
   concern_number: number | null;
+
+  // Permanent reference belonging to this resident.
+  resident_concern_number: number | null;
 
   resident_id: string;
   assigned_personnel_id: string | null;
@@ -63,6 +66,7 @@ export interface ConcernWithRelations {
 export interface ConcernResponse {
   concern_id: string;
   concern_number: number;
+  resident_concern_number: number;
   message?: string;
 }
 

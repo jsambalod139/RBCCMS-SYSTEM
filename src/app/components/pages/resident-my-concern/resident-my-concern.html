@@ -13,7 +13,10 @@
 
           <p class="reference-tag">
             Concern ID:
-            {{ concern.concern_number ?? 'Not numbered' }}
+            {{
+              concern.resident_concern_number ??
+              'Not numbered'
+            }}
           </p>
         </div>
 
@@ -84,7 +87,7 @@
             <dd>
               {{
                 concern.category?.category_name ??
-                  ('Category ' + concern.category_id)
+                ('Category ' + concern.category_id)
               }}
             </dd>
           </div>
@@ -98,7 +101,10 @@
             <dt>Date Submitted</dt>
 
             <dd>
-              {{ concern.reported_at | date:'MMM d, y, h:mm a' }}
+              {{
+                concern.reported_at |
+                date:'MMM d, y, h:mm a'
+              }}
             </dd>
           </div>
 
@@ -108,11 +114,11 @@
             <dd>
               {{
                 concern.office?.office_name ||
-                  (
-                    concern.office_id
-                      ? 'Office information unavailable'
-                      : 'Not assigned'
-                  )
+                (
+                  concern.office_id
+                    ? 'Office information unavailable'
+                    : 'Not assigned'
+                )
               }}
             </dd>
           </div>
@@ -171,7 +177,9 @@
           />
         </section>
       } @else if (concern.photo_path && !photoError()) {
-        <p role="status">Loading attached photo...</p>
+        <p role="status">
+          Loading attached photo...
+        </p>
       }
 
       <section class="details-section">
@@ -179,7 +187,10 @@
 
         @if (concern.updates.length > 0) {
           <ol class="history-list">
-            @for (update of concern.updates; track update.update_id) {
+            @for (
+              update of concern.updates;
+              track update.update_id
+            ) {
               <li class="history-entry">
                 <span
                   class="history-dot"
@@ -196,8 +207,13 @@
                       {{ update.new_status }}
                     </span>
 
-                    <time [attr.datetime]="update.created_at">
-                      {{ update.created_at | date:'MMM d, y, h:mm a' }}
+                    <time
+                      [attr.datetime]="update.created_at"
+                    >
+                      {{
+                        update.created_at |
+                        date:'MMM d, y, h:mm a'
+                      }}
                     </time>
                   </div>
 
@@ -217,7 +233,10 @@
                   </p>
 
                   <p class="remarks">
-                    {{ update.remarks || 'No remarks provided.' }}
+                    {{
+                      update.remarks ||
+                      'No remarks provided.'
+                    }}
                   </p>
                 </div>
               </li>
@@ -234,13 +253,21 @@
     <header class="page-header">
       <div>
         <h1>My Concerns</h1>
-        <p>View and track the status of your submitted concerns.</p>
+
+        <p>
+          View and track the status of your submitted concerns.
+        </p>
       </div>
     </header>
 
     <div class="toolbar">
       <div class="search-box">
-        <span class="search-icon" aria-hidden="true">⌕</span>
+        <span
+          class="search-icon"
+          aria-hidden="true"
+        >
+          ⌕
+        </span>
 
         <input
           type="search"
@@ -262,7 +289,10 @@
       </div>
 
       <div class="filter-box">
-        <label for="statusFilter" class="visually-hidden">
+        <label
+          for="statusFilter"
+          class="visually-hidden"
+        >
           Filter by status
         </label>
 
@@ -281,12 +311,22 @@
       </div>
     </div>
 
-    <div class="loading-state" *ngIf="isLoading">
-      <span class="loading-spinner" aria-hidden="true"></span>
+    <div
+      class="loading-state"
+      *ngIf="isLoading"
+    >
+      <span
+        class="loading-spinner"
+        aria-hidden="true"
+      ></span>
+
       <p>Loading your concerns...</p>
     </div>
 
-    <div class="error-state" *ngIf="!isLoading && errorMessage">
+    <div
+      class="error-state"
+      *ngIf="!isLoading && errorMessage"
+    >
       <p>{{ errorMessage }}</p>
 
       <button
@@ -300,7 +340,11 @@
 
     <div
       class="table-card"
-      *ngIf="!isLoading && !errorMessage && filteredConcerns.length > 0"
+      *ngIf="
+        !isLoading &&
+        !errorMessage &&
+        filteredConcerns.length > 0
+      "
     >
       <div class="table-responsive">
         <table>
@@ -310,22 +354,34 @@
               <th scope="col">Category</th>
               <th scope="col">Status</th>
               <th scope="col">Date Only</th>
-              <th scope="col" class="action-column">Action</th>
+
+              <th
+                scope="col"
+                class="action-column"
+              >
+                Action
+              </th>
             </tr>
           </thead>
 
           <tbody>
             <tr
-              *ngFor="let concern of filteredConcerns; trackBy: trackConcern"
+              *ngFor="
+                let concern of filteredConcerns;
+                trackBy: trackConcern
+              "
             >
               <td class="concern-id">
-                {{ concern.concern_number ?? 'Not numbered' }}
+                {{
+                  concern.resident_concern_number ??
+                  'Not numbered'
+                }}
               </td>
 
               <td>
                 {{
                   concern.category?.category_name ??
-                    ('Category ' + concern.category_id)
+                  ('Category ' + concern.category_id)
                 }}
               </td>
 
@@ -363,9 +419,18 @@
 
     <div
       class="empty-state"
-      *ngIf="!isLoading && !errorMessage && filteredConcerns.length === 0"
+      *ngIf="
+        !isLoading &&
+        !errorMessage &&
+        filteredConcerns.length === 0
+      "
     >
-      <div class="empty-icon" aria-hidden="true">▤</div>
+      <div
+        class="empty-icon"
+        aria-hidden="true"
+      >
+        ▤
+      </div>
 
       <h2>
         {{
@@ -384,7 +449,10 @@
       </p>
 
       <button
-        *ngIf="searchTerm || selectedStatus !== 'All Status'"
+        *ngIf="
+          searchTerm ||
+          selectedStatus !== 'All Status'
+        "
         type="button"
         class="btn-reset"
         (click)="clearFilters()"
@@ -393,7 +461,10 @@
       </button>
 
       <button
-        *ngIf="!searchTerm && selectedStatus === 'All Status'"
+        *ngIf="
+          !searchTerm &&
+          selectedStatus === 'All Status'
+        "
         type="button"
         class="btn-primary"
         (click)="onSubmitConcernClick()"

@@ -14,6 +14,7 @@
 }
 
 /* Page title */
+
 .page-header {
   margin-bottom: 20px;
 
@@ -27,6 +28,7 @@
 }
 
 /* Horizontal profile card */
+
 .profile-card {
   display: flex;
   align-items: center;
@@ -35,13 +37,14 @@
   min-width: 0;
   box-sizing: border-box;
   padding: 16px 20px;
-  background: #ffffff;
+  background-color: #ffffff;
   border: 1px solid #e9edf2;
   border-radius: 11px;
-  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.035);
+  box-shadow: 0 2px 4px rgb(15 23 42 / 3.5%);
 }
 
 /* Circular avatar */
+
 .profile-avatar {
   display: flex;
   flex: 0 0 64px;
@@ -63,6 +66,7 @@
 }
 
 /* Profile text */
+
 .profile-information {
   flex: 1;
   min-width: 0;
@@ -94,7 +98,8 @@
   overflow-wrap: anywhere;
 }
 
-/* Empty state */
+/* Loading and error states */
+
 .empty-profile {
   margin-top: 16px;
   padding: 20px;
@@ -118,7 +123,30 @@
   }
 }
 
+.btn-retry {
+  margin-top: 14px;
+  padding: 9px 16px;
+  border: 1px solid #21372a;
+  border-radius: 5px;
+  background: #21372a;
+  color: #ffffff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: #304c39;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #527c60;
+    outline-offset: 3px;
+  }
+}
+
 /* Tablet */
+
 @media (max-width: 768px) {
   .profile-page {
     padding: 20px;
@@ -131,6 +159,7 @@
 }
 
 /* Mobile */
+
 @media (max-width: 480px) {
   .profile-page {
     padding: 16px 12px;

@@ -179,7 +179,6 @@ export class ConcernService implements OnDestroy {
             this.records.update(items =>
               items.map(item => ({
                 ...item,
-
                 office: item.office_id
                   ? this.offices.get(item.office_id)
                   : undefined
@@ -234,9 +233,7 @@ export class ConcernService implements OnDestroy {
                 )
               )
               .sort((a, b) =>
-                b.reported_at.localeCompare(
-                  a.reported_at
-                )
+                b.reported_at.localeCompare(a.reported_at)
               );
 
             this.records.set(concerns);
@@ -256,10 +253,7 @@ export class ConcernService implements OnDestroy {
 
             this.clearRecords();
             this.busy.set(false);
-
-            this.failure.set(
-              this.errorMessage(error)
-            );
+            this.failure.set(this.errorMessage(error));
           }
         );
       },
@@ -276,10 +270,7 @@ export class ConcernService implements OnDestroy {
         this.clearRecords();
 
         this.busy.set(false);
-
-        this.failure.set(
-          this.errorMessage(error)
-        );
+        this.failure.set(this.errorMessage(error));
       }
     );
   }
@@ -364,86 +355,125 @@ export class ConcernService implements OnDestroy {
         );
       }
 
-      const concernNumber =
-        await runTransaction(
-          this.db,
+      const numbers = await runTransaction(
+        this.db,
 
-          async transaction => {
-            const officeId =
-              await this.categoryService.getOfficeId(
-                payload.category_id,
-                transaction
-              );
-
-            const counterRef = doc(
-              this.db,
-              'counters',
-              'concerns'
+        async transaction => {
+          const officeId =
+            await this.categoryService.getOfficeId(
+              payload.category_id,
+              transaction
             );
 
-            const counterSnapshot =
-              await transaction.get(counterRef);
+          const counterRef = doc(
+            this.db,
+            'counters',
+            'concerns'
+          );
 
-            const lastNumber =
-              counterSnapshot.data()?.['last_number'];
+          const residentCounterRef = doc(
+            this.db,
+            'resident_concern_counters',
+            user.uid
+          );
 
-            if (
-              !counterSnapshot.exists() ||
-              !Number.isSafeInteger(lastNumber) ||
-              lastNumber < 0 ||
-              lastNumber >= Number.MAX_SAFE_INTEGER
-            ) {
-              throw new Error(
-                'The concern counter is unavailable or invalid. ' +
-                'Please contact the barangay.'
-              );
-            }
+          const [
+            counterSnapshot,
+            residentCounterSnapshot
+          ] = await Promise.all([
+            transaction.get(counterRef),
+            transaction.get(residentCounterRef)
+          ]);
 
-            const nextNumber = lastNumber + 1;
+          const lastNumber =
+            counterSnapshot.data()?.['last_number'];
 
-            if (
-              this.auth.currentUser?.uid !== user.uid
-            ) {
-              throw new Error(
-                'Your login changed. Sign in again.'
-              );
-            }
-
-            transaction.set(concernRef, {
-              concern_number: nextNumber,
-              resident_id: user.uid,
-              assigned_personnel_id: null,
-              office_id: officeId,
-              category_id: payload.category_id,
-              location_description: location,
-              description,
-              photo_path: photoPath,
-              current_status: 'Pending',
-              reported_at: serverTimestamp(),
-              updated_at: null,
-              updates: {},
-              revision: 0
-            });
-
-            transaction.update(counterRef, {
-              last_number: nextNumber,
-              last_concern_id: concernRef.id
-            });
-
-            return nextNumber;
+          if (
+            !counterSnapshot.exists() ||
+            !Number.isSafeInteger(lastNumber) ||
+            lastNumber < 0 ||
+            lastNumber >= Number.MAX_SAFE_INTEGER
+          ) {
+            throw new Error(
+              'The concern counter is unavailable or invalid. ' +
+              'Please contact the barangay.'
+            );
           }
-        );
+
+          const residentLastNumber =
+            residentCounterSnapshot.exists()
+              ? residentCounterSnapshot.data()['last_number']
+              : 0;
+
+          if (
+            !Number.isSafeInteger(residentLastNumber) ||
+            residentLastNumber < 0 ||
+            residentLastNumber >= Number.MAX_SAFE_INTEGER
+          ) {
+            throw new Error(
+              'Your personal concern counter is invalid. Contact the barangay.'
+            );
+          }
+
+          const nextNumber =
+            lastNumber + 1;
+
+          const residentNumber =
+            residentLastNumber + 1;
+
+          if (
+            this.auth.currentUser?.uid !== user.uid
+          ) {
+            throw new Error(
+              'Your login changed. Sign in again.'
+            );
+          }
+
+          transaction.set(concernRef, {
+            concern_number: nextNumber,
+            resident_concern_number: residentNumber,
+
+            resident_id: user.uid,
+            assigned_personnel_id: null,
+            office_id: officeId,
+            category_id: payload.category_id,
+            location_description: location,
+            description,
+            photo_path: photoPath,
+            current_status: 'Pending',
+            reported_at: serverTimestamp(),
+            updated_at: null,
+            updates: {},
+            revision: 0
+          });
+
+          transaction.update(counterRef, {
+            last_number: nextNumber,
+            last_concern_id: concernRef.id
+          });
+
+          transaction.set(residentCounterRef, {
+            last_number: residentNumber,
+            last_concern_id: concernRef.id
+          });
+
+          return {
+            shared: nextNumber,
+            personal: residentNumber
+          };
+        }
+      );
 
       return {
         concern_id: concernRef.id,
-        concern_number: concernNumber,
+        concern_number: numbers.shared,
+        resident_concern_number: numbers.personal,
 
         message:
-          `Concern #${concernNumber} saved to Firebase.`
+          `Concern #${numbers.personal} saved to Firebase.`
       };
     } catch (error) {
       if (uploaded && photoPath) {
-        // Saved concern photos cannot be deleted by this cleanup.
         await this.photoService
           .cleanup(concernRef.id, user.uid)
           .catch(() => undefined);
@@ -562,9 +592,7 @@ export class ConcernService implements OnDestroy {
     const user = this.auth.currentUser;
 
     if (!user) {
-      throw new Error(
-        'Please sign in first.'
-      );
+      throw new Error('Please sign in first.');
     }
 
     const profile = (
@@ -622,6 +650,12 @@ export class ConcernService implements OnDestroy {
         Number.isSafeInteger(data['concern_number']) &&
         data['concern_number'] > 0
           ? data['concern_number']
+          : null,
+
+      resident_concern_number:
+        Number.isSafeInteger(data['resident_concern_number']) &&
+        data['resident_concern_number'] > 0
+          ? data['resident_concern_number']
           : null,
 
       resident_id: data['resident_id'],
@@ -689,10 +723,7 @@ export class ConcernService implements OnDestroy {
         .filter(Boolean)
     );
 
-    for (
-      const [path, url]
-      of this.objectUrls
-    ) {
+    for (const [path, url] of this.objectUrls) {
       if (!visiblePaths.has(path)) {
         URL.revokeObjectURL(url);
         this.objectUrls.delete(path);
@@ -756,10 +787,7 @@ export class ConcernService implements OnDestroy {
     this.records.set([]);
     this.photoFailure.set('');
 
-    for (
-      const url
-      of this.objectUrls.values()
-    ) {
+    for (const url of this.objectUrls.values()) {
       URL.revokeObjectURL(url);
     }
 
@@ -776,17 +804,13 @@ export class ConcernService implements OnDestroy {
         ? String(error.code)
         : '';
 
-    if (
-      code.includes('permission-denied')
-    ) {
+    if (code.includes('permission-denied')) {
       return (
         'Access denied. Check account approval and Firestore rules.'
       );
     }
 
-    if (
-      code.includes('unavailable')
-    ) {
+    if (code.includes('unavailable')) {
       return (
         'Firebase is unavailable. Check your connection and retry.'
       );

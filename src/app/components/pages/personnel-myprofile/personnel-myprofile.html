@@ -3,9 +3,23 @@
     <h1>My Profile</h1>
   </header>
 
-  <section class="profile-card" aria-label="Personnel profile">
-    <!-- Neutral avatar placeholder -->
-    <div class="profile-avatar" aria-hidden="true">
+  <section
+    *ngIf="loading"
+    class="empty-profile"
+    role="status"
+  >
+    <p>Loading your profile…</p>
+  </section>
+
+  <section
+    *ngIf="!loading && profile"
+    class="profile-card"
+    aria-label="Personnel profile"
+  >
+    <div
+      class="profile-avatar"
+      aria-hidden="true"
+    >
       <svg
         class="avatar-icon"
         xmlns="http://www.w3.org/2000/svg"
@@ -19,6 +33,7 @@
           stroke="currentColor"
           stroke-width="1.7"
         />
+
         <path
           d="M4.5 20a7.5 7.5 0 0 1 15 0"
           stroke="currentColor"
@@ -30,20 +45,32 @@
 
     <div class="profile-information">
       <h2>{{ displayName }}</h2>
-      <p class="profile-email">{{ displayEmail }}</p>
-      <span class="profile-role">{{ displayRole }}</span>
+
+      <p class="profile-email">
+        {{ displayEmail }}
+      </p>
+
+      <span class="profile-role">
+        {{ displayRole }}
+      </span>
     </div>
   </section>
 
   <section
+    *ngIf="!loading && errorMessage"
     class="empty-profile"
-    *ngIf="!profile"
-    aria-live="polite"
+    role="alert"
   >
     <h3>Profile information unavailable</h3>
-    <p>
-      Your personnel profile information will appear here when
-      the actual account data becomes available.
-    </p>
+
+    <p>{{ errorMessage }}</p>
+
+    <button
+      type="button"
+      class="btn-retry"
+      (click)="loadProfile()"
+    >
+      Try Again
+    </button>
   </section>
 </main>

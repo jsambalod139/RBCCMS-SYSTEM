@@ -26,7 +26,10 @@
   }
 
   @if (selectedConcern; as concern) {
-    <article class="details-page" aria-labelledby="details-title">
+    <article
+      class="details-page"
+      aria-labelledby="details-title"
+    >
       <header class="details-header">
         <div>
           <p class="eyebrow">PERSONNEL PORTAL</p>
@@ -49,12 +52,34 @@
         </p>
       }
 
+      @if (residentLoadError()) {
+        <div class="page-notice error-notice" role="alert">
+          <p>{{ residentLoadError() }}</p>
+
+          <button
+            type="button"
+            class="secondary-button"
+            (click)="retryResidents()"
+          >
+            Retry resident information
+          </button>
+        </div>
+      }
+
       <section aria-labelledby="information-title">
-        <h2 id="information-title" class="information-heading">
+        <h2
+          id="information-title"
+          class="information-heading"
+        >
           Concern Information
         </h2>
 
         <dl class="detail-grid">
+          <div class="detail-item">
+            <dt>Submitted By</dt>
+            <dd>{{ submittedBy(concern) }}</dd>
+          </div>
+
           <div class="detail-item">
             <dt>Concern ID</dt>
 
@@ -77,7 +102,10 @@
             <dt>Date Reported</dt>
 
             <dd>
-              {{ concern.reported_at | date:'MMMM d, y, h:mm a' }}
+              {{
+                concern.reported_at
+                  | date:'MMMM d, y, h:mm a'
+              }}
             </dd>
           </div>
 
@@ -162,7 +190,10 @@
         <p role="status">Loading attached photo...</p>
       }
 
-      <section class="update-section" aria-labelledby="update-title">
+      <section
+        class="update-section"
+        aria-labelledby="update-title"
+      >
         <h2 id="update-title">Update Concern Status</h2>
 
         <p>
@@ -200,7 +231,9 @@
               placeholder="Enter progress notes or the reason for the status change..."
             ></textarea>
 
-            <small>{{ remarks.length }}/2000 characters</small>
+            <small>
+              {{ remarks.length }}/2000 characters
+            </small>
           </div>
         </div>
 
@@ -216,7 +249,10 @@
           <button
             type="button"
             class="primary-button"
-            [disabled]="saving() || statusDraft === concern.current_status"
+            [disabled]="
+              saving() ||
+              statusDraft === concern.current_status
+            "
             (click)="saveStatus()"
           >
             {{ saving() ? 'Saving...' : 'Update Status' }}
@@ -228,7 +264,10 @@
         <h2>Status History &amp; Remarks</h2>
 
         @if (concern.updates.length > 0) {
-          @for (update of concern.updates; track update.update_id) {
+          @for (
+            update of concern.updates;
+            track update.update_id
+          ) {
             <article class="history-item">
               <div>
                 <span
@@ -257,7 +296,10 @@
               </div>
 
               <time [attr.datetime]="update.created_at">
-                {{ update.created_at | date:'MMM d, y, h:mm a' }}
+                {{
+                  update.created_at
+                    | date:'MMM d, y, h:mm a'
+                }}
               </time>
             </article>
           }
@@ -357,7 +399,10 @@
             }}
           </p>
 
-          @if (searchTerm() || selectedStatus() !== 'All Status') {
+          @if (
+            searchTerm() ||
+            selectedStatus() !== 'All Status'
+          ) {
             <button
               type="button"
               class="primary-button"
@@ -389,7 +434,10 @@
                 ) {
                   <tr>
                     <td class="concern-id">
-                      {{ concern.concern_number ?? 'Not numbered' }}
+                      {{
+                        concern.concern_number ??
+                          'Not numbered'
+                      }}
                     </td>
 
                     <td>{{ categoryName(concern) }}</td>
@@ -399,7 +447,10 @@
                     </td>
 
                     <td>
-                      {{ concern.reported_at | date:'MMM d, y' }}
+                      {{
+                        concern.reported_at
+                          | date:'MMM d, y'
+                      }}
                     </td>
 
                     <td>

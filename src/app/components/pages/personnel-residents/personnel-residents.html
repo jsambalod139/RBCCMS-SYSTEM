@@ -1,1 +1,497 @@
-<p>personnel-residents works!</p>
+<main class="residents-page">
+  <header class="page-heading">
+    <div>
+      <p class="eyebrow">PERSONNEL PORTAL</p>
+
+      <h1>
+        {{
+          mode() === 'list'
+            ? 'Residents'
+            : mode() === 'edit'
+              ? 'Edit Resident'
+              : mode() === 'resume'
+                ? 'Finish Resident Account Setup'
+                : 'Add New Resident'
+        }}
+      </h1>
+
+      <p>
+        {{
+          mode() === 'list'
+            ? 'Manage registered residents and residency verification.'
+            : 'Confirm the resident’s information during their visit to the barangay.'
+        }}
+      </p>
+    </div>
+
+    @if (mode() === 'list') {
+      <button
+        type="button"
+        class="btn-primary"
+        (click)="add()"
+        [disabled]="service.loading() || !!service.error()"
+      >
+        + Add Resident
+      </button>
+    } @else {
+      <button
+        type="button"
+        class="btn-secondary"
+        (click)="back()"
+        [disabled]="saving()"
+      >
+        ← Back to Residents
+      </button>
+    }
+  </header>
+
+  @if (feedback()) {
+    <p class="notice success" role="status">
+      {{ feedback() }}
+    </p>
+  }
+
+  @if (mode() === 'list') {
+    <section
+      class="list-card"
+      aria-label="Registered residents"
+      [attr.aria-busy]="service.loading()"
+    >
+      <div class="list-heading">
+        <h2>Resident Records</h2>
+
+        <label class="search-label">
+          <span class="visually-hidden">
+            Search residents
+          </span>
+
+          <input
+            type="search"
+            placeholder="Search resident ID, name, email, address, or purok…"
+            [value]="search()"
+            (input)="search.set($any($event.target).value)"
+          />
+        </label>
+      </div>
+
+      @if (service.loading()) {
+        <p class="empty-state" role="status">
+          Loading residents…
+        </p>
+      } @else if (service.error()) {
+        <div class="notice error" role="alert">
+          <p>{{ service.error() }}</p>
+
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="service.reload()"
+          >
+            Try Again
+          </button>
+        </div>
+      } @else if (!filteredResidents().length) {
+        <div class="empty-state">
+          <h3>
+            {{
+              search()
+                ? 'No matching residents'
+                : 'No resident records yet'
+            }}
+          </h3>
+
+          <p>
+            {{
+              search()
+                ? 'Try another resident ID, name, email, address, or purok.'
+                : 'Use Add Resident after verifying identity and residency in person.'
+            }}
+          </p>
+        </div>
+      } @else {
+        <p class="record-count">
+          {{ filteredResidents().length }} resident(s)
+        </p>
+
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Resident ID</th>
+                <th scope="col">Name</th>
+                <th scope="col">Verification</th>
+                <th scope="col">Account</th>
+                <th scope="col">Action</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (
+                resident of filteredResidents();
+                track resident.uid
+              ) {
+                <tr>
+                  <td>
+                    {{ resident.residentId }}
+                  </td>
+
+                  <td>
+                    <strong>
+                      {{ resident.name || 'Name not recorded' }}
+                    </strong>
+                  </td>
+
+                  <td>
+                    <span
+                      class="badge"
+                      [class.verified]="resident.residencyVerified"
+                    >
+                      {{
+                        resident.residencyVerified
+                          ? 'Verified'
+                          : 'Not verified'
+                      }}
+                    </span>
+
+                    @if (resident.verifiedAt) {
+                      <span>
+                        {{ resident.verifiedAt | date:'MMM d, y' }}
+                      </span>
+                    }
+                  </td>
+
+                  <td>
+                    {{
+                      resident.registrationState === 'incomplete'
+                        ? 'Setup incomplete'
+                        : (resident.accountStatus | titlecase)
+                    }}
+                  </td>
+
+                  <td>
+                    @if (service.canResume(resident)) {
+                      <button
+                        type="button"
+                        class="btn-secondary small"
+                        (click)="resume(resident)"
+                      >
+                        Finish Setup
+                      </button>
+                    } @else if (
+                      resident.registrationState !== 'incomplete'
+                    ) {
+                      <button
+                        type="button"
+                        class="btn-secondary small"
+                        (click)="edit(resident)"
+                        [attr.aria-label]="
+                          'Edit resident ' + resident.name
+                        "
+                      >
+                        Edit
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  } @else {
+    <form
+      class="form-card"
+      [formGroup]="form"
+      (ngSubmit)="save()"
+      novalidate
+    >
+      @if (saveError()) {
+        <p class="notice error" role="alert">
+          {{ saveError() }}
+        </p>
+      }
+
+      <fieldset [disabled]="saving()">
+        <section class="form-section">
+          <h2>Personal Information</h2>
+
+          <div class="form-grid">
+            <div class="field">
+              <label for="first-name">
+                First Name <span>*</span>
+              </label>
+
+              <input
+                id="first-name"
+                formControlName="firstName"
+                maxlength="60"
+                autocomplete="given-name"
+                [attr.aria-invalid]="invalid('firstName')"
+              />
+
+              @if (invalid('firstName')) {
+                <small class="field-error">
+                  Enter a first name, up to 60 characters.
+                </small>
+              }
+            </div>
+
+            <div class="field">
+              <label for="middle-name">
+                Middle Name <small>(Optional)</small>
+              </label>
+
+              <input
+                id="middle-name"
+                formControlName="middleName"
+                maxlength="60"
+                autocomplete="additional-name"
+              />
+            </div>
+
+            <div class="field">
+              <label for="last-name">
+                Last Name <span>*</span>
+              </label>
+
+              <input
+                id="last-name"
+                formControlName="lastName"
+                maxlength="60"
+                autocomplete="family-name"
+                [attr.aria-invalid]="invalid('lastName')"
+              />
+
+              @if (invalid('lastName')) {
+                <small class="field-error">
+                  Enter a last name, up to 60 characters.
+                </small>
+              }
+            </div>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <h2>Login Credentials</h2>
+
+          <p class="section-hint">
+            {{
+              mode() === 'edit'
+                ? 'The login email is read-only. Passwords are not shown or changed here.'
+                : 'Use the resident’s email address. Let the resident choose their password privately.'
+            }}
+          </p>
+
+          <div class="form-grid">
+            <div class="field">
+              <label for="resident-email">
+                Email <span>*</span>
+              </label>
+
+              <input
+                id="resident-email"
+                type="email"
+                formControlName="email"
+                maxlength="254"
+                autocomplete="off"
+                autocapitalize="none"
+                spellcheck="false"
+                [attr.aria-invalid]="invalid('email')"
+              />
+
+              @if (invalid('email')) {
+                <small class="field-error">
+                  Enter a valid email address.
+                </small>
+              }
+            </div>
+
+            @if (mode() !== 'edit') {
+              <div class="field">
+                <label for="resident-password">
+                  Password <span>*</span>
+                </label>
+
+                <div class="password-field">
+                  <input
+                    id="resident-password"
+                    [type]="
+                      passwordVisible()
+                        ? 'text'
+                        : 'password'
+                    "
+                    formControlName="password"
+                    autocomplete="new-password"
+                    minlength="8"
+                    maxlength="128"
+                    [attr.aria-invalid]="invalid('password')"
+                  />
+
+                  <button
+                    type="button"
+                    class="password-toggle"
+                    [attr.aria-pressed]="passwordVisible()"
+                    (click)="
+                      passwordVisible.set(!passwordVisible())
+                    "
+                  >
+                    {{ passwordVisible() ? 'Hide' : 'Show' }}
+                  </button>
+                </div>
+
+                <small>
+                  8–128 characters. Never saved in Firestore.
+                </small>
+
+                @if (invalid('password')) {
+                  <small class="field-error">
+                    Enter a password with 8–128 characters.
+                  </small>
+                }
+              </div>
+            }
+          </div>
+        </section>
+
+        <section class="form-section">
+          <h2>Contact and Address Information</h2>
+
+          <div class="form-grid">
+            <div class="field">
+              <label for="resident-contact">
+                Contact Number <small>(Optional)</small>
+              </label>
+
+              <input
+                id="resident-contact"
+                type="tel"
+                formControlName="contactNumber"
+                maxlength="30"
+                autocomplete="tel"
+                placeholder="e.g., 0917 123 4567"
+              />
+
+              @if (invalid('contactNumber')) {
+                <small class="field-error">
+                  Enter a valid contact number.
+                </small>
+              }
+            </div>
+
+            <div class="field">
+              <label for="resident-purok">
+                Purok <span>*</span>
+              </label>
+
+              <input
+                id="resident-purok"
+                formControlName="purok"
+                maxlength="60"
+                placeholder="Enter the verified purok"
+                [attr.aria-invalid]="invalid('purok')"
+              />
+
+              @if (invalid('purok')) {
+                <small class="field-error">
+                  Enter the resident’s purok.
+                </small>
+              }
+            </div>
+
+            <div class="field full">
+              <label for="resident-address">
+                Complete Address <span>*</span>
+              </label>
+
+              <textarea
+                id="resident-address"
+                formControlName="address"
+                maxlength="255"
+                rows="3"
+                autocomplete="street-address"
+                [attr.aria-invalid]="invalid('address')"
+              ></textarea>
+
+              @if (invalid('address')) {
+                <small class="field-error">
+                  Enter an address, up to 255 characters.
+                </small>
+              }
+            </div>
+          </div>
+        </section>
+
+        <section class="form-section verification-section">
+          <h2>Residency Verification</h2>
+
+          @if (
+            mode() === 'edit' &&
+            verifiedAlready()
+          ) {
+            <p class="notice success">
+              This resident’s residency is already verified.
+            </p>
+          } @else {
+            <label class="verification-check">
+              <input
+                type="checkbox"
+                formControlName="residencyVerified"
+              />
+
+              <span>
+                I have verified this resident’s identity
+                and residency in person.
+              </span>
+            </label>
+
+            <p class="section-hint">
+              The system records your personnel account
+              and the verification date.
+            </p>
+
+            @if (invalid('residencyVerified')) {
+              <small class="field-error">
+                Confirm in-person verification before
+                creating this account.
+              </small>
+            }
+          }
+        </section>
+
+        <footer class="form-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="back()"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            class="btn-primary"
+            [attr.aria-busy]="saving()"
+          >
+            @if (saving()) {
+              <span
+                class="spinner"
+                aria-hidden="true"
+              ></span>
+            }
+
+            {{
+              saving()
+                ? 'Saving…'
+                : mode() === 'edit'
+                  ? 'Save Changes'
+                  : mode() === 'resume'
+                    ? 'Finish Setup'
+                    : 'Add Resident'
+            }}
+          </button>
+        </footer>
+      </fieldset>
+    </form>
+  }
+</main>
