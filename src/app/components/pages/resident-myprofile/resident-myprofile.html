@@ -30,7 +30,15 @@
     <section class="profile-card" aria-label="Resident profile">
       <div class="profile-header">
         <div class="avatar" aria-hidden="true">
-          {{ getInitials() }}
+          @if (account.photoUrl()) {
+            <img
+              [src]="account.photoUrl()"
+              alt=""
+              (error)="account.imageFailed()"
+            />
+          } @else {
+            {{ getInitials() }}
+          }
         </div>
 
         <div class="profile-heading-details">

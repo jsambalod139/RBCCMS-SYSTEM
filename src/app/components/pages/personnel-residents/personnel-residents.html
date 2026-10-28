@@ -7,11 +7,13 @@
         {{
           mode() === 'list'
             ? 'Residents'
-            : mode() === 'edit'
-              ? 'Edit Resident'
-              : mode() === 'resume'
-                ? 'Finish Resident Account Setup'
-                : 'Add New Resident'
+            : mode() === 'view'
+              ? 'Resident Profile'
+              : mode() === 'edit'
+                ? 'Edit Resident'
+                : mode() === 'resume'
+                  ? 'Finish Resident Account Setup'
+                  : 'Add New Resident'
         }}
       </h1>
 
@@ -19,7 +21,9 @@
         {{
           mode() === 'list'
             ? 'Manage registered residents and residency verification.'
-            : 'Confirm the resident’s information during their visit to the barangay.'
+            : mode() === 'view'
+              ? 'View resident information and submitted concerns.'
+              : 'Confirm the resident’s information during their visit to the barangay.'
         }}
       </p>
     </div>
@@ -40,7 +44,11 @@
         (click)="back()"
         [disabled]="saving()"
       >
-        ← Back to Residents
+        {{
+          mode() === 'edit' && profileUid()
+            ? '← Back to Profile'
+            : '← Back to Residents'
+        }}
       </button>
     }
   </header>
@@ -131,9 +139,7 @@
                 track resident.uid
               ) {
                 <tr>
-                  <td>
-                    {{ resident.residentId }}
-                  </td>
+                  <td>{{ residentNumber(resident) }}</td>
 
                   <td>
                     <strong>
@@ -154,8 +160,11 @@
                     </span>
 
                     @if (resident.verifiedAt) {
-                      <span>
-                        {{ resident.verifiedAt | date:'MMM d, y' }}
+                      <span class="verification-date">
+                        {{
+                          resident.verifiedAt
+                            | date:'MMM d, y'
+                        }}
                       </span>
                     }
                   </td>
@@ -183,12 +192,12 @@
                       <button
                         type="button"
                         class="btn-secondary small"
-                        (click)="edit(resident)"
+                        (click)="view(resident)"
                         [attr.aria-label]="
-                          'Edit resident ' + resident.name
+                          'View resident ' + resident.name
                         "
                       >
-                        Edit
+                        View
                       </button>
                     }
                   </td>
@@ -199,6 +208,274 @@
         </div>
       }
     </section>
+  } @else if (mode() === 'view') {
+    @if (service.loading()) {
+      <p class="empty-state" role="status">
+        Loading resident profile...
+      </p>
+    } @else if (service.error()) {
+      <div class="notice error" role="alert">
+        <p>{{ service.error() }}</p>
+
+        <button
+          type="button"
+          class="btn-secondary"
+          (click)="service.reload()"
+        >
+          Try Again
+        </button>
+      </div>
+    } @else if (selectedResident(); as resident) {
+      <nav
+        class="profile-tabs"
+        aria-label="Resident profile sections"
+      >
+        <button
+          type="button"
+          [class.active]="profileTab() === 'personal'"
+          [attr.aria-pressed]="profileTab() === 'personal'"
+          (click)="profileTab.set('personal')"
+        >
+          Personal Information
+        </button>
+
+        <button
+          type="button"
+          [class.active]="profileTab() === 'history'"
+          [attr.aria-pressed]="profileTab() === 'history'"
+          (click)="profileTab.set('history')"
+        >
+          Concern History
+        </button>
+      </nav>
+
+      @if (profileTab() === 'personal') {
+        <section
+          class="resident-profile-card"
+          aria-label="Resident information"
+        >
+          <header class="resident-profile-header">
+            <div class="resident-avatar" aria-hidden="true">
+              {{ initials(resident) }}
+            </div>
+
+            <div class="resident-heading">
+              <p>
+                Resident ID:
+                <strong>
+                  {{ residentNumber(resident) }}
+                </strong>
+              </p>
+
+              <h2>
+                {{ resident.name || 'Name not recorded' }}
+              </h2>
+
+              <p>Barangay Resident</p>
+            </div>
+
+            @if (service.canResume(resident)) {
+              <button
+                type="button"
+                class="btn-primary"
+                (click)="resume(resident)"
+              >
+                Finish Setup
+              </button>
+            } @else if (
+              resident.registrationState !== 'incomplete'
+            ) {
+              <button
+                type="button"
+                class="btn-primary"
+                (click)="edit(resident)"
+              >
+                Edit Profile
+              </button>
+            }
+          </header>
+
+          <h3>Resident Information</h3>
+
+          <dl class="resident-info-grid">
+            <div>
+              <dt>Full Name</dt>
+              <dd>{{ resident.name || 'Not recorded' }}</dd>
+            </div>
+
+            <div>
+              <dt>Address</dt>
+              <dd>{{ resident.address || 'Not recorded' }}</dd>
+            </div>
+
+            <div>
+              <dt>Purok</dt>
+              <dd>{{ resident.purok || 'Not recorded' }}</dd>
+            </div>
+
+            <div>
+              <dt>Residency Verification</dt>
+
+              <dd>
+                <span
+                  class="badge"
+                  [class.verified]="resident.residencyVerified"
+                >
+                  {{
+                    resident.residencyVerified
+                      ? 'Verified'
+                      : 'Not verified'
+                  }}
+                </span>
+              </dd>
+            </div>
+
+            <div>
+              <dt>Verification Date</dt>
+
+              <dd>
+                {{
+                  resident.verifiedAt
+                    ? (resident.verifiedAt | date:'MMMM d, y')
+                    : 'Not recorded'
+                }}
+              </dd>
+            </div>
+
+            <div>
+              <dt>Account Status</dt>
+
+              <dd>
+                {{
+                  resident.registrationState === 'incomplete'
+                    ? 'Setup incomplete'
+                    : (
+                        (resident.accountStatus | titlecase)
+                        || 'Not recorded'
+                      )
+                }}
+              </dd>
+            </div>
+          </dl>
+
+          <h3>Contact Information</h3>
+
+          <dl class="resident-info-grid">
+            <div>
+              <dt>Email Address</dt>
+              <dd>{{ resident.email || 'Not recorded' }}</dd>
+            </div>
+
+            <div>
+              <dt>Contact Number</dt>
+              <dd>
+                {{ resident.contactNumber || 'Not recorded' }}
+              </dd>
+            </div>
+          </dl>
+        </section>
+      } @else {
+        <section
+          class="resident-profile-card"
+          aria-label="Resident concern history"
+          [attr.aria-busy]="concernService.loading()"
+        >
+          <div class="history-heading">
+            <div>
+              <h2>Concern History</h2>
+
+              <p>
+                {{ resident.name }}
+                · Resident ID: {{ residentNumber(resident) }}
+              </p>
+            </div>
+
+            <span>
+              {{ residentConcerns().length }} concern(s)
+            </span>
+          </div>
+
+          @if (concernService.loading()) {
+            <p class="empty-state" role="status">
+              Loading concerns...
+            </p>
+          } @else if (concernService.error()) {
+            <div class="notice error" role="alert">
+              <p>{{ concernService.error() }}</p>
+
+              <button
+                type="button"
+                class="btn-secondary"
+                (click)="concernService.reload()"
+              >
+                Try Again
+              </button>
+            </div>
+          } @else if (!residentConcerns().length) {
+            <p class="empty-state">
+              This resident has not submitted any concerns.
+            </p>
+          } @else {
+            <div class="table-scroll history-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Category</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Date Submitted</th>
+                    <th scope="col">Action</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  @for (
+                    concern of residentConcerns();
+                    track concern.concern_id
+                  ) {
+                    <tr>
+                      <td>{{ categoryName(concern) }}</td>
+
+                      <td>
+                        <span
+                          class="concern-status"
+                          [ngClass]="
+                            statusClass(concern.current_status)
+                          "
+                        >
+                          {{ concern.current_status }}
+                        </span>
+                      </td>
+
+                      <td>
+                        {{
+                          concern.reported_at
+                            | date:'MMM d, y'
+                        }}
+                      </td>
+
+                      <td>
+                        <button
+                          type="button"
+                          class="btn-secondary small"
+                          (click)="showConcern(concern)"
+                        >
+                          View Details
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </section>
+      }
+    } @else {
+      <p class="notice error" role="alert">
+        Resident record unavailable. Return to Residents
+        and select an existing record.
+      </p>
+    }
   } @else {
     <form
       class="form-card"
@@ -317,9 +594,7 @@
                   <input
                     id="resident-password"
                     [type]="
-                      passwordVisible()
-                        ? 'text'
-                        : 'password'
+                      passwordVisible() ? 'text' : 'password'
                     "
                     formControlName="password"
                     autocomplete="new-password"
@@ -425,10 +700,7 @@
         <section class="form-section verification-section">
           <h2>Residency Verification</h2>
 
-          @if (
-            mode() === 'edit' &&
-            verifiedAlready()
-          ) {
+          @if (mode() === 'edit' && verifiedAlready()) {
             <p class="notice success">
               This resident’s residency is already verified.
             </p>

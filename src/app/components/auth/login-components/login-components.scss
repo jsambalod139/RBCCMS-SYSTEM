@@ -35,7 +35,8 @@
 
 .login-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(340px, 420px);
+  grid-template-columns:
+    minmax(0, 1fr) minmax(340px, 420px);
   align-items: center;
   gap: clamp(36px, 7vw, 110px);
   width: 100%;
@@ -48,19 +49,19 @@
 .system-introduction {
   min-width: 0;
   padding: 30px 0;
+
+  h1 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(30px, 3.4vw, 48px);
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.7px;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+  }
 }
 
-.system-introduction h1 {
-  margin: 0;
-  color: #fff;
-  font-size: clamp(30px, 3.4vw, 48px);
-  font-weight: 700;
-  line-height: 1.3;
-  letter-spacing: -0.7px;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
-}
-
-/* Login card */
+/* Card */
 
 .login-card {
   width: 100%;
@@ -76,30 +77,30 @@
 .login-header {
   margin-bottom: 28px;
   text-align: center;
+
+  h2 {
+    margin: 0 0 8px;
+    color: #202b25;
+    font-size: 27px;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  p {
+    margin: 0;
+    color: #768079;
+    font-size: 14px;
+    line-height: 1.6;
+  }
 }
 
 .municipal-logo {
   display: block;
-  width: 96px;
-  height: 96px;
+  width: 180px;
+  height: 180px;
   margin: 0 auto 18px;
   border-radius: 50%;
-  object-fit: cover;
-}
-
-.login-header h2 {
-  margin: 0 0 8px;
-  color: #202b25;
-  font-size: 27px;
-  font-weight: 700;
-  line-height: 1.25;
-}
-
-.login-header p {
-  margin: 0;
-  color: #768079;
-  font-size: 14px;
-  line-height: 1.6;
+  object-fit: contain;
 }
 
 /* Form */
@@ -125,12 +126,36 @@ form {
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
-}
 
-.input-wrapper:focus-within {
-  border-color: #148057;
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(20, 128, 87, 0.12);
+  &:focus-within {
+    border-color: #148057;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(20, 128, 87, 0.12);
+  }
+
+  input {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: 52px;
+    padding: 14px 15px 14px 46px;
+    border: 0;
+    outline: 0;
+    border-radius: inherit;
+    background: transparent;
+    color: #263b2d;
+    font-family: inherit;
+    font-size: 14px;
+
+    &::placeholder {
+      color: #8b9790;
+    }
+
+    &:disabled {
+      cursor: wait;
+      opacity: 0.7;
+    }
+  }
 }
 
 .input-icon {
@@ -142,31 +167,7 @@ form {
   pointer-events: none;
 }
 
-.input-wrapper input {
-  display: block;
-  width: 100%;
-  min-width: 0;
-  min-height: 52px;
-  padding: 14px 15px 14px 46px;
-  border: 0;
-  outline: 0;
-  border-radius: inherit;
-  background: transparent;
-  color: #263b2d;
-  font-family: inherit;
-  font-size: 14px;
-}
-
-.input-wrapper input::placeholder {
-  color: #8b9790;
-}
-
-.input-wrapper input:disabled {
-  cursor: wait;
-  opacity: 0.7;
-}
-
-/* Login button */
+/* Submit button */
 
 .btn-login {
   display: inline-flex;
@@ -188,29 +189,29 @@ form {
   transition:
     background-color 0.2s ease,
     box-shadow 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: #06673d;
+    box-shadow: 0 5px 14px rgba(8, 124, 73, 0.2);
+  }
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  &.is-loading {
+    opacity: 1;
+    cursor: wait;
+  }
+
+  &:focus-visible {
+    outline: 3px solid #6dbb93;
+    outline-offset: 3px;
+  }
 }
 
-.btn-login:hover:not(:disabled) {
-  background: #06673d;
-  box-shadow: 0 5px 14px rgba(8, 124, 73, 0.2);
-}
-
-.btn-login:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-.btn-login.is-loading {
-  opacity: 1;
-  cursor: wait;
-}
-
-.btn-login:focus-visible {
-  outline: 3px solid #6dbb93;
-  outline-offset: 3px;
-}
-
-/* Loading spinner */
+/* Spinner */
 
 .login-spinner {
   display: inline-block;
@@ -229,25 +230,25 @@ form {
   }
 }
 
-/* Help text */
+/* Footer */
 
 .login-footer {
   margin-top: 27px;
   padding-top: 21px;
   border-top: 1px solid #e9eeeb;
   text-align: center;
-}
 
-.login-footer p {
-  margin: 0;
-  color: #6c7870;
-  font-size: 13px;
-  line-height: 1.7;
-}
+  p {
+    margin: 0;
+    color: #6c7870;
+    font-size: 13px;
+    line-height: 1.7;
+  }
 
-.login-footer strong {
-  color: #087344;
-  font-weight: 600;
+  strong {
+    color: #087344;
+    font-weight: 600;
+  }
 }
 
 .visually-hidden {
@@ -259,6 +260,122 @@ form {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/* Password recovery links */
+
+.forgot-password-link {
+  margin-top: 18px;
+  text-align: center;
+}
+
+.forgot-password-link a,
+.back-to-login {
+  color: #087344;
+  font-size: 13px;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #087344;
+    outline-offset: 4px;
+  }
+}
+
+.link-disabled {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* Centered reset page */
+
+.reset-container {
+  justify-items: center;
+  padding: 36px 18px;
+}
+
+.reset-card {
+  max-width: 400px;
+  padding: 30px 28px 24px;
+  border-radius: 12px;
+
+  .login-header {
+    margin-bottom: 24px;
+  }
+
+  .municipal-logo {
+    width: 180px;
+    height: 180px;
+  }
+
+  .login-header h2 {
+    font-size: 24px;
+  }
+
+  .login-header p {
+    font-size: 13px;
+  }
+}
+
+.reset-label {
+  display: block;
+  margin-bottom: 8px;
+  color: #263b2d;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.reset-input input {
+  padding-left: 14px;
+}
+
+.reset-field-error {
+  display: block;
+  margin-top: 5px;
+  color: #aa3030;
+  font-size: 12px;
+
+  &:empty {
+    display: none;
+  }
+}
+
+.reset-notice {
+  margin: 0 0 18px;
+  padding: 12px;
+  border: 1px solid;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.6;
+
+  &.success {
+    background: #edf8f0;
+    color: #216b40;
+    border-color: #cce5d3;
+  }
+
+  &.error {
+    background: #fff2f2;
+    color: #aa3030;
+    border-color: #eccccc;
+  }
+}
+
+.reset-wait {
+  margin: 0;
+  color: #68776e;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.back-to-login {
+  display: block;
+  width: fit-content;
+  margin: 20px auto 0;
 }
 
 /* Tablet */
@@ -278,14 +395,18 @@ form {
   .system-introduction {
     padding: 0;
     text-align: center;
-  }
 
-  .system-introduction h1 {
-    font-size: 29px;
+    h1 {
+      font-size: 29px;
+    }
   }
 
   .login-card {
     max-width: 420px;
+  }
+
+  .reset-card {
+    max-width: 400px;
   }
 }
 
@@ -305,17 +426,23 @@ form {
     border-radius: 16px;
   }
 
-  .municipal-logo {
-    width: 84px;
-    height: 84px;
-  }
-
   .login-header h2 {
     font-size: 25px;
   }
-}
 
-/* Reduced motion */
+  .reset-card {
+    padding: 24px 22px;
+
+    .municipal-logo {
+      width: 150px;
+      height: 150px;
+    }
+
+    .login-header h2 {
+      font-size: 24px;
+    }
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .input-wrapper,
@@ -326,11 +453,4 @@ form {
   .login-spinner {
     animation: none;
   }
-}
-
-.municipal-logo {
-  width: 180px;
-  height: 180px;
-  margin: 0 auto 18px;
-  object-fit: contain;
 }

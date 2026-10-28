@@ -1,5 +1,4 @@
 import { CommonModule } from '@angular/common';
-
 import {
   Component,
   OnDestroy,
@@ -7,37 +6,48 @@ import {
   inject,
   signal
 } from '@angular/core';
-
 import {
   FormBuilder,
   ReactiveFormsModule,
   Validators
 } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import {
   ResidentRecord,
   ResidentService
 } from '../../../core/services/resident.service';
 
+import {
+  Concern,
+  ConcernStatus
+} from '../../../core/models/concern.model';
+
+import {
+  ConcernService
+} from '../../../core/services/concern.service';
+
 @Component({
   selector: 'app-personnel-residents',
   standalone: true,
-
-  imports: [
-    CommonModule,
-    ReactiveFormsModule
-  ],
-
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './personnel-residents.html',
   styleUrl: './personnel-residents.scss'
 })
 export class PersonnelResidents implements OnDestroy {
   readonly service = inject(ResidentService);
+  readonly concernService = inject(ConcernService);
 
   private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   readonly mode =
-    signal<'list' | 'add' | 'edit' | 'resume'>('list');
+    signal<'list' | 'view' | 'add' | 'edit' | 'resume'>('list');
+
+  readonly profileUid = signal('');
+  readonly profileTab = signal<'personal' | 'history'>('personal');
 
   readonly saving = signal(false);
   readonly feedback = signal('');
@@ -60,12 +70,7 @@ export class PersonnelResidents implements OnDestroy {
         Validators.pattern(/\S/)
       ]
     ],
-
-    middleName: [
-      '',
-      Validators.maxLength(60)
-    ],
-
+    middleName: ['', Validators.maxLength(60)],
     lastName: [
       '',
       [
@@ -74,7 +79,6 @@ export class PersonnelResidents implements OnDestroy {
         Validators.pattern(/\S/)
       ]
     ],
-
     email: [
       '',
       [
@@ -83,7 +87,6 @@ export class PersonnelResidents implements OnDestroy {
         Validators.maxLength(254)
       ]
     ],
-
     password: [
       '',
       [
@@ -92,7 +95,6 @@ export class PersonnelResidents implements OnDestroy {
         Validators.maxLength(128)
       ]
     ],
-
     contactNumber: [
       '',
       [
@@ -100,7 +102,6 @@ export class PersonnelResidents implements OnDestroy {
         Validators.pattern(/^[+\d() .-]{7,30}$/)
       ]
     ],
-
     address: [
       '',
       [
@@ -109,7 +110,6 @@ export class PersonnelResidents implements OnDestroy {
         Validators.pattern(/\S/)
       ]
     ],
-
     purok: [
       '',
       [
@@ -118,16 +118,11 @@ export class PersonnelResidents implements OnDestroy {
         Validators.pattern(/\S/)
       ]
     ],
-
-    residencyVerified: [
-      false,
-      Validators.requiredTrue
-    ]
+    residencyVerified: [false, Validators.requiredTrue]
   });
 
   readonly filteredResidents = computed(() => {
-    const term =
-      this.search().trim().toLowerCase();
+    const term = this.search().trim().toLowerCase();
 
     const numberOf = (value: string): number => {
       const number = Number(value);
@@ -145,21 +140,106 @@ export class PersonnelResidents implements OnDestroy {
           resident.address,
           resident.purok,
           resident.residentId
-        ].some(value =>
-          value.toLowerCase().includes(term)
-        )
+        ].some(value => value.toLowerCase().includes(term))
       )
       .sort(
         (a, b) =>
-          numberOf(a.residentId) -
-            numberOf(b.residentId) ||
+          numberOf(a.residentId) - numberOf(b.residentId) ||
           a.name.localeCompare(b.name)
       );
   });
 
-  invalid(
-    field: keyof typeof this.form.controls
-  ): boolean {
+  readonly selectedResident = computed(() =>
+    this.service.residents().find(
+      item => item.uid === this.profileUid()
+    ) ?? null
+  );
+
+  readonly residentConcerns = computed(() => {
+    const uid = this.selectedResident()?.uid;
+
+    if (!uid) return [];
+
+    return this.concernService.concerns()
+      .filter(item => item.resident_id === uid)
+      .sort(
+        (a, b) =>
+          (a.concern_number ?? Number.MAX_SAFE_INTEGER) -
+          (b.concern_number ?? Number.MAX_SAFE_INTEGER)
+      );
+  });
+
+  constructor() {
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed())
+      .subscribe(params => {
+        this.form.controls.password.setValue('');
+        this.passwordVisible.set(false);
+        this.profileUid.set(params.get('resident') || '');
+        this.profileTab.set('personal');
+        this.mode.set(this.profileUid() ? 'view' : 'list');
+        this.saveError.set('');
+      });
+  }
+
+  view(resident: ResidentRecord): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { resident: resident.uid },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  residentNumber(resident: ResidentRecord): string {
+    return /^[1-9]\d*$/.test(resident.residentId)
+      ? resident.residentId
+      : 'Not assigned';
+  }
+
+  initials(resident: ResidentRecord): string {
+    return resident.name
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part.charAt(0).toUpperCase())
+      .join('') || 'R';
+  }
+
+  categoryName(concern: Concern): string {
+    return (
+      concern.category?.category_name ||
+      `Category ${concern.category_id}`
+    );
+  }
+
+  statusClass(status: ConcernStatus): string {
+    return {
+      Pending: 'pending',
+      'In Progress': 'progress',
+      Resolved: 'resolved',
+      Rejected: 'rejected'
+    }[status];
+  }
+
+  showConcern(concern: Concern): void {
+    if (
+      concern.resident_id !== this.selectedResident()?.uid
+    ) {
+      return;
+    }
+
+    void this.router.navigate(
+      ['/perso-dashboard/personnel-concern'],
+      {
+        queryParams: {
+          concern: concern.concern_id
+        }
+      }
+    );
+  }
+
+  invalid(field: keyof typeof this.form.controls): boolean {
     const control = this.form.controls[field];
 
     return (
@@ -171,7 +251,6 @@ export class PersonnelResidents implements OnDestroy {
   add(): void {
     this.prepare('add');
     this.form.reset();
-
     this.requestId = crypto.randomUUID();
 
     this.form.controls.email.enable();
@@ -185,47 +264,30 @@ export class PersonnelResidents implements OnDestroy {
     this.form.controls.residencyVerified
       .setValidators(Validators.requiredTrue);
 
-    this.form.controls.password
-      .updateValueAndValidity();
-
-    this.form.controls.residencyVerified
-      .updateValueAndValidity();
+    this.form.controls.password.updateValueAndValidity();
+    this.form.controls.residencyVerified.updateValueAndValidity();
   }
 
   edit(resident: ResidentRecord): void {
-    if (
-      resident.registrationState === 'incomplete'
-    ) {
-      return;
-    }
+    if (resident.registrationState === 'incomplete') return;
 
     this.fill(resident, 'edit');
 
     this.form.controls.email.disable();
-
     this.form.controls.password.clearValidators();
+    this.form.controls.residencyVerified.clearValidators();
 
-    this.form.controls.residencyVerified
-      .clearValidators();
-
-    this.form.controls.password
-      .updateValueAndValidity();
-
-    this.form.controls.residencyVerified
-      .updateValueAndValidity();
+    this.form.controls.password.updateValueAndValidity();
+    this.form.controls.residencyVerified.updateValueAndValidity();
   }
 
   resume(resident: ResidentRecord): void {
-    if (!this.service.canResume(resident)) {
-      return;
-    }
+    if (!this.service.canResume(resident)) return;
 
     this.add();
     this.fill(resident, 'resume');
 
-    this.requestId =
-      resident.registrationRequestId;
-
+    this.requestId = resident.registrationRequestId;
     this.form.controls.email.disable();
   }
 
@@ -236,46 +298,24 @@ export class PersonnelResidents implements OnDestroy {
     this.prepare(mode);
     this.selectedUid = resident.uid;
 
-    const names =
-      resident.name.trim().split(/\s+/);
+    const names = resident.name.trim().split(/\s+/);
 
     this.form.reset({
-      firstName:
-        resident.firstName || names[0] || '',
-
-      middleName:
-        resident.middleName,
-
-      lastName:
-        resident.lastName ||
-        names.slice(1).join(' '),
-
-      email:
-        resident.email,
-
+      firstName: resident.firstName || names[0] || '',
+      middleName: resident.middleName,
+      lastName: resident.lastName || names.slice(1).join(' '),
+      email: resident.email,
       password: '',
-
-      contactNumber:
-        resident.contactNumber,
-
-      address:
-        resident.address,
-
-      purok:
-        resident.purok,
-
-      residencyVerified:
-        resident.residencyVerified
+      contactNumber: resident.contactNumber,
+      address: resident.address,
+      purok: resident.purok,
+      residencyVerified: resident.residencyVerified
     });
 
-    this.verifiedAlready.set(
-      resident.residencyVerified
-    );
+    this.verifiedAlready.set(resident.residencyVerified);
   }
 
-  private prepare(
-    mode: 'add' | 'edit' | 'resume'
-  ): void {
+  private prepare(mode: 'add' | 'edit' | 'resume'): void {
     this.mode.set(mode);
     this.submitted.set(false);
     this.feedback.set('');
@@ -288,10 +328,21 @@ export class PersonnelResidents implements OnDestroy {
     if (this.saving()) return;
 
     this.form.controls.password.setValue('');
-
     this.passwordVisible.set(false);
-    this.mode.set('list');
     this.saveError.set('');
+
+    if (this.mode() === 'edit' && this.profileUid()) {
+      this.mode.set('view');
+      return;
+    }
+
+    this.mode.set('list');
+
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { resident: null },
+      queryParamsHandling: 'merge'
+    });
   }
 
   async save(): Promise<void> {
@@ -306,30 +357,24 @@ export class PersonnelResidents implements OnDestroy {
     }
 
     this.saving.set(true);
-
-    const editing =
-      this.mode() === 'edit';
+    const editing = this.mode() === 'edit';
 
     try {
-      const details =
-        this.form.getRawValue();
+      const details = this.form.getRawValue();
 
       const message = editing
-        ? await this.service.edit(
-            this.selectedUid,
-            details
-          )
-        : await this.service.create(
-            details,
-            this.requestId
-          );
+        ? await this.service.edit(this.selectedUid, details)
+        : await this.service.create(details, this.requestId);
 
       if (this.destroyed) return;
 
       this.form.controls.password.setValue('');
-
       this.passwordVisible.set(false);
-      this.mode.set('list');
+
+      this.mode.set(
+        editing && this.profileUid() ? 'view' : 'list'
+      );
+
       this.feedback.set(message);
     } catch (error) {
       if (!this.destroyed) {

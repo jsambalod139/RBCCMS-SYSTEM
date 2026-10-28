@@ -1,103 +1,99 @@
-<main class="login-container">
-  <div class="login-layout">
-    <section class="system-introduction" aria-label="About the system">
-      <h1>
-        Remote Barangay<br />
-        Community Concern<br />
-        Reporting and<br />
-        Monitoring System
-      </h1>
-    </section>
-
-    <section class="login-card" aria-labelledby="login-title">
+@if (isResetPage) {
+  <!-- Forgot password page -->
+  <main class="login-container reset-container">
+    <section
+      class="login-card reset-card"
+      aria-labelledby="reset-title"
+    >
       <header class="login-header">
         <img
           src="assets/images/dashboard_logo.png"
           alt="Municipality of Villanueva seal"
           class="municipal-logo"
-          width="96"
-          height="96"
+          width="180"
+          height="180"
         />
 
-        <h2 id="login-title">Welcome to RBCCMS</h2>
-        <p>Sign in to your account</p>
+        <h2 id="reset-title">Forgot Password</h2>
+
+        <p>
+          Enter your email address to request a link
+          to reset your password.
+        </p>
       </header>
 
-      <form #loginForm="ngForm" (ngSubmit)="login()">
+      @if (resetSuccess()) {
+        <p class="reset-notice success" role="status">
+          If an account uses this email address, you will
+          receive a password-reset link. Check your inbox
+          and spam folder.
+        </p>
+      }
+
+      @if (resetError()) {
+        <p class="reset-notice error" role="alert">
+          {{ resetError() }}
+        </p>
+      }
+
+      <form
+        #resetForm="ngForm"
+        (ngSubmit)="sendResetLink(resetForm)"
+        novalidate
+      >
         <div class="form-group">
-          <label for="email" class="visually-hidden">
-            Email address
+          <label for="reset-email" class="reset-label">
+            Email Address
           </label>
 
-          <div class="input-wrapper">
-            <svg
-              class="input-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.7"
-              aria-hidden="true"
-            >
-              <rect x="3" y="5" width="18" height="14" rx="3" />
-              <path d="m4 7 8 6 8-6" />
-            </svg>
-
+          <div class="input-wrapper reset-input">
             <input
+              id="reset-email"
+              name="resetEmail"
               type="email"
-              id="email"
-              name="email"
-              [(ngModel)]="email"
-              placeholder="Email address"
+              [(ngModel)]="resetEmail"
+              #emailControl="ngModel"
+              required
+              email
+              maxlength="254"
               autocomplete="email"
               autocapitalize="none"
               spellcheck="false"
-              required
-              email
-              [disabled]="loading()"
+              placeholder="Enter your email"
+              [disabled]="resetLoading()"
+              [attr.aria-invalid]="
+                emailControl.invalid &&
+                (emailControl.touched || resetForm.submitted)
+              "
+              aria-describedby="reset-email-error"
             />
           </div>
-        </div>
 
-        <div class="form-group">
-          <label for="password" class="visually-hidden">
-            Password
-          </label>
-
-          <div class="input-wrapper">
-            <svg
-              class="input-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.7"
-              aria-hidden="true"
-            >
-              <rect x="4" y="10" width="16" height="11" rx="3" />
-              <path d="M8 10V7a4 4 0 0 1 8 0v3" />
-              <path d="M12 14v3" />
-            </svg>
-
-            <input
-              [type]="showPassword ? 'text' : 'password'"
-              id="password"
-              name="password"
-              [(ngModel)]="password"
-              placeholder="Password"
-              autocomplete="current-password"
-              required
-              [disabled]="loading()"
-            />
-          </div>
+          <small
+            id="reset-email-error"
+            class="reset-field-error"
+          >
+            @if (
+              emailControl.invalid &&
+              (emailControl.touched || resetForm.submitted)
+            ) {
+              Enter a valid email address.
+            }
+          </small>
         </div>
 
         <button
           type="submit"
           class="btn-login"
-          [class.is-loading]="loading()"
-          [disabled]="loading() || loginForm.invalid"
-          [attr.aria-busy]="loading()"
+          [class.is-loading]="resetLoading()"
+          [disabled]="
+            resetLoading() ||
+            resetCooldown() ||
+            resetForm.invalid
+          "
+          [attr.aria-busy]="resetLoading()"
         >
-          @if (loading()) {
+          @if (resetLoading()) {
             <span
               class="login-spinner"
               aria-hidden="true"
@@ -105,17 +101,189 @@
           }
 
           <span aria-live="polite">
-            {{ loading() ? 'Signing in...' : 'Login' }}
+            {{
+              resetLoading()
+                ? 'Sending...'
+                : 'Send Reset Link'
+            }}
           </span>
         </button>
+
+        @if (resetCooldown()) {
+          <p class="reset-wait" role="status">
+            Please wait one minute before requesting
+            another link.
+          </p>
+        }
       </form>
 
-      <footer class="login-footer">
-        <p>
-          Need help?
-          <strong>Contact the barangay.</strong>
-        </p>
-      </footer>
+      <a
+        class="back-to-login"
+        routerLink="/login-components"
+      >
+        Back to Login
+      </a>
     </section>
-  </div>
-</main>
+  </main>
+} @else {
+  <!-- Existing login page -->
+  <main class="login-container">
+    <div class="login-layout">
+      <section
+        class="system-introduction"
+        aria-label="About the system"
+      >
+        <h1>
+          Remote Barangay<br />
+          Community Concern<br />
+          Reporting and<br />
+          Monitoring System
+        </h1>
+      </section>
+
+      <section
+        class="login-card"
+        aria-labelledby="login-title"
+      >
+        <header class="login-header">
+          <img
+            src="assets/images/dashboard_logo.png"
+            alt="Municipality of Villanueva seal"
+            class="municipal-logo"
+            width="180"
+            height="180"
+          />
+
+          <h2 id="login-title">Welcome to RBCCMS</h2>
+          <p>Sign in to your account</p>
+        </header>
+
+        <form
+          #loginForm="ngForm"
+          (ngSubmit)="login()"
+        >
+          <div class="form-group">
+            <label
+              for="email"
+              class="visually-hidden"
+            >
+              Email address
+            </label>
+
+            <div class="input-wrapper">
+              <svg
+                class="input-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                aria-hidden="true"
+              >
+                <rect
+                  x="3"
+                  y="5"
+                  width="18"
+                  height="14"
+                  rx="3"
+                />
+                <path d="m4 7 8 6 8-6" />
+              </svg>
+
+              <input
+                type="email"
+                id="email"
+                name="email"
+                [(ngModel)]="email"
+                placeholder="Email address"
+                autocomplete="email"
+                autocapitalize="none"
+                spellcheck="false"
+                required
+                email
+                [disabled]="loading()"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label
+              for="password"
+              class="visually-hidden"
+            >
+              Password
+            </label>
+
+            <div class="input-wrapper">
+              <svg
+                class="input-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                aria-hidden="true"
+              >
+                <rect
+                  x="4"
+                  y="10"
+                  width="16"
+                  height="11"
+                  rx="3"
+                />
+                <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+                <path d="M12 14v3" />
+              </svg>
+
+              <input
+                [type]="showPassword ? 'text' : 'password'"
+                id="password"
+                name="password"
+                [(ngModel)]="password"
+                placeholder="Password"
+                autocomplete="current-password"
+                required
+                [disabled]="loading()"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            class="btn-login"
+            [class.is-loading]="loading()"
+            [disabled]="loading() || loginForm.invalid"
+            [attr.aria-busy]="loading()"
+          >
+            @if (loading()) {
+              <span
+                class="login-spinner"
+                aria-hidden="true"
+              ></span>
+            }
+
+            <span aria-live="polite">
+              {{ loading() ? 'Signing in...' : 'Login' }}
+            </span>
+          </button>
+        </form>
+
+        <div class="forgot-password-link">
+          <a
+            routerLink="/forgot-password"
+            [attr.tabindex]="loading() ? -1 : null"
+            [class.link-disabled]="loading()"
+            [attr.aria-disabled]="loading()"
+          >
+            Forgot password?
+          </a>
+        </div>
+
+        <footer class="login-footer">
+          <p>
+            Need help?
+            <strong>Contact the barangay.</strong>
+          </p>
+        </footer>
+      </section>
+    </div>
+  </main>
+}

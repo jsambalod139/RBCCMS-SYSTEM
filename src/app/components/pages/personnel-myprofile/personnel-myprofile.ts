@@ -3,36 +3,43 @@ import { CommonModule } from '@angular/common';
 import {
   Component,
   OnDestroy,
-  signal
+  inject,
+  signal,
 } from '@angular/core';
 
 import {
   getAuth,
-  onAuthStateChanged
+  onAuthStateChanged,
 } from 'firebase/auth';
 
 import {
   doc,
   getFirestore,
-  onSnapshot
+  onSnapshot,
 } from 'firebase/firestore';
 
 import {
-  firebaseApp
+  firebaseApp,
 } from '../../../core/firebase.config';
 
 import {
-  PersonnelProfile
+  PersonnelProfile,
 } from '../../../core/models/users.model';
+
+import {
+  SettingsService,
+} from '../../../core/services/settings.service';
 
 @Component({
   selector: 'app-personnel-myprofile',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './personnel-myprofile.html',
-  styleUrl: './personnel-myprofile.scss'
+  styleUrl: './personnel-myprofile.scss',
 })
 export class PersonnelMyprofile implements OnDestroy {
+  readonly account = inject(SettingsService);
+
   private readonly auth = getAuth(firebaseApp);
   private readonly db = getFirestore(firebaseApp);
 
@@ -43,11 +50,8 @@ export class PersonnelMyprofile implements OnDestroy {
   private readonly profileState =
     signal<PersonnelProfile | null>(null);
 
-  private readonly loadingState =
-    signal(true);
-
-  private readonly errorState =
-    signal('');
+  private readonly loadingState = signal(true);
+  private readonly errorState = signal('');
 
   get profile(): PersonnelProfile | null {
     return this.profileState();
@@ -72,6 +76,7 @@ export class PersonnelMyprofile implements OnDestroy {
     const generation = ++this.generation;
 
     this.stopProfile?.();
+    this.stopProfile = undefined;
 
     this.profileState.set(null);
     this.errorState.set('');
@@ -81,17 +86,14 @@ export class PersonnelMyprofile implements OnDestroy {
 
     if (!user) {
       this.loadingState.set(false);
-
       this.errorState.set(
         'Please sign in to view your profile.'
       );
-
       return;
     }
 
     this.stopProfile = onSnapshot(
       doc(this.db, 'users', user.uid),
-
       snapshot => {
         if (generation !== this.generation) {
           return;
@@ -105,11 +107,9 @@ export class PersonnelMyprofile implements OnDestroy {
           data['accountStatus'] !== 'approved'
         ) {
           this.profileState.set(null);
-
           this.errorState.set(
             'Your approved personnel profile is unavailable. Contact the administrator.'
           );
-
           this.loadingState.set(false);
           return;
         }
@@ -129,34 +129,28 @@ export class PersonnelMyprofile implements OnDestroy {
           name: name || 'Personnel',
           email: user.email || storedEmail,
           role_name: 'Personnel',
-          account_status: data['accountStatus']
+          account_status: data['accountStatus'],
         });
 
         this.errorState.set('');
         this.loadingState.set(false);
       },
-
       () => {
         if (generation !== this.generation) {
           return;
         }
 
         this.profileState.set(null);
-
         this.errorState.set(
           'Unable to load your profile. Check your connection and try again.'
         );
-
         this.loadingState.set(false);
       }
     );
   }
 
   get displayName(): string {
-    return (
-      this.profile?.name?.trim() ||
-      'Personnel'
-    );
+    return this.profile?.name?.trim() || 'Personnel';
   }
 
   get displayEmail(): string {
@@ -171,6 +165,11 @@ export class PersonnelMyprofile implements OnDestroy {
       this.profile?.role_name?.trim() ||
       'Personnel'
     );
+  }
+
+  retryProfile(): void {
+    this.loadProfile();
+    this.account.reload();
   }
 
   ngOnDestroy(): void {

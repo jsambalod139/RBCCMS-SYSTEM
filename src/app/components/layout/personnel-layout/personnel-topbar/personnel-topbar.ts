@@ -1,36 +1,84 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
+
+import { Router, RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 
-import { AuthService } from '../../../../core/services/auth.service';
+import {
+  AuthService,
+} from '../../../../core/services/auth.service';
+
+import {
+  SettingsService,
+} from '../../../../core/services/settings.service';
+
+import {
+  Notifications,
+} from '../../../shared/notifications/notifications';
 
 @Component({
   selector: 'app-personnel-topbar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [
+    CommonModule,
+    RouterLink,
+    Notifications,
+  ],
   templateUrl: './personnel-topbar.html',
   styleUrl: './personnel-topbar.scss',
 })
 export class PersonnelTopbar {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
+  private readonly element =
+    inject(ElementRef<HTMLElement>);
 
-  isMenuOpen = false;
+  @ViewChild(Notifications)
+  private notifications?: Notifications;
+
+  readonly account = inject(SettingsService);
+  readonly isMenuOpen = signal(false);
   readonly loggingOut = signal(false);
 
   toggleMenu(): void {
     if (!this.loggingOut()) {
-      this.isMenuOpen = !this.isMenuOpen;
+      this.notifications?.close();
+      this.isMenuOpen.set(!this.isMenuOpen());
     }
+  }
+
+  closeMenu(): void {
+    this.isMenuOpen.set(false);
+  }
+
+  @HostListener('document:click', ['$event'])
+  outsideClick(event: MouseEvent): void {
+    if (
+      !this.element.nativeElement.contains(
+        event.target as Node
+      )
+    ) {
+      this.closeMenu();
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  escape(): void {
+    this.closeMenu();
   }
 
   async logout(event: MouseEvent): Promise<void> {
     event.stopPropagation();
 
-    if (this.loggingOut()) {
-      return;
-    }
+    if (this.loggingOut()) return;
 
     this.loggingOut.set(true);
 
@@ -42,21 +90,19 @@ export class PersonnelTopbar {
         showCancelButton: true,
         confirmButtonText: 'Yes, log out',
         cancelButtonText: 'Cancel',
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
+        confirmButtonColor: '#21372a',
+        cancelButtonColor: '#777',
       });
 
-      if (!result.isConfirmed) {
-        return;
-      }
+      if (!result.isConfirmed) return;
 
       await this.auth.logout();
+      this.closeMenu();
 
-      this.isMenuOpen = false;
-
-      await this.router.navigate(['/login-components'], {
-        replaceUrl: true,
-      });
+      await this.router.navigate(
+        ['/login-components'],
+        { replaceUrl: true }
+      );
 
       await Swal.fire({
         icon: 'success',

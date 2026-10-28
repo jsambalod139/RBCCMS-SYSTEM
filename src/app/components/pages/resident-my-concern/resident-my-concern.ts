@@ -3,20 +3,25 @@ import { CommonModule } from '@angular/common';
 import {
   Component,
   OnInit,
+  effect,
   inject,
-  effect
 } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import {
+  ActivatedRoute,
+  Router,
+} from '@angular/router';
+
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import {
   ConcernStatus,
-  ConcernWithRelations
+  ConcernWithRelations,
 } from '../../../core/models/concern.model';
 
 import {
-  ConcernService
+  ConcernService,
 } from '../../../core/services/concern.service';
 
 @Component({
@@ -24,44 +29,57 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './resident-my-concern.html',
-  styleUrl: './resident-my-concern.scss'
+  styleUrl: './resident-my-concern.scss',
 })
 export class ResidentMyConcern implements OnInit {
   private readonly concernService =
     inject(ConcernService);
 
-  private readonly router =
-    inject(Router);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
+  private readonly routeParams = toSignal(
+    this.route.queryParamMap,
+    {
+      initialValue: this.route.snapshot.queryParamMap,
+    }
+  );
 
   searchTerm = '';
   selectedStatus = 'All Status';
 
   selectedConcern: ConcernWithRelations | null = null;
 
-  readonly photoError =
-    this.concernService.photoError;
+  readonly photoError = this.concernService.photoError;
 
   readonly statusOptions = [
     'All Status',
     'Pending',
     'In Progress',
     'Resolved',
-    'Rejected'
+    'Rejected',
   ];
 
   constructor() {
     effect(() => {
-      const records =
-        this.concernService.concerns();
+      const records = this.concernService.concerns();
+      const requested = this.routeParams().get('concern');
+      const loading = this.concernService.loading();
+      const failed = this.concernService.error();
 
-      const selected =
-        this.selectedConcern;
+      const target =
+        requested || this.selectedConcern?.concern_id;
 
-      if (selected) {
-        this.selectedConcern = records.find(
-          item =>
-            item.concern_id === selected.concern_id
-        ) ?? null;
+      if (!target) return;
+
+      const current = records.find(
+        item => item.concern_id === target
+      );
+
+      if (current) {
+        this.selectedConcern = current;
+      } else if (!loading && !failed) {
+        this.closeDetails();
       }
     });
   }
@@ -91,8 +109,7 @@ export class ResidentMyConcern implements OnInit {
   }
 
   get filteredConcerns(): ConcernWithRelations[] {
-    const search =
-      this.searchTerm.trim().toLowerCase();
+    const search = this.searchTerm.trim().toLowerCase();
 
     return this.concerns
       .filter(concern => {
@@ -101,12 +118,10 @@ export class ResidentMyConcern implements OnInit {
           `Category ${concern.category_id}`;
 
         const matchesSearch = [
-          String(
-            concern.resident_concern_number ?? ''
-          ),
+          String(concern.resident_concern_number ?? ''),
           categoryName,
           concern.location_description,
-          concern.description
+          concern.description,
         ].some(value =>
           (value ?? '').toLowerCase().includes(search)
         );
@@ -130,9 +145,7 @@ export class ResidentMyConcern implements OnInit {
       );
   }
 
-  getStatusClass(
-    status: ConcernStatus
-  ): string {
+  getStatusClass(status: ConcernStatus): string {
     switch (status) {
       case 'Pending':
         return 'status-pending';
@@ -155,10 +168,31 @@ export class ResidentMyConcern implements OnInit {
     concern: ConcernWithRelations
   ): void {
     this.selectedConcern = concern;
+
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        concern: concern.concern_id,
+      },
+      queryParamsHandling: 'merge',
+    });
   }
 
   closeDetails(): void {
     this.selectedConcern = null;
+
+    if (
+      this.route.snapshot.queryParamMap.has('concern')
+    ) {
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: {
+          concern: null,
+        },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    }
   }
 
   clearFilters(): void {
@@ -168,7 +202,7 @@ export class ResidentMyConcern implements OnInit {
 
   onSubmitConcernClick(): void {
     void this.router.navigate([
-      '/res-dashboard/resident-submit-concern'
+      '/res-dashboard/resident-submit-concern',
     ]);
   }
 

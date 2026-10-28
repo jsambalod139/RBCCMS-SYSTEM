@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+
 import {
   Component,
   computed,
@@ -6,7 +7,10 @@ import {
   inject,
   signal
 } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import {
   Concern,
@@ -33,6 +37,15 @@ type StatusFilter = 'All Status' | ConcernStatus;
 export class PersonnelConcerns {
   private readonly concernService = inject(ConcernService);
   private readonly residentService = inject(ResidentService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
+  private readonly routeParams = toSignal(
+    this.route.queryParamMap,
+    {
+      initialValue: this.route.snapshot.queryParamMap
+    }
+  );
 
   readonly concerns = this.concernService.concerns;
   readonly loading = this.concernService.loading;
@@ -43,9 +56,10 @@ export class PersonnelConcerns {
 
   readonly saving = signal(false);
   readonly feedback = signal('');
-
   readonly searchTerm = signal('');
-  readonly selectedStatus = signal<StatusFilter>('All Status');
+
+  readonly selectedStatus =
+    signal<StatusFilter>('All Status');
 
   selectedConcern: Concern | null = null;
   statusDraft: ConcernStatus = 'Pending';
@@ -69,17 +83,27 @@ export class PersonnelConcerns {
   constructor() {
     effect(() => {
       const records = this.concerns();
+      const requestedId = this.routeParams().get('concern');
+      const loading = this.loading();
+      const failed = this.loadError();
       const selected = this.selectedConcern;
 
-      if (!selected) return;
+      const targetId =
+        requestedId || selected?.concern_id;
+
+      if (!targetId) return;
 
       const current = records.find(
-        item => item.concern_id === selected.concern_id
+        item => item.concern_id === targetId
       );
 
       if (current) {
-        this.selectedConcern = current;
-      } else {
+        if (selected?.concern_id !== current.concern_id) {
+          this.viewDetails(current);
+        } else {
+          this.selectedConcern = current;
+        }
+      } else if (!loading && !failed) {
         this.closeDetails();
       }
     });
@@ -123,7 +147,6 @@ export class PersonnelConcerns {
       return 'Resident information unavailable';
     }
 
-    // Match the submitter's Firebase UID, not the displayed Resident ID.
     const resident = this.residentService.residents().find(
       item => item.uid === concern.resident_id
     );
@@ -148,7 +171,6 @@ export class PersonnelConcerns {
 
     const residentId = resident.residentId.trim();
 
-    // Avoid displaying an internal Firebase UID as the Resident ID.
     if (/^[1-9]\d*$/.test(residentId)) {
       return `${name} (Resident ID: ${residentId})`;
     }
@@ -175,16 +197,12 @@ export class PersonnelConcerns {
     switch (status) {
       case 'Pending':
         return 'status-pending';
-
       case 'In Progress':
         return 'status-progress';
-
       case 'Resolved':
         return 'status-resolved';
-
       case 'Rejected':
         return 'status-rejected';
-
       default:
         return 'status-default';
     }
@@ -201,6 +219,15 @@ export class PersonnelConcerns {
     this.selectedConcern = null;
     this.remarks = '';
     this.feedback.set('');
+
+    if (this.route.snapshot.queryParamMap.has('concern')) {
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { concern: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true
+      });
+    }
   }
 
   async saveStatus(): Promise<void> {

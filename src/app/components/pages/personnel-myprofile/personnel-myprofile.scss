@@ -5,15 +5,18 @@
   color: #243044;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 .profile-page {
   width: 100%;
   min-width: 0;
-  box-sizing: border-box;
   padding: 22px 28px;
   background: #f6f8fb;
 }
-
-/* Page title */
 
 .page-header {
   margin-bottom: 20px;
@@ -27,23 +30,18 @@
   }
 }
 
-/* Horizontal profile card */
-
 .profile-card {
   display: flex;
   align-items: center;
   gap: 20px;
   width: 100%;
   min-width: 0;
-  box-sizing: border-box;
   padding: 16px 20px;
-  background-color: #ffffff;
   border: 1px solid #e9edf2;
   border-radius: 11px;
+  background: #fff;
   box-shadow: 0 2px 4px rgb(15 23 42 / 3.5%);
 }
-
-/* Circular avatar */
 
 .profile-avatar {
   display: flex;
@@ -52,11 +50,18 @@
   justify-content: center;
   width: 64px;
   height: 64px;
-  box-sizing: border-box;
+  overflow: hidden;
   border: 1px solid #e2e8f0;
   border-radius: 50%;
   background: #edf1f5;
   color: #64748b;
+}
+
+.profile-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .avatar-icon {
@@ -64,8 +69,6 @@
   width: 32px;
   height: 32px;
 }
-
-/* Profile text */
 
 .profile-information {
   flex: 1;
@@ -98,15 +101,20 @@
   overflow-wrap: anywhere;
 }
 
-/* Loading and error states */
+.photo-loading {
+  margin: 12px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.6;
+}
 
 .empty-profile {
   margin-top: 16px;
   padding: 20px;
-  text-align: center;
-  background: #ffffff;
   border: 1px solid #e9edf2;
   border-radius: 11px;
+  background: #fff;
+  text-align: center;
 
   h3 {
     margin: 0 0 6px;
@@ -120,6 +128,7 @@
     color: #64748b;
     font-size: 12px;
     line-height: 1.7;
+    overflow-wrap: anywhere;
   }
 }
 
@@ -129,13 +138,13 @@
   border: 1px solid #21372a;
   border-radius: 5px;
   background: #21372a;
-  color: #ffffff;
+  color: #fff;
   font: inherit;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: #304c39;
   }
 
@@ -143,9 +152,12 @@
     outline: 2px solid #527c60;
     outline-offset: 3px;
   }
-}
 
-/* Tablet */
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
 
 @media (max-width: 768px) {
   .profile-page {
@@ -157,8 +169,6 @@
     padding: 16px;
   }
 }
-
-/* Mobile */
 
 @media (max-width: 480px) {
   .profile-page {

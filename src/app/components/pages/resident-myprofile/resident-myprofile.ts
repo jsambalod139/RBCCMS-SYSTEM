@@ -1,6 +1,17 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, signal } from '@angular/core';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+
+import {
+  Component,
+  OnDestroy,
+  inject,
+  signal,
+} from '@angular/core';
+
+import {
+  getAuth,
+  onAuthStateChanged,
+} from 'firebase/auth';
+
 import {
   Timestamp,
   doc,
@@ -8,7 +19,13 @@ import {
   onSnapshot,
 } from 'firebase/firestore';
 
-import { firebaseApp } from '../../../core/firebase.config';
+import {
+  firebaseApp,
+} from '../../../core/firebase.config';
+
+import {
+  SettingsService,
+} from '../../../core/services/settings.service';
 
 interface ResidentProfile {
   residentId: string;
@@ -30,6 +47,8 @@ interface ResidentProfile {
   styleUrl: './resident-myprofile.scss',
 })
 export class ResidentMyprofile implements OnDestroy {
+  readonly account = inject(SettingsService);
+
   private readonly auth = getAuth(firebaseApp);
   private readonly db = getFirestore(firebaseApp);
 
@@ -42,15 +61,18 @@ export class ResidentMyprofile implements OnDestroy {
   readonly errorMessage = signal('');
 
   constructor() {
-    this.stopAuth = onAuthStateChanged(this.auth, () => {
-      this.loadProfile();
-    });
+    this.stopAuth = onAuthStateChanged(
+      this.auth,
+      () => this.loadProfile()
+    );
   }
 
   loadProfile(): void {
     const generation = ++this.generation;
 
     this.stopProfile?.();
+    this.stopProfile = undefined;
+
     this.profile.set(null);
     this.errorMessage.set('');
     this.loading.set(true);
@@ -59,7 +81,9 @@ export class ResidentMyprofile implements OnDestroy {
 
     if (!user) {
       this.loading.set(false);
-      this.errorMessage.set('Please sign in to view your profile.');
+      this.errorMessage.set(
+        'Please sign in to view your profile.'
+      );
       return;
     }
 
@@ -92,7 +116,8 @@ export class ResidentMyprofile implements OnDestroy {
           address: this.text(data['address']),
           purok: this.text(data['purok']),
           accountStatus:
-            this.text(data['accountStatus']) || 'Not recorded',
+            this.text(data['accountStatus']) ||
+            'Not recorded',
           verificationStatus:
             data['residencyVerified'] === true
               ? 'Verified'
@@ -101,7 +126,9 @@ export class ResidentMyprofile implements OnDestroy {
                 : 'Not recorded',
           verifiedAt:
             data['verifiedAt'] instanceof Timestamp
-              ? data['verifiedAt'].toDate().toISOString()
+              ? data['verifiedAt']
+                  .toDate()
+                  .toISOString()
               : null,
         });
       },
@@ -134,7 +161,9 @@ export class ResidentMyprofile implements OnDestroy {
   }
 
   private text(value: unknown): string {
-    return typeof value === 'string' ? value.trim() : '';
+    return typeof value === 'string'
+      ? value.trim()
+      : '';
   }
 
   ngOnDestroy(): void {

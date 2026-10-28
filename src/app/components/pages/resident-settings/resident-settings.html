@@ -1,0 +1,474 @@
+<main class="settings-page">
+  <header class="page-heading">
+    <h1>Settings</h1>
+    <p>Manage your profile photo and account security.</p>
+  </header>
+
+  <div
+    class="settings-tabs"
+    role="group"
+    aria-label="Settings sections"
+  >
+    <button
+      type="button"
+      [class.active]="activeTab() === 'account'"
+      [attr.aria-pressed]="activeTab() === 'account'"
+      (click)="activeTab.set('account')"
+    >
+      Account
+    </button>
+
+    <button
+      type="button"
+      [class.active]="activeTab() === 'preferences'"
+      [attr.aria-pressed]="activeTab() === 'preferences'"
+      (click)="activeTab.set('preferences')"
+    >
+      Preferences
+    </button>
+  </div>
+
+  @if (account.loading()) {
+    <div class="notice" role="status">
+      Loading your account...
+    </div>
+  } @else if (account.error()) {
+    <div class="notice error-message" role="alert">
+      <p>{{ account.error() }}</p>
+
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="account.reload()"
+      >
+        Try Again
+      </button>
+    </div>
+  } @else if (account.profile(); as profile) {
+    <section
+      class="settings-card"
+      [hidden]="activeTab() !== 'account'"
+      aria-labelledby="account-title"
+    >
+      <header class="card-heading">
+        <h2 id="account-title">Account Information</h2>
+      </header>
+
+      <section
+        class="photo-section"
+        aria-labelledby="photo-title"
+        [attr.aria-busy]="photoBusy()"
+      >
+        <h3 id="photo-title">Profile Photo</h3>
+
+        <div class="photo-controls">
+          <div class="profile-avatar">
+            @if (account.photoUrl()) {
+              <img
+                [src]="account.photoUrl()"
+                alt="Your profile photo"
+                (error)="account.imageFailed()"
+              />
+            } @else {
+              <span aria-hidden="true">
+                {{ account.initials() }}
+              </span>
+            }
+          </div>
+
+          <input
+            #photoInput
+            type="file"
+            class="photo-file-input"
+            accept="image/jpeg,image/png,image/webp"
+            hidden
+            [disabled]="photoBusy()"
+            (change)="changePhoto($event)"
+          />
+
+          <div class="photo-actions">
+            <button
+              type="button"
+              class="secondary-button change-photo"
+              (click)="photoInput.click()"
+              [disabled]="photoBusy()"
+              [attr.aria-busy]="photoBusy()"
+            >
+              @if (photoBusy()) {
+                <span
+                  class="photo-button-spinner"
+                  aria-hidden="true"
+                ></span>
+              }
+
+              <span aria-live="polite">
+                {{
+                  photoBusy()
+                    ? 'Saving photo...'
+                    : 'Change Photo'
+                }}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              class="secondary-button remove-photo"
+              (click)="removePhoto()"
+              [disabled]="photoBusy() || !profile.photoPath"
+            >
+              Remove Photo
+            </button>
+          </div>
+
+          <p class="photo-hint">
+            JPG, PNG, or WEBP, up to 5 MB.
+            Photos are cropped to a square and compressed
+            before upload.
+          </p>
+
+          @if (account.photoLoading()) {
+            <p class="loading-text" role="status">
+              Loading your photo...
+            </p>
+          }
+
+          @if (photoFeedback()) {
+            <p class="message success-message" role="status">
+              {{ photoFeedback() }}
+            </p>
+          }
+
+          @if (photoError()) {
+            <p class="message error-message" role="alert">
+              {{ photoError() }}
+            </p>
+          }
+
+          @if (account.photoError()) {
+            <div class="photo-load-error">
+              <p class="message error-message" role="alert">
+                {{ account.photoError() }}
+              </p>
+
+              <button
+                type="button"
+                class="secondary-button"
+                (click)="account.retryPhoto()"
+                [disabled]="account.photoLoading() || photoBusy()"
+              >
+                Reload Photo
+              </button>
+            </div>
+          }
+        </div>
+      </section>
+
+      <div class="account-grid">
+        <div class="form-field">
+          <label for="settings-name">
+            {{
+              profile.role === 'resident'
+                ? 'Full Name'
+                : 'Account Name'
+            }}
+          </label>
+
+          <input
+            id="settings-name"
+            [value]="profile.name || 'Not recorded'"
+            readonly
+          />
+        </div>
+
+        <div class="form-field">
+          <label for="settings-email">Email Address</label>
+
+          <input
+            id="settings-email"
+            [value]="profile.email || 'Not recorded'"
+            readonly
+          />
+        </div>
+
+        <div class="form-field">
+          <label for="settings-role">Role</label>
+
+          <input
+            id="settings-role"
+            [value]="profile.role | titlecase"
+            readonly
+          />
+        </div>
+
+        <div class="form-field">
+          <label for="settings-status">Account Status</label>
+
+          <input
+            id="settings-status"
+            [value]="profile.accountStatus | titlecase"
+            readonly
+          />
+        </div>
+      </div>
+
+      <p class="account-note">
+        For corrections to your name or email, contact
+        {{
+          profile.role === 'resident'
+            ? 'the barangay'
+            : 'the administrator'
+        }}.
+      </p>
+
+      <section
+        class="password-section"
+        aria-labelledby="password-title"
+      >
+        <h3 id="password-title">Change Password</h3>
+
+        <p class="section-description">
+          Enter your current password to confirm this change.
+          Use 8–128 characters for your new password.
+        </p>
+
+        @if (passwordFeedback()) {
+          <p class="message success-message" role="status">
+            {{ passwordFeedback() }}
+          </p>
+        }
+
+        @if (passwordError()) {
+          <p class="message error-message" role="alert">
+            {{ passwordError() }}
+          </p>
+        }
+
+        <form
+          #passwordForm="ngForm"
+          (ngSubmit)="changePassword(passwordForm)"
+          novalidate
+        >
+          <fieldset [disabled]="passwordBusy()">
+            <div class="password-grid">
+              <div class="form-field">
+                <label for="current-password">
+                  Current Password
+                </label>
+
+                <div class="password-input">
+                  <input
+                    id="current-password"
+                    name="currentPassword"
+                    [(ngModel)]="currentPassword"
+                    [type]="showCurrent() ? 'text' : 'password'"
+                    placeholder="Enter current password"
+                    autocomplete="current-password"
+                    required
+                  />
+
+                  <button
+                    type="button"
+                    class="visibility-button"
+                    (click)="showCurrent.set(!showCurrent())"
+                    [attr.aria-pressed]="showCurrent()"
+                    aria-label="Show or hide current password"
+                  >
+                    {{ showCurrent() ? 'Hide' : 'Show' }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label for="new-password">New Password</label>
+
+                <div class="password-input">
+                  <input
+                    id="new-password"
+                    name="newPassword"
+                    [(ngModel)]="newPassword"
+                    [type]="showNew() ? 'text' : 'password'"
+                    placeholder="Enter new password"
+                    autocomplete="new-password"
+                    required
+                    minlength="8"
+                    maxlength="128"
+                  />
+
+                  <button
+                    type="button"
+                    class="visibility-button"
+                    (click)="showNew.set(!showNew())"
+                    [attr.aria-pressed]="showNew()"
+                    aria-label="Show or hide new password"
+                  >
+                    {{ showNew() ? 'Hide' : 'Show' }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label for="confirm-password">
+                  Confirm New Password
+                </label>
+
+                <div class="password-input">
+                  <input
+                    id="confirm-password"
+                    name="confirmPassword"
+                    [(ngModel)]="confirmPassword"
+                    [type]="showConfirm() ? 'text' : 'password'"
+                    placeholder="Confirm new password"
+                    autocomplete="new-password"
+                    required
+                    minlength="8"
+                    maxlength="128"
+                  />
+
+                  <button
+                    type="button"
+                    class="visibility-button"
+                    (click)="showConfirm.set(!showConfirm())"
+                    [attr.aria-pressed]="showConfirm()"
+                    aria-label="Show or hide confirmation password"
+                  >
+                    {{ showConfirm() ? 'Hide' : 'Show' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button
+                type="submit"
+                class="primary-button"
+                [disabled]="passwordBusy() || passwordForm.invalid"
+                [attr.aria-busy]="passwordBusy()"
+              >
+                @if (passwordBusy()) {
+                  <span
+                    class="button-spinner"
+                    aria-hidden="true"
+                  ></span>
+                }
+
+                <span aria-live="polite">
+                  {{
+                    passwordBusy()
+                      ? 'Updating...'
+                      : 'Update Password'
+                  }}
+                </span>
+              </button>
+            </div>
+          </fieldset>
+        </form>
+      </section>
+    </section>
+
+    @if (activeTab() === 'preferences') {
+      <section
+        class="settings-card preferences-card"
+        aria-labelledby="preferences-title"
+        [attr.aria-busy]="account.preferencesSaving()"
+      >
+        <header class="card-heading">
+          <h2 id="preferences-title">
+            Notification Preferences
+          </h2>
+          <p>
+            Choose which in-app notifications appear
+            in your account.
+          </p>
+        </header>
+
+        @if (account.preferencesLoading()) {
+          <p class="notice" role="status">
+            Loading your preferences...
+          </p>
+        } @else if (account.preferencesError()) {
+          <div class="notice error-message" role="alert">
+            <p>{{ account.preferencesError() }}</p>
+
+            <button
+              type="button"
+              class="secondary-button"
+              (click)="account.retryNotificationPreferences()"
+            >
+              Try Again
+            </button>
+          </div>
+        } @else {
+          <div class="preference-row">
+            <div class="preference-copy">
+              <h3 id="notification-preference-label">
+                {{
+                  profile.role === 'resident'
+                    ? 'Concern updates'
+                    : 'New concern submissions'
+                }}
+              </h3>
+
+              <p id="notification-preference-description">
+                {{
+                  profile.role === 'resident'
+                    ? 'Show notifications when personnel changes the status of your concern. Remarks attached to the update are included.'
+                    : 'Show notifications when residents submit new concerns across the responsible offices.'
+                }}
+              </p>
+            </div>
+
+            <label class="preference-switch">
+              <input
+                type="checkbox"
+                role="switch"
+                [checked]="account.notificationEnabled()"
+                [disabled]="account.preferencesSaving()"
+                (change)="changeNotificationPreference($event)"
+                aria-labelledby="notification-preference-label"
+                aria-describedby="notification-preference-description"
+              />
+
+              <span
+                class="switch-track"
+                aria-hidden="true"
+              ></span>
+            </label>
+          </div>
+
+          <p class="preference-status" role="status">
+            {{
+              account.preferencesSaving()
+                ? 'Saving preference...'
+                : account.notificationEnabled()
+                  ? 'Notifications are on.'
+                  : 'Notifications are off.'
+            }}
+          </p>
+
+          <p class="account-note">
+            Changes save automatically for this account.
+            Turning notifications off hides the bell alerts.
+            Your concern history and read status are kept.
+            Turning them on shows the existing events again.
+          </p>
+        }
+
+        @if (account.preferencesFeedback()) {
+          <p class="message success-message" role="status">
+            {{ account.preferencesFeedback() }}
+          </p>
+        }
+
+        @if (account.preferencesSaveError()) {
+          <p class="message error-message" role="alert">
+            {{ account.preferencesSaveError() }}
+          </p>
+        }
+      </section>
+    }
+  } @else {
+    <div class="notice" role="alert">
+      Please sign in to view your settings.
+    </div>
+  }
+</main>

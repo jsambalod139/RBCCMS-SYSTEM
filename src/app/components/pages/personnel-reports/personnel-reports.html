@@ -1,1 +1,352 @@
-<p>personnel-reports works!</p>
+<main class="reports-page">
+  <header class="page-heading">
+    <div>
+      <p class="eyebrow">PERSONNEL PORTAL</p>
+      <h1>Personnel Reports</h1>
+
+      <p>
+        Prepare consolidated reports for a selected period.
+      </p>
+    </div>
+
+    <div class="actions">
+      <button
+        type="button"
+        (click)="printReport()"
+        [disabled]="loading() || !!error()"
+      >
+        Print / Save PDF
+      </button>
+
+      <button
+        type="button"
+        class="primary"
+        (click)="exportCsv()"
+        [disabled]="loading() || !!error()"
+      >
+        Export CSV
+      </button>
+    </div>
+  </header>
+
+  @if (tab() !== 'residents') {
+    <form class="filters" (ngSubmit)="generate()">
+      <label>
+        Date From
+
+        <input
+          type="date"
+          name="from"
+          [(ngModel)]="from"
+          required
+        />
+      </label>
+
+      <label>
+        Date To
+
+        <input
+          type="date"
+          name="to"
+          [(ngModel)]="to"
+          required
+        />
+      </label>
+
+      <button type="submit" class="primary">
+        Generate Report
+      </button>
+
+      <button type="button" (click)="reset()">
+        Reset
+      </button>
+
+      @if (validation()) {
+        <p class="error" role="alert">
+          {{ validation() }}
+        </p>
+      }
+    </form>
+  }
+
+  <nav class="tabs" aria-label="Report sections">
+    <button
+      type="button"
+      [class.active]="tab() === 'summary'"
+      [attr.aria-pressed]="tab() === 'summary'"
+      (click)="tab.set('summary')"
+    >
+      Concern Summary
+    </button>
+
+    <button
+      type="button"
+      [class.active]="tab() === 'offices'"
+      [attr.aria-pressed]="tab() === 'offices'"
+      (click)="tab.set('offices')"
+    >
+      Responsible Offices
+    </button>
+
+    <button
+      type="button"
+      [class.active]="tab() === 'residents'"
+      [attr.aria-pressed]="tab() === 'residents'"
+      (click)="tab.set('residents')"
+    >
+      Resident Accounts
+    </button>
+  </nav>
+
+  @if (exportError()) {
+    <p class="error" role="alert">
+      {{ exportError() }}
+    </p>
+  }
+
+  <section
+    class="report-panel"
+    [attr.aria-busy]="loading()"
+  >
+    @if (loading()) {
+      <p role="status">Loading report data...</p>
+    } @else if (error()) {
+      <div role="alert">
+        <p class="error">{{ error() }}</p>
+
+        <button type="button" (click)="retry()">
+          Try Again
+        </button>
+      </div>
+    } @else if (tab() === 'residents') {
+      <h2>Resident Accounts</h2>
+
+      <p class="note">
+        All current registered accounts. Date filters do not
+        apply. These figures do not represent the entire
+        barangay population.
+      </p>
+
+      <div class="summary-strip">
+        <div>
+          Accounts
+          <strong>{{ residentTotals().total }}</strong>
+        </div>
+
+        <div>
+          Verified
+          <strong>{{ residentTotals().verified }}</strong>
+        </div>
+
+        <div>
+          Not Verified
+
+          <strong>
+            {{
+              residentTotals().total -
+              residentTotals().verified
+            }}
+          </strong>
+        </div>
+
+        <div>
+          Approved
+          <strong>{{ residentTotals().approved }}</strong>
+        </div>
+      </div>
+
+      <h3>Accounts by Purok</h3>
+
+      @if (!puroks().length) {
+        <p class="empty">
+          No registered resident accounts found.
+        </p>
+      } @else {
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Purok</th>
+                <th>Accounts</th>
+                <th>Verified</th>
+                <th>Not Verified</th>
+                <th>Approved</th>
+                <th>Other Account Statuses</th>
+                <th>Share</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (row of puroks(); track row.label) {
+                <tr>
+                  <td>{{ row.label }}</td>
+                  <td>{{ row.total }}</td>
+                  <td>{{ row.verified }}</td>
+                  <td>{{ row.total - row.verified }}</td>
+                  <td>{{ row.approved }}</td>
+                  <td>{{ row.total - row.approved }}</td>
+
+                  <td>
+                    {{
+                      share(
+                        row.total,
+                        residentTotals().total
+                      )
+                    }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+
+            <tfoot>
+              <tr>
+                <th>Total</th>
+                <td>{{ residentTotals().total }}</td>
+                <td>{{ residentTotals().verified }}</td>
+
+                <td>
+                  {{
+                    residentTotals().total -
+                    residentTotals().verified
+                  }}
+                </td>
+
+                <td>{{ residentTotals().approved }}</td>
+
+                <td>
+                  {{
+                    residentTotals().total -
+                    residentTotals().approved
+                  }}
+                </td>
+
+                <td>
+                  {{
+                    share(
+                      residentTotals().total,
+                      residentTotals().total
+                    )
+                  }}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      }
+    } @else {
+      <div class="report-heading">
+        <h2>
+          {{
+            tab() === 'offices'
+              ? 'Responsible Offices'
+              : 'Concern Summary'
+          }}
+        </h2>
+
+        <span>{{ periodLabel() }}</span>
+      </div>
+
+      <p class="note">
+        Concerns submitted during this period, grouped by
+        their current status. This is not a historical
+        status snapshot.
+      </p>
+
+      <div class="summary-strip">
+        <div>
+          Total
+          <strong>{{ totals().total }}</strong>
+        </div>
+
+        @for (status of statuses; track status) {
+          <div>
+            {{ status }}
+            <strong>{{ totals().counts[status] }}</strong>
+          </div>
+        }
+      </div>
+
+      <h3>
+        {{
+          tab() === 'offices'
+            ? 'Office Breakdown'
+            : 'Category Breakdown'
+        }}
+      </h3>
+
+      @if (!rows().length) {
+        <p class="empty">
+          No concerns were submitted during this period.
+        </p>
+      } @else {
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>
+                  {{
+                    tab() === 'offices'
+                      ? 'Responsible Office'
+                      : 'Category'
+                  }}
+                </th>
+
+                @for (status of statuses; track status) {
+                  <th>{{ status }}</th>
+                }
+
+                <th>Total</th>
+                <th>Share</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (row of rows(); track $index) {
+                <tr>
+                  <td>{{ row.label }}</td>
+
+                  @for (status of statuses; track status) {
+                    <td>{{ row.counts[status] }}</td>
+                  }
+
+                  <td>{{ row.total }}</td>
+
+                  <td>
+                    {{ share(row.total, totals().total) }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+
+            <tfoot>
+              <tr>
+                <th>Total</th>
+
+                @for (status of statuses; track status) {
+                  <td>{{ totals().counts[status] }}</td>
+                }
+
+                <td>{{ totals().total }}</td>
+
+                <td>
+                  {{
+                    share(
+                      totals().total,
+                      totals().total
+                    )
+                  }}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      }
+
+      <p class="note footnote">
+        Only categories or offices with submissions are
+        listed. Share is the percentage of concerns in the
+        selected period.
+      </p>
+    }
+  </section>
+</main>

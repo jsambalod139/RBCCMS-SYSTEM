@@ -1,0 +1,186 @@
+<div class="notification-wrapper">
+  <button
+    #bell
+    type="button"
+    class="bell-button"
+    (click)="toggle()"
+    [attr.aria-expanded]="isOpen()"
+    aria-controls="notification-panel"
+    [attr.aria-label]="
+      'Notifications, ' + feed.unreadCount() + ' unread'
+    "
+  >
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path
+        d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"
+      />
+    </svg>
+
+    @if (feed.unreadCount() > 0) {
+      <span class="unread-badge" aria-hidden="true">
+        {{
+          feed.unreadCount() > 99
+            ? '99+'
+            : feed.unreadCount()
+        }}
+      </span>
+    }
+  </button>
+
+  @if (isOpen()) {
+    <section
+      id="notification-panel"
+      class="notification-panel"
+      aria-labelledby="notification-title"
+      [attr.aria-busy]="feed.loading()"
+    >
+      <header class="panel-heading">
+        <h2 id="notification-title">Notifications</h2>
+
+        <button
+          type="button"
+          class="read-all"
+          (click)="feed.markAllRead()"
+          [disabled]="
+            feed.saving()
+            || !feed.unreadCount()
+            || feed.loading()
+          "
+        >
+          {{
+            feed.saving()
+              ? 'Saving...'
+              : 'Mark all as read'
+          }}
+        </button>
+
+        <button
+          type="button"
+          class="close-button"
+          (click)="closeAndFocus()"
+          aria-label="Close notifications"
+        >
+          ×
+        </button>
+      </header>
+
+      @if (feed.actionError()) {
+        <p class="error" role="alert">
+          {{ feed.actionError() }}
+        </p>
+      }
+
+      @if (feed.loading()) {
+        <p class="state" role="status">
+          Loading notifications...
+        </p>
+      } @else if (feed.error()) {
+        <div class="state" role="alert">
+          <p>{{ feed.error() }}</p>
+
+          <button
+            type="button"
+            class="retry"
+            (click)="feed.retry()"
+          >
+            Try Again
+          </button>
+        </div>
+      } @else if (feed.notificationsDisabled()) {
+        <div class="state">
+          <strong>Notifications are off</strong>
+          <p>
+            Turn them on in Settings → Preferences
+            to see concern notifications.
+          </p>
+        </div>
+      } @else if (!feed.visibleNotifications().length) {
+        <div class="state">
+          <strong>No notifications yet</strong>
+          <p>Concern updates will appear here.</p>
+        </div>
+      } @else {
+        <ul class="notification-list">
+          @for (
+            item of feed.visibleNotifications();
+            track item.id
+          ) {
+            <li>
+              <button
+                type="button"
+                class="notification-item"
+                [class.unread]="!item.read"
+                [disabled]="feed.saving()"
+                (click)="openConcern(item)"
+              >
+                <span
+                  class="event-icon"
+                  [class.resolved]="item.kind === 'resolved'"
+                  aria-hidden="true"
+                >
+                  {{
+                    item.kind === 'resolved'
+                      ? '✓'
+                      : item.kind === 'rejected'
+                        ? '!'
+                        : item.kind === 'submitted'
+                          ? '+'
+                          : '↻'
+                  }}
+                </span>
+
+                <span class="item-content">
+                  <span class="item-heading">
+                    <strong>{{ item.title }}</strong>
+
+                    @if (!item.read) {
+                      <span
+                        class="unread-dot"
+                        aria-label="Unread"
+                      ></span>
+                    }
+                  </span>
+
+                  <span class="item-message">
+                    {{ item.message }}
+                  </span>
+
+                  @if (item.remarks) {
+                    <span class="item-remarks">
+                      {{ item.remarks }}
+                    </span>
+                  }
+
+                  <time [attr.datetime]="item.createdAt">
+                    {{
+                      item.createdAt
+                        | date:'MMM d, y, h:mm a'
+                    }}
+                  </time>
+
+                  <span class="view-link">
+                    View concern →
+                  </span>
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+
+        <footer class="panel-footer">
+          Showing the latest
+          {{ feed.visibleNotifications().length }}
+          notifications.
+        </footer>
+      }
+    </section>
+  }
+</div>
