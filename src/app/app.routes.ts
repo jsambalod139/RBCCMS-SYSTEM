@@ -21,8 +21,12 @@ import { PersonnelReports } from './components/pages/personnel-reports/personnel
 import { PersonnelResidents } from './components/pages/personnel-residents/personnel-residents';
 import { PersonnelSettings } from './components/pages/personnel-settings/personnel-settings';
 
-// Administrator
+// Administrator layout
 import { AdDashboard } from './components/layout/admin-layout/ad-dashboard/ad-dashboard';
+import { AdminDashboard } from './components/pages/admin-dashboard/admin-dashboard';
+import { AdminMyProfile } from './components/pages/admin-my-profile/admin-my-profile';
+import { AdminAuditLogs } from './components/pages/admin-audit-logs/admin-audit-logs';
+import { AdminSettings } from './components/pages/admin-settings/admin-settings';
 
 export const routes: Routes = [
   {
@@ -41,6 +45,7 @@ export const routes: Routes = [
       passwordReset: true,
     },
   },
+
   {
     path: 'res-dashboard',
     component: ResDashboard,
@@ -74,6 +79,7 @@ export const routes: Routes = [
       },
     ],
   },
+
   {
     path: 'perso-dashboard',
     component: PersoDashboard,
@@ -111,12 +117,40 @@ export const routes: Routes = [
       },
     ],
   },
+
   {
     path: 'ad-dashboard',
     component: AdDashboard,
     canActivate: [roleGuard('admin')],
     canActivateChild: [roleGuard('admin')],
+    children: [
+      {
+        path: '',
+        redirectTo: 'admin-dashboard',
+        pathMatch: 'full',
+      },
+      {
+        path: 'admin-dashboard',
+        component: AdminDashboard,
+      },
+      {
+        path: 'admin-my-profile',
+        component: AdminMyProfile,
+      },
+      {
+        path: 'admin-audit-logs',
+        component: AdminAuditLogs,
+      },
+      {
+        path: 'admin-settings',
+        component: AdminSettings,
+      },
+      
+
+
+    ],
   },
+
   {
     path: '**',
     redirectTo: 'login-components',

@@ -1,0 +1,364 @@
+<main class="settings-page">
+  <header class="page-heading">
+    <p class="eyebrow">ADMINISTRATOR PORTAL</p>
+    <h1>Settings</h1>
+    <p>Manage your profile photo and account security.</p>
+  </header>
+
+  @if (account.loading()) {
+    <div class="notice" role="status">
+      Loading your account...
+    </div>
+  } @else if (account.error()) {
+    <div class="notice error-message" role="alert">
+      <p>{{ account.error() }}</p>
+
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="account.reload()"
+      >
+        Try Again
+      </button>
+    </div>
+  } @else if (adminProfile(); as profile) {
+    <section
+      class="settings-card"
+      aria-labelledby="account-title"
+    >
+      <header class="card-heading">
+        <h2 id="account-title">Account Information</h2>
+      </header>
+
+      <section
+        class="photo-section"
+        aria-labelledby="photo-title"
+        [attr.aria-busy]="photoBusy()"
+      >
+        <h3 id="photo-title">Profile Photo</h3>
+
+        <div class="photo-controls">
+          <div class="profile-avatar">
+            @if (account.photoUrl()) {
+              <img
+                [src]="account.photoUrl()"
+                alt="Your profile photo"
+                (error)="account.imageFailed()"
+              />
+            } @else {
+              <span aria-hidden="true">
+                {{ account.initials() }}
+              </span>
+            }
+          </div>
+
+          <input
+            #photoInput
+            type="file"
+            class="photo-file-input"
+            accept="image/jpeg,image/png,image/webp"
+            hidden
+            [disabled]="photoBusy()"
+            (change)="changePhoto($event)"
+          />
+
+          <div class="photo-actions">
+            <button
+              type="button"
+              class="secondary-button change-photo"
+              (click)="photoInput.click()"
+              [disabled]="photoBusy()"
+              [attr.aria-busy]="photoAction() === 'upload'"
+            >
+              @if (photoAction() === 'upload') {
+                <span
+                  class="spinner"
+                  aria-hidden="true"
+                ></span>
+              }
+
+              {{
+                photoAction() === 'upload'
+                  ? 'Saving photo...'
+                  : 'Change Photo'
+              }}
+            </button>
+
+            <button
+              type="button"
+              class="secondary-button"
+              (click)="removePhoto()"
+              [disabled]="photoBusy() || !profile.photoPath"
+              [attr.aria-busy]="photoAction() === 'remove'"
+            >
+              @if (photoAction() === 'remove') {
+                <span
+                  class="spinner"
+                  aria-hidden="true"
+                ></span>
+              }
+
+              {{
+                photoAction() === 'remove'
+                  ? 'Removing...'
+                  : 'Remove Photo'
+              }}
+            </button>
+          </div>
+
+          <p class="photo-hint">
+            JPG, PNG, or WEBP, up to 5 MB.
+            Photos are cropped to a square and compressed
+            before upload.
+          </p>
+
+          @if (account.photoLoading()) {
+            <p class="photo-hint" role="status">
+              Loading your photo...
+            </p>
+          }
+
+          @if (photoFeedback()) {
+            <p class="message success-message" role="status">
+              {{ photoFeedback() }}
+            </p>
+          }
+
+          @if (photoError()) {
+            <p class="message error-message" role="alert">
+              {{ photoError() }}
+            </p>
+          }
+
+          @if (account.photoError()) {
+            <div class="photo-load-error">
+              <p class="message error-message" role="alert">
+                {{ account.photoError() }}
+              </p>
+
+              <button
+                type="button"
+                class="secondary-button"
+                (click)="account.retryPhoto()"
+                [disabled]="account.photoLoading() || photoBusy()"
+              >
+                Reload Photo
+              </button>
+            </div>
+          }
+        </div>
+      </section>
+
+      <div class="account-grid">
+        <div class="form-field">
+          <label for="admin-name">Account Name</label>
+          <input
+            id="admin-name"
+            type="text"
+            [value]="profile.name || 'Administrator'"
+            readonly
+          />
+        </div>
+
+        <div class="form-field">
+          <label for="admin-email">Email Address</label>
+          <input
+            id="admin-email"
+            type="email"
+            [value]="profile.email"
+            readonly
+          />
+        </div>
+
+        <div class="form-field">
+          <label for="admin-role">Role</label>
+          <input
+            id="admin-role"
+            type="text"
+            value="Administrator"
+            readonly
+          />
+        </div>
+
+        <div class="form-field">
+          <label for="admin-status">Account Status</label>
+          <input
+            id="admin-status"
+            type="text"
+            [value]="profile.accountStatus | titlecase"
+            readonly
+          />
+        </div>
+      </div>
+
+      <p class="account-note">
+        Account name and email are managed by the system administrator.
+      </p>
+
+      <section
+        class="password-section"
+        aria-labelledby="password-title"
+      >
+        <h3 id="password-title">Change Password</h3>
+
+        <p class="section-description">
+          Enter your current password to confirm this change.
+          Use 8–128 characters for your new password.
+        </p>
+
+        @if (passwordFeedback()) {
+          <p class="message success-message" role="status">
+            {{ passwordFeedback() }}
+          </p>
+        }
+
+        @if (passwordError()) {
+          <p class="message error-message" role="alert">
+            {{ passwordError() }}
+          </p>
+        }
+
+        <form
+          #passwordForm="ngForm"
+          (ngSubmit)="changePassword(passwordForm)"
+        >
+          <fieldset
+            [disabled]="passwordBusy()"
+            [attr.aria-busy]="passwordBusy()"
+          >
+            <legend class="visually-hidden">
+              Change your account password
+            </legend>
+
+            <div class="password-grid">
+              <div class="form-field">
+                <label for="current-password">
+                  Current Password
+                </label>
+
+                <div class="password-input">
+                  <input
+                    id="current-password"
+                    name="currentPassword"
+                    [type]="showCurrent() ? 'text' : 'password'"
+                    [(ngModel)]="currentPassword"
+                    autocomplete="current-password"
+                    placeholder="Enter current password"
+                    required
+                  />
+
+                  <button
+                    type="button"
+                    class="visibility-button"
+                    (click)="showCurrent.set(!showCurrent())"
+                    [attr.aria-label]="
+                      showCurrent()
+                        ? 'Hide current password'
+                        : 'Show current password'
+                    "
+                    [attr.aria-pressed]="showCurrent()"
+                  >
+                    {{ showCurrent() ? 'Hide' : 'Show' }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label for="new-password">New Password</label>
+
+                <div class="password-input">
+                  <input
+                    id="new-password"
+                    name="newPassword"
+                    [type]="showNew() ? 'text' : 'password'"
+                    [(ngModel)]="newPassword"
+                    autocomplete="new-password"
+                    placeholder="Enter new password"
+                    minlength="8"
+                    maxlength="128"
+                    required
+                  />
+
+                  <button
+                    type="button"
+                    class="visibility-button"
+                    (click)="showNew.set(!showNew())"
+                    [attr.aria-label]="
+                      showNew()
+                        ? 'Hide new password'
+                        : 'Show new password'
+                    "
+                    [attr.aria-pressed]="showNew()"
+                  >
+                    {{ showNew() ? 'Hide' : 'Show' }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label for="confirm-password">
+                  Confirm New Password
+                </label>
+
+                <div class="password-input">
+                  <input
+                    id="confirm-password"
+                    name="confirmPassword"
+                    [type]="showConfirm() ? 'text' : 'password'"
+                    [(ngModel)]="confirmPassword"
+                    autocomplete="new-password"
+                    placeholder="Confirm new password"
+                    minlength="8"
+                    maxlength="128"
+                    required
+                  />
+
+                  <button
+                    type="button"
+                    class="visibility-button"
+                    (click)="showConfirm.set(!showConfirm())"
+                    [attr.aria-label]="
+                      showConfirm()
+                        ? 'Hide password confirmation'
+                        : 'Show password confirmation'
+                    "
+                    [attr.aria-pressed]="showConfirm()"
+                  >
+                    {{ showConfirm() ? 'Hide' : 'Show' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button
+                type="submit"
+                class="primary-button"
+                [disabled]="passwordBusy() || passwordForm.invalid"
+              >
+                @if (passwordBusy()) {
+                  <span
+                    class="spinner"
+                    aria-hidden="true"
+                  ></span>
+                }
+
+                <span aria-live="polite">
+                  {{
+                    passwordBusy()
+                      ? 'Updating password...'
+                      : 'Update Password'
+                  }}
+                </span>
+              </button>
+            </div>
+          </fieldset>
+        </form>
+      </section>
+    </section>
+  } @else {
+    <div class="notice" role="alert">
+      Please sign in with an approved administrator account.
+    </div>
+  }
+</main>

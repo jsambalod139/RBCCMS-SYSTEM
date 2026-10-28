@@ -1,16 +1,17 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 
 import {
+  User,
   getAuth,
   signInWithEmailAndPassword,
   signOut,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 
 import {
   doc,
   getDoc,
-  getFirestore
+  getFirestore,
 } from 'firebase/firestore';
 
 import { firebaseApp } from '../firebase.config';
@@ -35,6 +36,13 @@ export class AuthService {
   private readonly auth = getAuth(firebaseApp);
   private readonly db = getFirestore(firebaseApp);
 
+  private readonly auditEndpoint =
+    'https://nlwjwvhjojnjrmlaykym.supabase.co/functions/v1/auth-audit';
+
+  private readonly auditFailure = signal('');
+
+  readonly auditWarning = this.auditFailure.asReadonly();
+
   async getApprovedProfile(): Promise<UserProfile | null> {
     await this.auth.authStateReady();
 
@@ -45,6 +53,10 @@ export class AuthService {
     const snapshot = await getDoc(
       doc(this.db, 'users', user.uid)
     );
+
+    if (this.auth.currentUser?.uid !== user.uid) {
+      throw new Error('account/session-changed');
+    }
 
     if (!snapshot.exists()) {
       throw new Error('account/profile-missing');
@@ -70,7 +82,7 @@ export class AuthService {
       uid: user.uid,
       name:
         typeof data['name'] === 'string'
-          ? data['name']
+          ? data['name'].trim()
           : '',
       email: user.email ?? '',
       role,
@@ -78,7 +90,7 @@ export class AuthService {
       officeId:
         typeof data['officeId'] === 'string'
           ? data['officeId']
-          : null
+          : null,
     };
   }
 
@@ -86,12 +98,18 @@ export class AuthService {
     email: string,
     password: string
   ): Promise<UserProfile> {
+    this.auditFailure.set('');
+
+    let signedInUser: User | null = null;
+
     try {
-      await signInWithEmailAndPassword(
+      const credential = await signInWithEmailAndPassword(
         this.auth,
         email.trim(),
         password
       );
+
+      signedInUser = credential.user;
 
       const profile = await this.getApprovedProfile();
 
@@ -99,9 +117,22 @@ export class AuthService {
         throw new Error('account/profile-missing');
       }
 
+      await this.recordAuthEvent('login', signedInUser);
+
+      if (this.auth.currentUser?.uid !== profile.uid) {
+        throw new Error('account/session-changed');
+      }
+
       return profile;
     } catch (error) {
-      await signOut(this.auth).catch(() => undefined);
+      // Avoid signing out a different account after an account switch.
+      if (
+        signedInUser &&
+        this.auth.currentUser?.uid === signedInUser.uid
+      ) {
+        await signOut(this.auth).catch(() => undefined);
+      }
+
       throw error;
     }
   }
@@ -120,14 +151,78 @@ export class AuthService {
           ? String(error.code)
           : '';
 
-      // Keep the response generic for unregistered addresses.
       if (code !== 'auth/user-not-found') {
         throw error;
       }
     }
   }
 
-  logout(): Promise<void> {
-    return signOut(this.auth);
+  async logout(): Promise<void> {
+    const user = this.auth.currentUser;
+
+    this.auditFailure.set('');
+
+    if (!user) {
+      await signOut(this.auth);
+      return;
+    }
+
+    // Logging is best effort. It must not block sign-out.
+    await this.recordAuthEvent('logout', user);
+
+    if (this.auth.currentUser?.uid === user.uid) {
+      await signOut(this.auth);
+    }
+  }
+
+  private async recordAuthEvent(
+    action: 'login' | 'logout',
+    user: User
+  ): Promise<void> {
+    const controller = new AbortController();
+
+    const timeout = setTimeout(
+      () => controller.abort(),
+      8000
+    );
+
+    try {
+      if (this.auth.currentUser?.uid !== user.uid) {
+        return;
+      }
+
+      const token = await user.getIdToken();
+
+      if (
+        controller.signal.aborted ||
+        this.auth.currentUser?.uid !== user.uid
+      ) {
+        return;
+      }
+
+      const response = await fetch(this.auditEndpoint, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action }),
+        cache: 'no-store',
+        credentials: 'omit',
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error('audit/unavailable');
+      }
+    } catch {
+      if (this.auth.currentUser?.uid === user.uid) {
+        this.auditFailure.set(
+          'The authentication activity could not be recorded.'
+        );
+      }
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 }

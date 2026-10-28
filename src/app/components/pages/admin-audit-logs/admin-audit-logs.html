@@ -1,0 +1,239 @@
+<main
+  class="audit-page"
+  [attr.aria-busy]="loading()"
+>
+  <header class="page-heading">
+    <p class="eyebrow">ADMINISTRATOR PORTAL</p>
+
+    <h1>Audit Logs</h1>
+
+    <p class="page-description">
+      Review recorded user actions and affected records.
+    </p>
+  </header>
+
+  <section
+    class="filter-panel"
+    aria-label="Audit log filters"
+  >
+    <div class="filter-field category-field">
+      <label for="audit-category">Category</label>
+
+      <select
+        id="audit-category"
+        [ngModel]="selectedCategory()"
+        (ngModelChange)="changeCategory($event)"
+      >
+        @for (category of categoryOptions; track category) {
+          <option [value]="category">
+            {{ category }}
+          </option>
+        }
+      </select>
+    </div>
+
+    <div class="filter-field search-field">
+      <label for="audit-search">Search</label>
+
+      <div class="search-wrapper">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          aria-hidden="true"
+        >
+          <circle cx="10.5" cy="10.5" r="6.5" />
+          <path d="m16 16 4 4" />
+        </svg>
+
+        <input
+          id="audit-search"
+          type="search"
+          placeholder="Action, user, details..."
+          autocomplete="off"
+          maxlength="200"
+          [ngModel]="searchTerm()"
+          (ngModelChange)="changeSearch($event)"
+        />
+      </div>
+    </div>
+
+    <button
+      type="button"
+      class="button button-outline reset-button"
+      (click)="resetFilters()"
+    >
+      Reset
+    </button>
+  </section>
+
+  <section
+    class="records-panel"
+    aria-labelledby="activity-title"
+  >
+    <header class="records-heading">
+      <h2 id="activity-title">Activity Records</h2>
+
+      @if (!loading() && !errorMessage()) {
+        <span class="record-count">
+          {{ totalRecords() }}
+          {{ totalRecords() === 1 ? 'record' : 'records' }}
+        </span>
+      }
+    </header>
+
+    @if (loading()) {
+      <div class="state-message" role="status">
+        <span
+          class="spinner"
+          aria-hidden="true"
+        ></span>
+
+        <p>Loading audit logs...</p>
+      </div>
+    } @else if (errorMessage()) {
+      <div
+        class="state-message error-state"
+        role="alert"
+      >
+        <p>{{ errorMessage() }}</p>
+
+        <button
+          type="button"
+          class="button button-primary"
+          (click)="loadLogs()"
+        >
+          Try Again
+        </button>
+      </div>
+    } @else if (totalRecords() === 0) {
+      <div class="state-message">
+        @if (
+          searchTerm().trim() ||
+          selectedCategory() !== 'All categories'
+        ) {
+          <h3>No matching audit logs</h3>
+
+          <p>
+            Try another search or reset the filters.
+          </p>
+
+          <button
+            type="button"
+            class="button button-outline"
+            (click)="resetFilters()"
+          >
+            Reset Filters
+          </button>
+        } @else {
+          <h3>No audit logs yet</h3>
+
+          <p>
+            Recorded activity will appear here after logging
+            is connected and a new action occurs.
+          </p>
+        }
+      </div>
+    } @else {
+      <div
+        class="table-wrapper"
+        role="region"
+        aria-label="Audit activity records"
+        tabindex="0"
+      >
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Date &amp; Time</th>
+              <th scope="col">User</th>
+              <th scope="col">Category</th>
+              <th scope="col">Action</th>
+              <th scope="col">Details</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (entry of pagedEntries(); track entry.id) {
+              <tr>
+                <td class="date-cell">
+                  @if (entry.createdAt) {
+                    <time [attr.datetime]="entry.createdAt">
+                      {{
+                        entry.createdAt
+                          | date:'MMM d, y, h:mm a':'GMT+08:00'
+                      }}
+                    </time>
+                  } @else {
+                    Date unavailable
+                  }
+                </td>
+
+                <td class="user-cell">
+                  {{ entry.userName }}
+                </td>
+
+                <td>
+                  <span
+                    class="category-badge"
+                    [ngClass]="categoryClass(entry.category)"
+                  >
+                    {{ entry.category }}
+                  </span>
+                </td>
+
+                <td class="action-cell">
+                  {{ entry.action }}
+                </td>
+
+                <td class="details-cell">
+                  {{ displayDetails(entry) }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <footer class="pagination">
+        <p
+          class="pagination-summary"
+          aria-live="polite"
+        >
+          Showing {{ firstRecord() }}–{{ lastRecord() }}
+          of {{ totalRecords() }}
+        </p>
+
+        <nav
+          class="pagination-controls"
+          aria-label="Audit log pagination"
+        >
+          <button
+            type="button"
+            class="button button-outline"
+            [disabled]="displayedPage() <= 1"
+            (click)="previousPage()"
+          >
+            Previous
+          </button>
+
+          <span
+            class="page-number"
+            aria-live="polite"
+          >
+            Page {{ displayedPage() }} of {{ totalPages() }}
+          </span>
+
+          <button
+            type="button"
+            class="button button-outline"
+            [disabled]="displayedPage() >= totalPages()"
+            (click)="nextPage()"
+          >
+            Next
+          </button>
+        </nav>
+      </footer>
+    }
+  </section>
+</main>

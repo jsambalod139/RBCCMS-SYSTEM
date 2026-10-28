@@ -1,0 +1,101 @@
+<main class="profile-page">
+  <header class="page-header">
+    <h1>My Profile</h1>
+  </header>
+
+  @if (account.loading()) {
+    <section class="profile-notice" role="status">
+      <p>Loading your profile...</p>
+    </section>
+  } @else if (account.error()) {
+    <section class="profile-notice" role="alert">
+      <h2>Profile information unavailable</h2>
+
+      <p>{{ account.error() }}</p>
+
+      <button
+        type="button"
+        class="retry-button"
+        (click)="retryLoad()"
+      >
+        Try Again
+      </button>
+    </section>
+  } @else if (adminProfile(); as admin) {
+    <section
+      class="profile-card"
+      aria-label="Administrator profile"
+    >
+      <div class="profile-avatar" aria-hidden="true">
+        @if (account.photoUrl(); as photoUrl) {
+          <img
+            [src]="photoUrl"
+            alt=""
+            (error)="account.imageFailed()"
+          />
+        } @else {
+          <svg
+            class="avatar-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+          >
+            <circle cx="12" cy="8" r="4" />
+
+            <path
+              d="M4.5 20a7.5 7.5 0 0 1 15 0"
+              stroke-linecap="round"
+            />
+          </svg>
+        }
+      </div>
+
+      <div class="profile-information">
+        <h2>{{ admin.name || 'Administrator' }}</h2>
+
+        <p class="profile-email">
+          {{ admin.email || 'Email not recorded' }}
+        </p>
+
+        <span class="profile-role">
+          Administrator
+        </span>
+      </div>
+    </section>
+
+    @if (account.photoLoading()) {
+      <p class="photo-message" role="status">
+        Loading profile photo...
+      </p>
+    } @else if (account.photoError()) {
+      <div class="photo-message" role="status">
+        <p>{{ account.photoError() }}</p>
+
+        <button
+          type="button"
+          class="photo-retry"
+          (click)="account.retryPhoto()"
+        >
+          Retry Photo
+        </button>
+      </div>
+    }
+  } @else {
+    <section class="profile-notice" role="alert">
+      <h2>Administrator profile unavailable</h2>
+
+      <p>
+        Please sign in with an approved administrator account.
+      </p>
+
+      <button
+        type="button"
+        class="retry-button"
+        (click)="retryLoad()"
+      >
+        Try Again
+      </button>
+    </section>
+  }
+</main>

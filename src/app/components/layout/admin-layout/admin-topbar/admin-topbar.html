@@ -1,21 +1,117 @@
-<nav class="dashboard-topbar">
-    <div class="topbar-left">
-        <h1>Welcome to BRIMS!</h1>
-    </div>
-    <div class="topbar-right">
-       <div class="profile-wrapper" (click)="toggleMenu()">
+<nav class="dashboard-topbar" aria-label="Administrator header">
+  <div class="topbar-left">
+    <h1>Welcome to RBCCMS!</h1>
+  </div>
 
-  <img src="https://i.pravatar.cc/100" class="avatar" />
-  <div class="dropdown" *ngIf="isMenuOpen">
-    <div class="profile-info">
-      <img src="https://i.pravatar.cc/100" class="avatar" />
-      <span>Jon Charles</span>
-    </div>
-    <div class="menu-item logout" (click)="logout()">
-    <i class="pi pi-sign-out"></i> Log out
-       </div>
-      </div>
+  <div class="topbar-right">
+    <div class="profile-wrapper">
+      <button
+        type="button"
+        class="profile-trigger"
+        (click)="toggleMenu()"
+        [attr.aria-expanded]="isMenuOpen()"
+        aria-controls="admin-profile-dropdown"
+        aria-label="Open account options"
+        [disabled]="loggingOut()"
+      >
+        @if (account.photoUrl()) {
+          <img
+            [src]="account.photoUrl()"
+            class="avatar"
+            alt=""
+            (error)="account.imageFailed()"
+          />
+        } @else {
+          <span
+            class="avatar avatar-initials"
+            aria-hidden="true"
+          >
+            {{ account.initials() }}
+          </span>
+        }
+      </button>
+
+      @if (isMenuOpen()) {
+        <div
+          id="admin-profile-dropdown"
+          class="dropdown"
+        >
+          <div class="profile-info">
+            @if (account.photoUrl()) {
+              <img
+                [src]="account.photoUrl()"
+                class="avatar"
+                alt=""
+                (error)="account.imageFailed()"
+              />
+            } @else {
+              <span
+                class="avatar avatar-initials"
+                aria-hidden="true"
+              >
+                {{ account.initials() }}
+              </span>
+            }
+
+            <div class="profile-text">
+              <span class="profile-name">
+                {{ account.profile()?.name || 'Administrator' }}
+              </span>
+
+              <span class="profile-role">
+                Administrator
+              </span>
+            </div>
+          </div>
+
+          <a
+            class="menu-item"
+            routerLink="/ad-dashboard/admin-settings"
+            (click)="closeMenu()"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M9 3h6l1 3 3 1 2 5-2 5-3 1-1 3H9l-1-3-3-1-2-5 2-5 3-1Z"
+              />
+            </svg>
+
+            Settings
+          </a>
+
+          <button
+            type="button"
+            class="menu-item logout"
+            (click)="logout()"
+            [disabled]="loggingOut()"
+            [attr.aria-busy]="loggingOut()"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              aria-hidden="true"
+            >
+              <path
+                d="M9 4H4v16h5M10 12h11m-4-4 4 4-4 4"
+              />
+            </svg>
+
+            {{
+              loggingOut()
+                ? 'Please wait...'
+                : 'Log out'
+            }}
+          </button>
+        </div>
+      }
     </div>
   </div>
 </nav>
-
