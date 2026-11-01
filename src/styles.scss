@@ -1,5 +1,373 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --font-ui: 'Inter', Arial, sans-serif;
+  --text-strong: #172b20;
+  --text-body: #344b3d;
+  --text-muted: #5d7063;
+}
+
+/* Preserve the existing RBCCMS reset. */
 * {
-    margin: 0;
-    padding: 0;
-    
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-body);
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.avatar-initials {
+  font-family: var(--font-ui) !important;
+}
+
+/*
+ * Admin typography overrides.
+ * !important overrides the explicit font sizes in existing
+ * component styles without replacing their layouts.
+ */
+app-ad-dashboard {
+  font-family: var(--font-ui);
+
+  .topbar-left h1 {
+    font-size: clamp(20px, 2vw, 26px) !important;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .page-heading h1,
+  .page-header h1,
+  .details-header h1 {
+    font-size: clamp(24px, 2.3vw, 28px) !important;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.025em;
+    color: var(--text-strong);
+  }
+
+  .section-heading h2,
+  .records-heading h2,
+  .results-heading h2,
+  .card-heading h2,
+  .description-section h2,
+  .photo-section h2,
+  .history-section h2 {
+    font-size: 18px !important;
+    font-weight: 600;
+    line-height: 1.45;
+    letter-spacing: -0.015em;
+  }
+
+  .eyebrow {
+    font-size: 11px !important;
+    line-height: 1.5;
+    letter-spacing: 0.13em;
+  }
+
+  .page-description,
+  .page-heading > p:not(.eyebrow),
+  .section-description,
+  .account-note,
+  .photo-hint,
+  .read-only-note {
+    font-size: 13px !important;
+    line-height: 1.75;
+    color: var(--text-muted);
+  }
+
+  table th {
+    font-size: 12px !important;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
+  table td {
+    font-size: 13px !important;
+    line-height: 1.6;
+  }
+
+  table .date-cell,
+  .pagination-summary,
+  .page-number,
+  .record-count {
+    font-size: 12px !important;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .details-cell,
+  .status-transition,
+  .history-empty {
+    color: var(--text-muted);
+  }
+
+  .detail-grid dt {
+    font-size: 12px !important;
+    font-weight: 500;
+  }
+
+  .detail-grid dd,
+  .description-section p,
+  .history-item p {
+    font-size: 14px !important;
+    line-height: 1.75;
+  }
+
+  .history-item time {
+    font-size: 12px !important;
+    line-height: 1.6;
+  }
+
+  .status-badge,
+  .category-badge,
+  .badge {
+    font-size: 11px !important;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
+  .summary-information h2 {
+    font-size: 13px !important;
+    font-weight: 500;
+  }
+
+  .summary-information p {
+    font-size: 30px !important;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .profile-information h2 {
+    font-size: 18px !important;
+    line-height: 1.5;
+  }
+
+  .profile-email,
+  .profile-name,
+  .menu-item {
+    font-size: 13px !important;
+  }
+
+  .profile-role {
+    font-size: 12px !important;
+  }
+
+  .form-field label,
+  .filter-field label,
+  .filters label {
+    font-size: 13px !important;
+  }
+
+  .form-field input,
+  .filters input,
+  .filters select,
+  .filter-panel input,
+  .filter-panel select,
+  .search-box input,
+  .filter-box select {
+    font-size: 14px !important;
+  }
+
+  .button,
+  .primary-button,
+  .secondary-button,
+  .view-button,
+  .retry-button,
+  .row-actions button,
+  .pagination button {
+    font-size: 13px !important;
+    font-weight: 600;
+  }
+
+  /*
+   * Style the existing photo link as a button.
+   * Its URL and new-tab behavior remain intact.
+   */
+  .photo-section > a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 10px 16px;
+    border: 1px solid #087b49;
+    border-radius: 7px;
+    background: #087b49;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.5;
+    text-decoration: none;
+    text-transform: capitalize;
+
+    transition:
+      transform 160ms ease,
+      background-color 160ms ease,
+      border-color 160ms ease,
+      box-shadow 160ms ease;
+
+    &:focus-visible {
+      outline: 2px solid #527b60;
+      outline-offset: 3px;
+    }
+
+    &:active {
+      transform: scale(0.97);
+    }
+  }
+
+  /*
+   * Informational cards keep a normal cursor.
+   * Hover does not imply they are clickable.
+   */
+  .history-item {
+    cursor: default;
+
+    transition:
+      transform 180ms ease,
+      border-color 180ms ease,
+      box-shadow 180ms ease,
+      background-color 180ms ease;
+  }
+
+  /* Replays when the page-keyed tbody is recreated. */
+  .audit-page .audit-page-rows {
+    animation: audit-records-enter 180ms ease-out;
+  }
+
+  /* Reserve space to reduce pagination jumping. */
+  .audit-page .table-wrapper {
+    min-height: 34rem;
+  }
+
+  .audit-page .pagination button {
+    transition:
+      transform 160ms ease,
+      background-color 160ms ease,
+      border-color 160ms ease;
+
+    &:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+  }
+}
+
+/* Shared notification typography for all roles. */
+app-notifications {
+  .panel-heading h2 {
+    font-size: 15px !important;
+    font-weight: 600;
+  }
+
+  .item-heading,
+  .item-message,
+  .item-remarks {
+    font-size: 13px !important;
+    line-height: 1.65;
+  }
+
+  time,
+  .view-link,
+  .read-all {
+    font-size: 12px !important;
+  }
+
+  .panel-footer {
+    font-size: 11px !important;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  app-ad-dashboard .photo-section > a:hover {
+    border-color: #06643b;
+    background: #06643b;
+    box-shadow: 0 4px 12px rgb(8 123 73 / 16%);
+  }
+
+  app-ad-dashboard .history-item:hover {
+    transform: translateY(-2px);
+    border-color: #a9c7b3;
+    background: #f7fbf8;
+    box-shadow: 0 5px 16px rgb(33 55 42 / 7%);
+  }
+}
+
+@keyframes audit-records-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 600px) {
+  app-ad-dashboard {
+    .form-field input,
+    .filters input,
+    .filters select,
+    .filter-panel input,
+    .filter-panel select,
+    .search-box input,
+    .filter-box select {
+      font-size: 16px !important;
+    }
+
+    .photo-section > a {
+      min-height: 44px;
+      max-width: 100%;
+    }
+
+    .history-item {
+      transform: none;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  app-ad-dashboard {
+    .audit-page .audit-page-rows {
+      animation: none;
+    }
+
+    .history-item,
+    .photo-section > a,
+    .audit-page .pagination button {
+      transition: none;
+    }
+
+    .history-item:hover,
+    .photo-section > a:active,
+    .audit-page .pagination button:active:not(:disabled) {
+      transform: none;
+    }
+  }
+}
+
+@media print {
+  app-ad-dashboard .audit-page .table-wrapper {
+    min-height: 0;
+  }
 }

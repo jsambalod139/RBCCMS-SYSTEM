@@ -2,25 +2,37 @@
   position: fixed;
   inset: 0;
   display: block;
+  min-width: 0;
   overflow: hidden;
+  font-family: 'Inter', Arial, sans-serif;
+  color: #21372a;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 .app-layout {
   display: flex;
+  width: 100%;
   height: 100%;
+  height: 100dvh;
   overflow: hidden;
-  background: #cdd9f0;
-  font-family: 'Poppins', sans-serif;
+  background: #f5f8f6;
+  font-family: inherit;
 }
 
 app-resident-sidebar {
   display: block;
   flex: 0 0 auto;
+  min-height: 0;
 }
 
 .page-wrapper {
-  flex: 1;
   display: flex;
+  flex: 1;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
@@ -28,6 +40,8 @@ app-resident-sidebar {
 }
 
 app-resident-topbar {
+  position: relative;
+  z-index: 30;
   display: block;
   flex: 0 0 auto;
 }
@@ -36,8 +50,60 @@ app-resident-topbar {
   flex: 1;
   min-width: 0;
   min-height: 0;
+  padding: 0;
   overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
+  background: #f5f8f6;
+  scrollbar-width: thin;
+  scrollbar-color: #bdcec2 transparent;
+}
+
+app-contents {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
   padding: 0;
-  background: #f7fafc;
+}
+
+.main-section::-webkit-scrollbar {
+  width: 8px;
+}
+
+.main-section::-webkit-scrollbar-thumb {
+  border: 2px solid #f5f8f6;
+  border-radius: 10px;
+  background: #bdcec2;
+}
+
+@media (max-width: 600px) {
+  .app-layout {
+    flex-direction: column;
+  }
+
+  app-resident-sidebar {
+    width: 100%;
+  }
+}
+
+@media print {
+  :host {
+    position: static;
+    overflow: visible;
+  }
+
+  .app-layout,
+  .page-wrapper,
+  .main-section {
+    display: block;
+    height: auto;
+    overflow: visible;
+    background: #fff;
+  }
+
+  app-resident-sidebar,
+  app-resident-topbar {
+    display: none;
+  }
 }

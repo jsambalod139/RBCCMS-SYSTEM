@@ -14,6 +14,7 @@ import {
   collection,
   doc,
   getFirestore,
+  getDoc,
   onSnapshot,
   query,
   where
@@ -63,6 +64,7 @@ export class ResidentService implements OnDestroy {
   readonly residents = signal<ResidentRecord[]>([]);
   readonly loading = signal(true);
   readonly error = signal('');
+  readonly canManageResidents = signal(false);
 
   private stopAuth: () => void;
   private stopProfile?: () => void;
@@ -84,6 +86,7 @@ export class ResidentService implements OnDestroy {
     this.stopProfile?.();
     this.stopResidents?.();
 
+    this.canManageResidents.set(false);
     this.residents.set([]);
     this.error.set('');
     this.loading.set(true);
@@ -103,24 +106,27 @@ export class ResidentService implements OnDestroy {
 
         const profileGeneration =
           ++this.profileGeneration;
+        this.canManageResidents.set(false);
 
         this.stopResidents?.();
+        this.canManageResidents.set(false);
         this.residents.set([]);
 
         const profile = snapshot.data();
 
         if (
           profile?.['role'] !== 'personnel' ||
-          profile?.['accountStatus'] !== 'approved'
+          profile?.['accountStatus'] !== 'approved' ||
+          profile?.['officeId'] !== 'barangay-office'
         ) {
-          this.error.set(
-            'An approved personnel account is required.'
-          );
+          // Other offices may use concerns without loading the resident registry.
+          this.error.set('');
 
           this.loading.set(false);
           return;
         }
 
+        this.canManageResidents.set(true);
         this.loading.set(true);
 
         const residentsQuery = query(
@@ -271,6 +277,12 @@ export class ResidentService implements OnDestroy {
       throw new Error('Please sign in.');
     }
 
+    const profile = (await getDoc(doc(this.db, 'users', user.uid))).data();
+    if (profile?.['role'] !== 'personnel' ||
+        profile?.['accountStatus'] !== 'approved' ||
+        profile?.['officeId'] !== 'barangay-office') {
+      throw new Error('Only approved Barangay Office personnel can manage residents.');
+    }
     const token = await user.getIdToken();
 
     if (this.auth.currentUser?.uid !== user.uid) {
@@ -323,6 +335,7 @@ export class ResidentService implements OnDestroy {
   ngOnDestroy(): void {
     ++this.generation;
 
+    this.canManageResidents.set(false);
     this.stopAuth();
     this.stopProfile?.();
     this.stopResidents?.();

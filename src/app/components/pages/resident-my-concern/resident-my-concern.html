@@ -59,15 +59,12 @@
               @case ('Pending') {
                 Your concern is awaiting review.
               }
-
               @case ('In Progress') {
                 Personnel are working on your concern.
               }
-
               @case ('Resolved') {
                 Your concern has been marked as resolved.
               }
-
               @case ('Rejected') {
                 Your concern has been marked as rejected.
                 Review the remarks below.
@@ -83,7 +80,6 @@
         <dl class="information-grid">
           <div class="information-card">
             <dt>Category</dt>
-
             <dd>
               {{
                 concern.category?.category_name ??
@@ -99,18 +95,13 @@
 
           <div class="information-card">
             <dt>Date Submitted</dt>
-
             <dd>
-              {{
-                concern.reported_at |
-                date:'MMM d, y, h:mm a'
-              }}
+              {{ concern.reported_at | date:'MMM d, y, h:mm a' }}
             </dd>
           </div>
 
           <div class="information-card">
             <dt>Responsible Office</dt>
-
             <dd>
               {{
                 concern.office?.office_name ||
@@ -125,19 +116,16 @@
 
           <div class="information-card">
             <dt>Last Updated By</dt>
-
             <dd>
               {{
-                concern.last_updated_by
-                  ? 'Personnel'
-                  : 'Not recorded'
+                concern.last_updated_by_label ||
+                'No personnel update yet'
               }}
             </dd>
           </div>
 
           <div class="information-card">
             <dt>Last Updated</dt>
-
             <dd>
               {{
                 concern.updated_at
@@ -167,7 +155,7 @@
             rel="noopener noreferrer"
             class="photo-link"
           >
-            Open full photo
+            Open Full Photo
           </a>
 
           <img
@@ -177,9 +165,7 @@
           />
         </section>
       } @else if (concern.photo_path && !photoError()) {
-        <p role="status">
-          Loading attached photo...
-        </p>
+        <p role="status">Loading attached photo...</p>
       }
 
       <section class="details-section">
@@ -207,13 +193,8 @@
                       {{ update.new_status }}
                     </span>
 
-                    <time
-                      [attr.datetime]="update.created_at"
-                    >
-                      {{
-                        update.created_at |
-                        date:'MMM d, y, h:mm a'
-                      }}
+                    <time [attr.datetime]="update.created_at">
+                      {{ update.created_at | date:'MMM d, y, h:mm a' }}
                     </time>
                   </div>
 
@@ -225,18 +206,15 @@
                   }
 
                   <p>
+                    Updated by
                     {{
-                      update.updated_by
-                        ? 'Updated by Personnel'
-                        : 'Updater not recorded'
+                      update.updated_by_label ||
+                      'Personnel (name not recorded)'
                     }}
                   </p>
 
                   <p class="remarks">
-                    {{
-                      update.remarks ||
-                      'No remarks provided.'
-                    }}
+                    {{ update.remarks || 'No remarks provided.' }}
                   </p>
                 </div>
               </li>
@@ -253,7 +231,6 @@
     <header class="page-header">
       <div>
         <h1>My Concerns</h1>
-
         <p>
           View and track the status of your submitted concerns.
         </p>
@@ -262,12 +239,7 @@
 
     <div class="toolbar">
       <div class="search-box">
-        <span
-          class="search-icon"
-          aria-hidden="true"
-        >
-          ⌕
-        </span>
+        <span class="search-icon" aria-hidden="true">⌕</span>
 
         <input
           type="search"
@@ -311,15 +283,8 @@
       </div>
     </div>
 
-    <div
-      class="loading-state"
-      *ngIf="isLoading"
-    >
-      <span
-        class="loading-spinner"
-        aria-hidden="true"
-      ></span>
-
+    <div class="loading-state" *ngIf="isLoading">
+      <span class="loading-spinner" aria-hidden="true"></span>
       <p>Loading your concerns...</p>
     </div>
 
@@ -354,13 +319,7 @@
               <th scope="col">Category</th>
               <th scope="col">Status</th>
               <th scope="col">Date Only</th>
-
-              <th
-                scope="col"
-                class="action-column"
-              >
-                Action
-              </th>
+              <th scope="col" class="action-column">Action</th>
             </tr>
           </thead>
 
@@ -425,12 +384,7 @@
         filteredConcerns.length === 0
       "
     >
-      <div
-        class="empty-icon"
-        aria-hidden="true"
-      >
-        ▤
-      </div>
+      <div class="empty-icon" aria-hidden="true">▤</div>
 
       <h2>
         {{

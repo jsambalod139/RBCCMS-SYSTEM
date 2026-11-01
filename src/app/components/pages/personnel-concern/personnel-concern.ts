@@ -5,7 +5,7 @@ import {
   computed,
   effect,
   inject,
-  signal
+  signal,
 } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
@@ -14,15 +14,15 @@ import { toSignal } from '@angular/core/rxjs-interop';
 
 import {
   Concern,
-  ConcernStatus
+  ConcernStatus,
 } from '../../../core/models/concern.model';
 
 import {
-  ConcernService
+  ConcernService,
 } from '../../../core/services/concern.service';
 
 import {
-  ResidentService
+  ResidentService,
 } from '../../../core/services/resident.service';
 
 type StatusFilter = 'All Status' | ConcernStatus;
@@ -32,7 +32,7 @@ type StatusFilter = 'All Status' | ConcernStatus;
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './personnel-concern.html',
-  styleUrl: './personnel-concern.scss'
+  styleUrl: './personnel-concern.scss',
 })
 export class PersonnelConcerns {
   private readonly concernService = inject(ConcernService);
@@ -43,7 +43,7 @@ export class PersonnelConcerns {
   private readonly routeParams = toSignal(
     this.route.queryParamMap,
     {
-      initialValue: this.route.snapshot.queryParamMap
+      initialValue: this.route.snapshot.queryParamMap,
     }
   );
 
@@ -70,14 +70,14 @@ export class PersonnelConcerns {
     'Pending',
     'In Progress',
     'Resolved',
-    'Rejected'
+    'Rejected',
   ];
 
   readonly availableStatuses: ConcernStatus[] = [
     'Pending',
     'In Progress',
     'Resolved',
-    'Rejected'
+    'Rejected',
   ];
 
   constructor() {
@@ -87,6 +87,13 @@ export class PersonnelConcerns {
       const loading = this.loading();
       const failed = this.loadError();
       const selected = this.selectedConcern;
+
+      if (loading || failed) {
+        this.selectedConcern = null;
+        this.remarks = '';
+        this.feedback.set('');
+        return;
+      }
 
       const targetId =
         requestedId || selected?.concern_id;
@@ -103,7 +110,7 @@ export class PersonnelConcerns {
         } else {
           this.selectedConcern = current;
         }
-      } else if (!loading && !failed) {
+      } else {
         this.closeDetails();
       }
     });
@@ -120,7 +127,7 @@ export class PersonnelConcerns {
           this.categoryName(concern),
           concern.location_description,
           concern.description,
-          concern.office?.office_name ?? ''
+          concern.office?.office_name ?? '',
         ].some(value =>
           (value ?? '').toLowerCase().includes(search)
         );
@@ -131,10 +138,9 @@ export class PersonnelConcerns {
 
         return matchesSearch && matchesStatus;
       })
-      .sort(
-        (a, b) =>
-          (a.concern_number ?? Number.MAX_SAFE_INTEGER) -
-          (b.concern_number ?? Number.MAX_SAFE_INTEGER)
+      .sort((a, b) =>
+        (a.concern_number ?? Number.MAX_SAFE_INTEGER) -
+        (b.concern_number ?? Number.MAX_SAFE_INTEGER)
       );
   });
 
@@ -158,7 +164,7 @@ export class PersonnelConcerns {
     const fullName = [
       resident.firstName,
       resident.middleName,
-      resident.lastName
+      resident.lastName,
     ]
       .filter(Boolean)
       .join(' ')
@@ -171,11 +177,9 @@ export class PersonnelConcerns {
 
     const residentId = resident.residentId.trim();
 
-    if (/^[1-9]\d*$/.test(residentId)) {
-      return `${name} (Resident ID: ${residentId})`;
-    }
-
-    return `${name} (Resident ID not assigned)`;
+    return /^[1-9]\d*$/.test(residentId)
+      ? `${name} (Resident ID: ${residentId})`
+      : `${name} (Resident ID not assigned)`;
   }
 
   retryResidents(): void {
@@ -197,12 +201,16 @@ export class PersonnelConcerns {
     switch (status) {
       case 'Pending':
         return 'status-pending';
+
       case 'In Progress':
         return 'status-progress';
+
       case 'Resolved':
         return 'status-resolved';
+
       case 'Rejected':
         return 'status-rejected';
+
       default:
         return 'status-default';
     }
@@ -225,7 +233,7 @@ export class PersonnelConcerns {
         relativeTo: this.route,
         queryParams: { concern: null },
         queryParamsHandling: 'merge',
-        replaceUrl: true
+        replaceUrl: true,
       });
     }
   }
@@ -255,6 +263,16 @@ export class PersonnelConcerns {
       if (
         this.selectedConcern?.concern_id !== concern.concern_id
       ) {
+        return;
+      }
+
+      if (
+        !this.concerns().some(
+          item => item.concern_id === updated.concern_id
+        )
+      ) {
+        this.selectedConcern = null;
+        this.remarks = '';
         return;
       }
 

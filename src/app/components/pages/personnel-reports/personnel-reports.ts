@@ -1,26 +1,44 @@
 import { CommonModule } from '@angular/common';
+
 import {
   Component,
+  DestroyRef,
   computed,
+  effect,
   inject,
-  signal
+  signal,
 } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 
 import {
+  getAuth,
+  onAuthStateChanged,
+} from 'firebase/auth';
+
+import {
+  firebaseApp,
+} from '../../../core/firebase.config';
+
+import {
   Concern,
-  ConcernStatus
+  ConcernStatus,
 } from '../../../core/models/concern.model';
 
 import {
-  ConcernService
+  ConcernService,
 } from '../../../core/services/concern.service';
 
 import {
-  ResidentService
+  ResidentService,
 } from '../../../core/services/resident.service';
 
 type Tab = 'summary' | 'offices' | 'residents';
+
+interface ReportPeriod {
+  from: string;
+  to: string;
+}
 
 interface SummaryRow {
   label: string;
@@ -35,16 +53,26 @@ interface ResidentRow {
   approved: number;
 }
 
+// Keeps navigation state if browser storage is unavailable.
+const reportPeriods = new Map<string, ReportPeriod>();
+
 @Component({
   selector: 'app-personnel-reports',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './personnel-reports.html',
-  styleUrl: './personnel-reports.scss'
+  styleUrl: './personnel-reports.scss',
 })
 export class PersonnelReports {
+  private readonly auth = getAuth(firebaseApp);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly concernService = inject(ConcernService);
   private readonly residentService = inject(ResidentService);
+
+  private periodUid: string | null = null;
+
+  readonly canManageResidents =
+    this.residentService.canManageResidents;
 
   readonly tab = signal<Tab>('summary');
 
@@ -52,7 +80,7 @@ export class PersonnelReports {
     'Pending',
     'In Progress',
     'Resolved',
-    'Rejected'
+    'Rejected',
   ];
 
   private readonly today = new Date();
@@ -70,13 +98,38 @@ export class PersonnelReports {
   from = this.initialFrom;
   to = this.initialTo;
 
-  readonly period = signal({
+  readonly period = signal<ReportPeriod>({
     from: this.initialFrom,
-    to: this.initialTo
+    to: this.initialTo,
   });
 
   readonly validation = signal('');
   readonly exportError = signal('');
+
+  constructor() {
+    this.restorePeriod(
+      this.auth.currentUser?.uid ?? null
+    );
+
+    const stop = onAuthStateChanged(this.auth, user => {
+      const uid = user?.uid ?? null;
+
+      if (uid !== this.periodUid) {
+        this.restorePeriod(uid);
+      }
+    });
+
+    this.destroyRef.onDestroy(stop);
+
+    effect(() => {
+      if (
+        !this.canManageResidents() &&
+        this.tab() === 'residents'
+      ) {
+        this.tab.set('summary');
+      }
+    });
+  }
 
   readonly loading = computed(() =>
     this.tab() === 'residents'
@@ -114,7 +167,7 @@ export class PersonnelReports {
     this.group(this.filtered(), concern => [
       String(concern.category_id),
       concern.category?.category_name ||
-        `Category ${concern.category_id}`
+        `Category ${concern.category_id}`,
     ])
   );
 
@@ -126,7 +179,7 @@ export class PersonnelReports {
           concern.office_id
             ? `Office unavailable (${concern.office_id})`
             : 'Not assigned'
-        )
+        ),
     ])
   );
 
@@ -136,7 +189,11 @@ export class PersonnelReports {
       : this.categories()
   );
 
-  readonly residents = this.residentService.residents;
+  readonly residents = computed(() =>
+    this.canManageResidents()
+      ? this.residentService.residents()
+      : []
+  );
 
   readonly residentTotals = computed(() => ({
     total: this.residents().length,
@@ -147,7 +204,7 @@ export class PersonnelReports {
 
     approved: this.residents().filter(
       item => item.accountStatus === 'approved'
-    ).length
+    ).length,
   }));
 
   readonly puroks = computed(() => {
@@ -160,7 +217,7 @@ export class PersonnelReports {
         label,
         total: 0,
         verified: 0,
-        approved: 0
+        approved: 0,
       };
 
       row.total++;
@@ -198,9 +255,10 @@ export class PersonnelReports {
 
     this.period.set({
       from: this.from,
-      to: this.to
+      to: this.to,
     });
 
+    this.savePeriod();
     this.validation.set('');
     this.exportError.set('');
   }
@@ -209,6 +267,90 @@ export class PersonnelReports {
     this.from = this.initialFrom;
     this.to = this.initialTo;
     this.generate();
+  }
+
+  private restorePeriod(uid: string | null): void {
+    this.periodUid = uid;
+
+    let range: ReportPeriod = {
+      from: this.initialFrom,
+      to: this.initialTo,
+    };
+
+    if (uid) {
+      let candidate: unknown = reportPeriods.get(uid);
+
+      if (!candidate) {
+        try {
+          const raw = sessionStorage.getItem(
+            this.periodKey(uid)
+          );
+
+          candidate = raw ? JSON.parse(raw) : null;
+        } catch {
+          // Use defaults if storage is blocked or invalid.
+        }
+      }
+
+      if (this.validPeriod(candidate)) {
+        range = {
+          from: candidate.from,
+          to: candidate.to,
+        };
+
+        reportPeriods.set(uid, range);
+      }
+    }
+
+    this.from = range.from;
+    this.to = range.to;
+    this.period.set({ ...range });
+
+    this.validation.set('');
+    this.exportError.set('');
+  }
+
+  private savePeriod(): void {
+    const uid = this.auth.currentUser?.uid;
+
+    if (!uid || uid !== this.periodUid) {
+      return;
+    }
+
+    const range = { ...this.period() };
+
+    reportPeriods.set(uid, range);
+
+    try {
+      sessionStorage.setItem(
+        this.periodKey(uid),
+        JSON.stringify(range)
+      );
+    } catch {
+      // The memory fallback preserves page navigation state.
+    }
+  }
+
+  private periodKey(uid: string): string {
+    return `rbccms:personnel-report-period:v1:${uid}`;
+  }
+
+  private validPeriod(
+    value: unknown
+  ): value is ReportPeriod {
+    if (!value || typeof value !== 'object') {
+      return false;
+    }
+
+    const range = value as Partial<ReportPeriod>;
+
+    return (
+      typeof range.from === 'string' &&
+      typeof range.to === 'string' &&
+      !!this.parseDay(range.from) &&
+      !!this.parseDay(range.to) &&
+      range.from <= range.to
+    );
   }
 
   retry(): void {
@@ -226,7 +368,7 @@ export class PersonnelReports {
       this.parseDay(day)!.toLocaleDateString('en-PH', {
         month: 'short',
         day: 'numeric',
-        year: 'numeric'
+        year: 'numeric',
       });
 
     return `${format(period.from)} – ${format(period.to)}`;
@@ -278,8 +420,8 @@ export class PersonnelReports {
         Pending: 0,
         'In Progress': 0,
         Resolved: 0,
-        Rejected: 0
-      }
+        Rejected: 0,
+      },
     };
 
     for (const record of records) {
@@ -303,7 +445,7 @@ export class PersonnelReports {
 
       const group = groups.get(key) || {
         label,
-        records: []
+        records: [],
       };
 
       group.records.push(record);
@@ -313,7 +455,7 @@ export class PersonnelReports {
     return [...groups.values()]
       .map(group => ({
         ...this.summarize(group.records),
-        label: group.label
+        label: group.label,
       }))
       .sort((a, b) =>
         a.label.localeCompare(b.label)
@@ -326,6 +468,12 @@ export class PersonnelReports {
     cells: string[][];
   } {
     if (this.tab() === 'residents') {
+      if (!this.canManageResidents()) {
+        throw new Error(
+          'Resident reports are restricted to Barangay Office personnel.'
+        );
+      }
+
       const total = this.residentTotals();
 
       return {
@@ -343,7 +491,7 @@ export class PersonnelReports {
             'Not verified',
             'Approved',
             'Other account statuses',
-            'Share'
+            'Share',
           ],
 
           ...this.puroks().map(row => [
@@ -353,7 +501,7 @@ export class PersonnelReports {
             String(row.total - row.verified),
             String(row.approved),
             String(row.total - row.approved),
-            this.share(row.total, total.total)
+            this.share(row.total, total.total),
           ]),
 
           [
@@ -363,9 +511,9 @@ export class PersonnelReports {
             String(total.total - total.verified),
             String(total.approved),
             String(total.total - total.approved),
-            this.share(total.total, total.total)
-          ]
-        ]
+            this.share(total.total, total.total),
+          ],
+        ],
       };
     }
 
@@ -377,7 +525,7 @@ export class PersonnelReports {
         String(row.counts[status])
       ),
       String(row.total),
-      this.share(row.total, total.total)
+      this.share(row.total, total.total),
     ];
 
     return {
@@ -397,17 +545,24 @@ export class PersonnelReports {
             : 'Category',
           ...this.statuses,
           'Total',
-          'Share'
+          'Share',
         ],
 
         ...this.rows().map(cells),
-        cells(total)
-      ]
+        cells(total),
+      ],
     };
   }
 
   exportCsv(): void {
-    if (this.loading() || this.error()) {
+    if (
+      this.loading() ||
+      this.error() ||
+      (
+        this.tab() === 'residents' &&
+        !this.canManageResidents()
+      )
+    ) {
       return;
     }
 
@@ -427,7 +582,7 @@ export class PersonnelReports {
       [report.note],
       [`Generated: ${new Date().toLocaleString('en-PH')}`],
       [],
-      ...report.cells
+      ...report.cells,
     ]
       .map(row => row.map(quote).join(','))
       .join('\r\n');
@@ -441,6 +596,7 @@ export class PersonnelReports {
     const anchor = document.createElement('a');
 
     anchor.href = url;
+
     anchor.download =
       `rbccms-${this.tab()}-${this.localDay(new Date())}.csv`;
 
@@ -452,7 +608,14 @@ export class PersonnelReports {
   }
 
   printReport(): void {
-    if (this.loading() || this.error()) {
+    if (
+      this.loading() ||
+      this.error() ||
+      (
+        this.tab() === 'residents' &&
+        !this.canManageResidents()
+      )
+    ) {
       return;
     }
 
@@ -480,7 +643,7 @@ export class PersonnelReports {
           '<': '&lt;',
           '>': '&gt;',
           '"': '&quot;',
-          "'": '&#39;'
+          "'": '&#39;',
         }[char]!)
       );
 

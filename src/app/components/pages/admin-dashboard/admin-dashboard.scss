@@ -14,8 +14,9 @@
 .admin-dashboard {
   width: 100%;
   min-height: 100%;
-  padding: 28px 32px;
-  background: #f5f7f6;
+  padding: clamp(18px, 2.4vw, 32px);
+  background: #f5f8f6;
+  animation: dashboard-enter 200ms ease-out;
 }
 
 .page-heading {
@@ -24,15 +25,16 @@
   h1 {
     margin: 0 0 8px;
     color: #17251d;
-    font-size: 27px;
+    font-size: clamp(23px, 2.5vw, 28px);
     font-weight: 700;
     line-height: 1.3;
+    overflow-wrap: anywhere;
   }
 }
 
 .eyebrow {
   margin: 0 0 9px;
-  color: #66776c;
+  color: #627267;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 1.6px;
@@ -42,7 +44,7 @@
   margin: 0;
   color: #68736c;
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 .summary-grid {
@@ -57,22 +59,26 @@
   align-items: center;
   gap: 15px;
   min-width: 0;
-  min-height: 112px;
+  min-height: 104px;
   padding: 20px;
-  border: 1px solid #dfe7e1;
-  border-radius: 8px;
-  background: #ffffff;
-  box-shadow: 0 2px 5px rgb(33 55 42 / 3%);
+  border: 1px solid #dfe8e2;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 3px 14px rgb(33 55 42 / 4%);
+
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
 }
 
 .summary-icon {
-  display: flex;
+  display: grid;
   flex: 0 0 48px;
-  align-items: center;
-  justify-content: center;
+  place-items: center;
   width: 48px;
   height: 48px;
-  border-radius: 9px;
+  border-radius: 10px;
   background: #e7f2e9;
   color: #24613b;
 
@@ -114,14 +120,16 @@
     font-size: 30px;
     font-weight: 700;
     line-height: 1.1;
+    font-variant-numeric: tabular-nums;
   }
 }
 
 .concerns-section {
   padding: 24px;
-  border: 1px solid #dfe7e1;
-  border-radius: 8px;
-  background: #ffffff;
+  border: 1px solid #dfe8e2;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 3px 14px rgb(33 55 42 / 4%);
 }
 
 .section-heading {
@@ -129,7 +137,6 @@
 
   h2 {
     margin: 0;
-    color: #21372a;
     font-size: 19px;
     font-weight: 700;
   }
@@ -137,14 +144,12 @@
 
 .table-wrapper {
   width: 100%;
+  max-width: 100%;
   overflow-x: auto;
   border: 1px solid #dfe7e1;
-  border-radius: 6px;
-
-  &:focus-visible {
-    outline: 2px solid #527b60;
-    outline-offset: 3px;
-  }
+  border-radius: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #b8cbbf #f5f8f6;
 }
 
 table {
@@ -161,10 +166,23 @@ th {
   font-size: 12px;
   font-weight: 600;
   line-height: 1.5;
+
+  &:nth-child(1),
+  &:nth-child(2) {
+    width: 30%;
+  }
+
+  &:nth-child(3) {
+    width: 18%;
+  }
+
+  &:nth-child(4) {
+    width: 22%;
+  }
 }
 
 td {
-  padding: 16px;
+  padding: 14px 16px;
   border-top: 1px solid #e7ece8;
   color: #263a2e;
   font-size: 13px;
@@ -172,20 +190,12 @@ td {
   overflow-wrap: anywhere;
 }
 
-th:nth-child(1) {
-  width: 30%;
-}
+tbody tr {
+  transition: background-color 150ms ease;
 
-th:nth-child(2) {
-  width: 30%;
-}
-
-th:nth-child(3) {
-  width: 18%;
-}
-
-th:nth-child(4) {
-  width: 22%;
+  &:focus-within {
+    background: #eff6f1;
+  }
 }
 
 .status-badge {
@@ -227,11 +237,11 @@ th:nth-child(4) {
 .error-state {
   padding: 24px;
   border: 1px solid #dfe7e1;
-  border-radius: 8px;
-  background: #ffffff;
+  border-radius: 10px;
+  background: #fff;
   color: #596b60;
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 .notice {
@@ -243,6 +253,7 @@ th:nth-child(4) {
 
 .error-state {
   border-color: #efd4d4;
+  background: #fff7f7;
   color: #a63333;
 
   p {
@@ -251,23 +262,35 @@ th:nth-child(4) {
 }
 
 .retry-button {
+  min-height: 40px;
   padding: 9px 16px;
-  border: none;
-  border-radius: 5px;
+  border: 0;
+  border-radius: 6px;
   background: #21372a;
-  color: #ffffff;
+  color: #fff;
   font: inherit;
   font-weight: 600;
   cursor: pointer;
 
-  &:hover {
-    background: #304c3a;
+  transition:
+    transform 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+
+  &:active:not(:disabled) {
+    transform: scale(0.97);
   }
 
-  &:focus-visible {
-    outline: 2px solid #527b60;
-    outline-offset: 3px;
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
+}
+
+.retry-button:focus-visible,
+.table-wrapper:focus-visible {
+  outline: 2px solid #527b60;
+  outline-offset: 3px;
 }
 
 .empty-state {
@@ -284,17 +307,18 @@ th:nth-child(4) {
     margin: 0;
     color: #718078;
     font-size: 13px;
-    line-height: 1.6;
+    line-height: 1.7;
   }
 }
 
 .spinner {
+  flex-shrink: 0;
   width: 19px;
   height: 19px;
   border: 2px solid #dce7df;
   border-top-color: #087b49;
   border-radius: 50%;
-  animation: dashboard-spin 0.8s linear infinite;
+  animation: dashboard-spin 800ms linear infinite;
 }
 
 @keyframes dashboard-spin {
@@ -303,48 +327,78 @@ th:nth-child(4) {
   }
 }
 
-@media (max-width: 1100px) {
+@keyframes dashboard-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .summary-card:hover {
+    transform: translateY(-2px);
+    border-color: #9bbca6;
+    box-shadow: 0 7px 22px rgb(33 55 42 / 8%);
+  }
+
+  tbody tr:hover {
+    background: #f4f9f5;
+  }
+
+  .retry-button:hover:not(:disabled) {
+    background: #304c3a;
+    box-shadow: 0 3px 10px rgb(33 55 42 / 12%);
+  }
+}
+
+@media (max-width: 1250px) {
   .summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 600px) {
   .admin-dashboard {
-    padding: 24px 20px;
-  }
-
-  .concerns-section {
-    padding: 18px;
-  }
-}
-
-@media (max-width: 520px) {
-  .admin-dashboard {
-    padding: 20px 12px;
-  }
-
-  .page-heading h1 {
-    font-size: 23px;
+    padding: 18px 12px;
   }
 
   .summary-grid {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: 1fr;
     gap: 12px;
   }
 
   .summary-card {
-    min-height: 92px;
+    min-height: 90px;
     padding: 16px;
   }
 
   .concerns-section {
-    padding: 16px 12px;
+    padding: 18px 14px;
+  }
+
+  .retry-button {
+    min-height: 44px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .admin-dashboard,
   .spinner {
     animation: none;
   }
+
+  .summary-card,
+  .retry-button,
+  tbody tr {
+    transition: none;
+  }
+
+  .summary-card:hover,
+  .retry-button:active:not(:disabled) {
+    transform: none;
+  }
 }
+

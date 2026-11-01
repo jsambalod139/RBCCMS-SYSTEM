@@ -3,11 +3,18 @@
   min-width: 0;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 .app-layout {
   display: flex;
+  height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  background: #f7fafc;
+  background: #f5f8f6;
   font-family: 'Inter', sans-serif;
 }
 
@@ -20,10 +27,67 @@
   overflow: hidden;
 }
 
+app-admin-sidebar {
+  position: relative;
+  z-index: 40;
+  flex: 0 0 auto;
+}
+
+app-admin-topbar {
+  position: relative;
+  z-index: 30;
+  flex: 0 0 auto;
+}
+
 .main-section {
   flex: 1;
   min-width: 0;
   min-height: 0;
-  overflow-y: auto;
-  background: #f7fafc;
+  overflow: auto;
+  background: #f5f8f6;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #b9cbbf transparent;
+  padding: 0;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border: 2px solid #f5f8f6;
+    border-radius: 12px;
+    background: #b9cbbf;
+  }
+}
+
+@media (max-width: 600px) {
+  .app-layout {
+    flex-direction: column;
+  }
+
+  app-admin-sidebar,
+  .page-wrapper {
+    width: 100%;
+  }
+}
+
+@media print {
+  .app-layout {
+    display: block;
+    height: auto;
+    overflow: visible;
+  }
+
+  app-admin-sidebar,
+  app-admin-topbar {
+    display: none;
+  }
+
+  .page-wrapper,
+  .main-section {
+    display: block;
+    overflow: visible;
+  }
 }

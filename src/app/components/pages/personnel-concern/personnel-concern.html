@@ -1,7 +1,7 @@
 <main class="personnel-concerns-page">
   @if (loading()) {
     <p class="page-notice" role="status">
-      Loading community concerns...
+      Loading concerns assigned to your office...
     </p>
   }
 
@@ -82,7 +82,6 @@
 
           <div class="detail-item">
             <dt>Concern ID</dt>
-
             <dd class="reference-id">
               {{ concern.concern_number ?? 'Not numbered' }}
             </dd>
@@ -100,18 +99,13 @@
 
           <div class="detail-item">
             <dt>Date Reported</dt>
-
             <dd>
-              {{
-                concern.reported_at
-                  | date:'MMMM d, y, h:mm a'
-              }}
+              {{ concern.reported_at | date:'MMMM d, y, h:mm a' }}
             </dd>
           </div>
 
           <div class="detail-item">
             <dt>Current Status</dt>
-
             <dd>
               <span
                 class="status-badge"
@@ -124,7 +118,6 @@
 
           <div class="detail-item">
             <dt>Last Updated</dt>
-
             <dd>
               {{
                 concern.updated_at
@@ -136,27 +129,24 @@
 
           <div class="detail-item">
             <dt>Responsible Office</dt>
-
             <dd>
               {{
                 concern.office?.office_name ||
-                  (
-                    concern.office_id
-                      ? 'Office information unavailable'
-                      : 'Not assigned'
-                  )
+                (
+                  concern.office_id
+                    ? 'Office information unavailable'
+                    : 'Not assigned'
+                )
               }}
             </dd>
           </div>
 
           <div class="detail-item">
             <dt>Last Updated By</dt>
-
             <dd>
               {{
-                concern.last_updated_by
-                  ? 'Personnel'
-                  : 'Not recorded'
+                concern.last_updated_by_label ||
+                'No personnel update yet'
               }}
             </dd>
           </div>
@@ -177,7 +167,7 @@
             target="_blank"
             rel="noopener noreferrer"
           >
-            Open full photo
+            Open Full Photo
           </a>
 
           <img
@@ -264,10 +254,7 @@
         <h2>Status History &amp; Remarks</h2>
 
         @if (concern.updates.length > 0) {
-          @for (
-            update of concern.updates;
-            track update.update_id
-          ) {
+          @for (update of concern.updates; track update.update_id) {
             <article class="history-item">
               <div>
                 <span
@@ -283,10 +270,10 @@
                 </p>
 
                 <p>
+                  Updated by
                   {{
-                    update.updated_by
-                      ? 'Updated by Personnel'
-                      : 'Updater not recorded'
+                    update.updated_by_label ||
+                    'Personnel (name not recorded)'
                   }}
                 </p>
 
@@ -296,10 +283,7 @@
               </div>
 
               <time [attr.datetime]="update.created_at">
-                {{
-                  update.created_at
-                    | date:'MMM d, y, h:mm a'
-                }}
+                {{ update.created_at | date:'MMM d, y, h:mm a' }}
               </time>
             </article>
           }
@@ -314,10 +298,10 @@
     <header class="page-header">
       <div>
         <p class="eyebrow">PERSONNEL PORTAL</p>
-        <h1>Concern Reports</h1>
+        <h1>Concerns</h1>
 
         <p class="page-description">
-          Review all community concerns and manage their status.
+          Review concerns assigned to your office and manage their status.
         </p>
       </div>
     </header>
@@ -374,7 +358,7 @@
     </section>
 
     <div class="results-heading">
-      <h2>Community Concerns</h2>
+      <h2>Office Concerns</h2>
       <span>{{ filteredConcerns().length }} record(s)</span>
     </div>
 
@@ -394,7 +378,7 @@
           <p>
             {{
               concerns().length === 0
-                ? 'No community concerns have been submitted yet.'
+                ? 'No concerns are currently assigned to your office.'
                 : 'Try a different search term or status filter.'
             }}
           </p>
@@ -434,10 +418,7 @@
                 ) {
                   <tr>
                     <td class="concern-id">
-                      {{
-                        concern.concern_number ??
-                          'Not numbered'
-                      }}
+                      {{ concern.concern_number ?? 'Not numbered' }}
                     </td>
 
                     <td>{{ categoryName(concern) }}</td>
@@ -447,10 +428,7 @@
                     </td>
 
                     <td>
-                      {{
-                        concern.reported_at
-                          | date:'MMM d, y'
-                      }}
+                      {{ concern.reported_at | date:'MMM d, y' }}
                     </td>
 
                     <td>

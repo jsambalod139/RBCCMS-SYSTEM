@@ -1,3 +1,4 @@
+import { barangayResidentsGuard } from './core/guard/barangay-residents.guard';
 import { Routes } from '@angular/router';
 import { roleGuard } from './core/guard/role.guard';
 
@@ -27,6 +28,9 @@ import { AdminDashboard } from './components/pages/admin-dashboard/admin-dashboa
 import { AdminMyProfile } from './components/pages/admin-my-profile/admin-my-profile';
 import { AdminAuditLogs } from './components/pages/admin-audit-logs/admin-audit-logs';
 import { AdminSettings } from './components/pages/admin-settings/admin-settings';
+import { AdminUserManagement } from './components/pages/admin-user-management/admin-user-management';
+import { AdminConcern } from './components/pages/admin-concern/admin-concern';
+import { AdminParticipatingOffice } from './components/pages/admin-participating-office/admin-participating-office';
 
 export const routes: Routes = [
   {
@@ -110,6 +114,7 @@ export const routes: Routes = [
       {
         path: 'personnel-residents',
         component: PersonnelResidents,
+        canActivate: [barangayResidentsGuard],
       },
       {
         path: 'personnel-settings',
@@ -138,8 +143,20 @@ export const routes: Routes = [
         component: AdminMyProfile,
       },
       {
+        path: 'admin-concern',
+        component: AdminConcern,
+      },
+      {
+        path: 'admin-participating-office',
+        component: AdminParticipatingOffice,
+      },
+      {
         path: 'admin-audit-logs',
         component: AdminAuditLogs,
+      },
+      {
+        path: 'admin-user-management',
+        component: AdminUserManagement,
       },
       {
         path: 'admin-settings',

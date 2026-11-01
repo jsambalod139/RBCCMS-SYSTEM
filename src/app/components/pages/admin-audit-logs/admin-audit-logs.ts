@@ -290,14 +290,26 @@ export class AdminAuditLogs implements OnDestroy {
   }
 
   displayDetails(entry: AuditEntry): string {
-    if (entry.category !== 'Concern') {
-      return entry.details;
-    }
+  let details = entry.details;
 
-    return entry.details
+  if (entry.category === 'Concern') {
+    details = details
       .replace(/^Concern\s+#\d+\s*:\s*/, '')
       .replace(/^Concern\s+#\d+\s+/, 'Concern ');
   }
+
+  if (
+    entry.category === 'Auth'
+    && [
+      'Account suspended',
+      'Account restored'
+    ].includes(entry.action)
+  ) {
+    details = details.replace(/\s+Reason:[\s\S]*$/, '');
+  }
+
+  return details;
+}
 
   changeSearch(value: string): void {
     this.searchTerm.set(value);

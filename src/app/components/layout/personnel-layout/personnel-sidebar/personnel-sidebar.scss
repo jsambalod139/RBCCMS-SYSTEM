@@ -1,84 +1,180 @@
+:host {
+  display: block;
+  flex-shrink: 0;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 .sidenav {
-  width: 230px;
-  height: 100vh;
-  background: rgb(33, 55, 42);
-  color: white;
   display: flex;
   flex-direction: column;
-  font-family: 'Inter', sans-serif;
-  transition: all 0.3s ease;
-
-.logo{
-  text-align: center;
-  margin-top: 20px;
+  width: 230px;
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  background: #21372a;
+  color: #fff;
+  font-family: var(--font-ui, 'Inter', Arial, sans-serif);
+  scrollbar-width: thin;
+  scrollbar-color: #65806d transparent;
+  transition: width 200ms ease;
 }
-  
-  .sidenav-header {
-    padding: 2rem 1.5rem;
+
+.logo {
+  flex-shrink: 0;
+  padding: 24px 16px 18px;
+  text-align: center;
+
+  img {
+    display: block;
+    width: 140px;
+    max-width: 100%;
+    height: auto;
+    margin: auto;
+  }
+}
+
+.sidenav-header {
+  padding: 0;
+
+  h2 {
+    margin: 0;
+  }
+
+  h2:empty {
+    display: none;
+  }
+}
+
+nav {
+  flex: 1;
+  padding: 14px 12px 24px;
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li + li {
+    margin-top: 6px;
+  }
+
+  a {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 12px;
+    min-height: 44px;
+    padding: 12px 15px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    color: #edf5ef;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.5;
+    -webkit-tap-highlight-color: transparent;
+
+    transition:
+      transform 160ms ease,
+      background-color 160ms ease,
+      border-color 160ms ease;
 
     i {
-      font-size: 1.5rem;
-      color: #00d2ff;
+      flex: 0 0 20px;
+      font-size: 18px;
+      text-align: center;
     }
 
-    span {
-      font-size: 1.25rem;
-      font-weight: 700;
-      letter-spacing: -0.5px;
+    &:active {
+      transform: scale(0.98);
     }
+
+    &:focus-visible {
+      outline: 2px solid #c0dfc9;
+      outline-offset: 2px;
+    }
+
+    &.active,
+    &[aria-current='page'] {
+      border-color: #658b71;
+      background: #3b5945;
+      color: #fff;
+      font-weight: 600;
+    }
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  nav a:hover {
+    border-color: #506f5a;
+    background: #344f3e;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 1100px) {
+  .sidenav {
+    width: 190px;
+  }
+
+  .logo img {
+    width: 120px;
   }
 
   nav {
-    flex: 1;
+    padding-inline: 8px;
+
+    a {
+      gap: 9px;
+      padding-inline: 11px;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .sidenav {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .logo,
+  .sidenav-header {
+    display: none;
+  }
+
+  nav {
+    overflow-x: auto;
+    padding: 8px;
 
     ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-
-      li {
-        margin: 0.25rem 0.75rem;
-
-        a {
-          display: flex;
-          align-items: center;
-          position: relative;
-          bottom: 3rem;
-          gap: 0.75rem;
-          padding: 12px 1rem;
-          color: #f3f2f2;
-          text-decoration: none;
-          border-radius: 8px;
-          font-weight: 500;
-          font-size: 12px;
-          transition: all 0.3s ease;
-
-          i {
-            font-size: 1.1rem;
-          }
-
-          &:hover {
-            color: white;
-            background: rgba(255, 255, 255, 0.209);
-            padding: 12px 1.5rem;
-          }
-
-          &:focus {
-            color: white;
-            background: rgba(255, 255, 255, 0.209);
-            padding: 12px 1.5rem;
-          }
-
-          &.active {
-            color: rgb(0, 0, 0);
-            background-color: #192B20;;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-          }
-        }
-      }
+      display: flex;
+      width: max-content;
+      gap: 6px;
     }
+
+    li + li {
+      margin-top: 0;
+    }
+
+    a {
+      padding: 10px 12px;
+      white-space: nowrap;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidenav,
+  nav a {
+    transition: none;
+  }
+
+  nav a:active {
+    transform: none;
   }
 }

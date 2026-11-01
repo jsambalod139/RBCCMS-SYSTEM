@@ -1,0 +1,447 @@
+<main
+  class="admin-concerns-page"
+  [attr.aria-busy]="loading()"
+>
+  @if (loading()) {
+    <p class="page-notice" role="status">
+      Loading community concerns...
+    </p>
+  } @else if (loadError()) {
+    <div
+      class="page-notice error-notice"
+      role="alert"
+    >
+      <p>{{ loadError() }}</p>
+
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="retryLoad()"
+      >
+        Try Again
+      </button>
+    </div>
+  } @else if (selectedConcern(); as concern) {
+    <article
+      class="details-page"
+      aria-labelledby="details-title"
+    >
+      <header class="details-header">
+        <div>
+          <p class="eyebrow">
+            ADMINISTRATOR PORTAL
+          </p>
+
+          <h1 id="details-title">
+            Concern Details
+          </h1>
+        </div>
+
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="closeDetails()"
+        >
+          ← Back to Concerns
+        </button>
+      </header>
+
+      <p class="read-only-note">
+        View-only access. Concern status updates
+        are managed by personnel.
+      </p>
+
+      <section
+        aria-labelledby="information-title"
+      >
+        <h2
+          id="information-title"
+          class="information-heading"
+        >
+          Concern Information
+        </h2>
+
+        <dl class="detail-grid">
+          <div>
+            <dt>Submitted By</dt>
+            <dd>{{ submittedBy(concern) }}</dd>
+          </div>
+
+          <div>
+            <dt>Concern ID</dt>
+            <dd>
+              {{
+                concern.concern_number
+                  ?? 'Not numbered'
+              }}
+            </dd>
+          </div>
+
+          <div>
+            <dt>Category</dt>
+            <dd>{{ categoryName(concern) }}</dd>
+          </div>
+
+          <div>
+            <dt>Location</dt>
+            <dd>
+              {{ concern.location_description }}
+            </dd>
+          </div>
+
+          <div>
+            <dt>Date Reported</dt>
+            <dd>
+              {{
+                concern.reported_at
+                  ? (
+                      concern.reported_at
+                        | date:'MMMM d, y, h:mm a':'GMT+08:00'
+                    )
+                  : 'Not recorded'
+              }}
+            </dd>
+          </div>
+
+          <div>
+            <dt>Current Status</dt>
+            <dd>
+              <span
+                class="status-badge"
+                [ngClass]="statusClass(concern.current_status)"
+              >
+                {{ concern.current_status }}
+              </span>
+            </dd>
+          </div>
+
+          <div>
+            <dt>Last Updated</dt>
+            <dd>
+              {{
+                concern.updated_at
+                  ? (
+                      concern.updated_at
+                        | date:'MMM d, y, h:mm a':'GMT+08:00'
+                    )
+                  : 'No updates yet'
+              }}
+            </dd>
+          </div>
+
+          <div>
+            <dt>Responsible Office</dt>
+            <dd>
+              {{
+                concern.office?.office_name
+                  || (
+                    concern.office_id
+                      ? 'Office information unavailable'
+                      : 'Not assigned'
+                  )
+              }}
+            </dd>
+          </div>
+
+          <div>
+            <dt>Last Updated By</dt>
+            <dd>
+              {{
+                concern.last_updated_by
+                  ? 'Personnel'
+                  : 'Not recorded'
+              }}
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="description-section">
+        <h2>Description</h2>
+        <p>{{ concern.description }}</p>
+      </section>
+
+      @if (concern.photo_path) {
+        <section
+          class="photo-section"
+          aria-labelledby="photo-title"
+        >
+          <h2 id="photo-title">
+            Attached Photo
+          </h2>
+
+          @if (photoLoading()) {
+            <p role="status">
+              Loading attached photo...
+            </p>
+          } @else if (photoError()) {
+            <div
+              class="page-notice error-notice"
+              role="alert"
+            >
+              <p>{{ photoError() }}</p>
+
+              <button
+                type="button"
+                class="secondary-button"
+                (click)="retryPhoto()"
+              >
+                Reload Photo
+              </button>
+            </div>
+          } @else if (photoUrl()) {
+            <a
+              [href]="photoUrl()"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open full photo
+            </a>
+
+            <img
+              [src]="photoUrl()"
+              alt="Photo attached to this concern"
+              class="concern-photo"
+              (error)="imageFailed()"
+            />
+          }
+        </section>
+      }
+
+      <section class="history-section">
+        <h2>Status History &amp; Remarks</h2>
+
+        @for (
+          update of concern.updates;
+          track update.update_id
+        ) {
+          <article class="history-item">
+            <div>
+              <span
+                class="status-badge"
+                [ngClass]="statusClass(update.new_status)"
+              >
+                {{ update.new_status }}
+              </span>
+
+              <p class="status-transition">
+                {{
+                  update.previous_status
+                    || 'Created'
+                }}
+                → {{ update.new_status }}
+              </p>
+
+              <p>
+                {{
+                  update.updated_by
+                    ? 'Updated by Personnel'
+                    : 'Updater not recorded'
+                }}
+              </p>
+
+              <p class="remarks">
+                {{
+                  update.remarks
+                    || 'No remarks provided.'
+                }}
+              </p>
+            </div>
+
+            <time
+              [attr.datetime]="update.created_at"
+            >
+              {{
+                update.created_at
+                  ? (
+                      update.created_at
+                        | date:'MMM d, y, h:mm a':'GMT+08:00'
+                    )
+                  : 'Date not recorded'
+              }}
+            </time>
+          </article>
+        } @empty {
+          <p class="history-empty">
+            No status updates have been recorded yet.
+          </p>
+        }
+      </section>
+    </article>
+  } @else if (requestedId()) {
+    <div class="page-notice" role="status">
+      <p>
+        This concern was not found or is no longer
+        available.
+      </p>
+
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="closeDetails()"
+      >
+        Back to Concerns
+      </button>
+    </div>
+  } @else {
+    <header class="page-header">
+      <p class="eyebrow">
+        ADMINISTRATOR PORTAL
+      </p>
+
+      <h1>Community Concerns</h1>
+
+      <p class="page-description">
+        View submitted community concerns and their
+        latest updates.
+      </p>
+    </header>
+
+    <section
+      class="toolbar"
+      aria-label="Concern filters"
+    >
+      <div class="search-box">
+        <span aria-hidden="true">⌕</span>
+
+        <input
+          type="search"
+          name="searchTerm"
+          [ngModel]="searchTerm()"
+          (ngModelChange)="searchTerm.set($event)"
+          placeholder="Search concern ID, resident, category, location, or description..."
+          aria-label="Search concerns"
+          maxlength="200"
+        />
+      </div>
+
+      <div class="filter-box">
+        <label for="adminStatusFilter">
+          Status
+        </label>
+
+        <select
+          id="adminStatusFilter"
+          [ngModel]="selectedStatus()"
+          (ngModelChange)="selectedStatus.set($event)"
+        >
+          @for (
+            status of statusOptions;
+            track status
+          ) {
+            <option [ngValue]="status">
+              {{ status }}
+            </option>
+          }
+        </select>
+      </div>
+
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="clearFilters()"
+      >
+        Reset
+      </button>
+    </section>
+
+    <div class="results-heading">
+      <h2>Concern Records</h2>
+
+      <span>
+        {{ filteredConcerns().length }} record(s)
+      </span>
+    </div>
+
+    @if (filteredConcerns().length === 0) {
+      <section class="empty-state">
+        <h3>No concerns found</h3>
+
+        <p>
+          No concerns match the current search and
+          status filter.
+        </p>
+      </section>
+    } @else {
+      <section class="table-card">
+        <div
+          class="table-wrapper"
+          role="region"
+          aria-label="Community concerns"
+          tabindex="0"
+        >
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Concern ID</th>
+                <th scope="col">Category</th>
+                <th scope="col">Location</th>
+                <th scope="col">Date Reported</th>
+                <th scope="col">Status</th>
+                <th scope="col">Action</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (
+                concern of filteredConcerns();
+                track concern.concern_id
+              ) {
+                <tr>
+                  <td>
+                    {{
+                      concern.concern_number
+                        ?? 'Not numbered'
+                    }}
+                  </td>
+
+                  <td>
+                    {{ categoryName(concern) }}
+                  </td>
+
+                  <td class="location-cell">
+                    {{ concern.location_description }}
+                  </td>
+
+                  <td>
+                    {{
+                      concern.reported_at
+                        ? (
+                            concern.reported_at
+                              | date:'MMM d, y':'GMT+08:00'
+                          )
+                        : 'Not recorded'
+                    }}
+                  </td>
+
+                  <td>
+                    <span
+                      class="status-badge"
+                      [ngClass]="statusClass(concern.current_status)"
+                    >
+                      {{ concern.current_status }}
+                    </span>
+                  </td>
+
+                  <td>
+                    <button
+                      type="button"
+                      class="view-button"
+                      (click)="viewDetails(concern)"
+                      [attr.aria-label]="
+                        'View details for concern '
+                        + (concern.concern_number ?? '')
+                      "
+                    >
+                      View Details
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+  }
+</main>

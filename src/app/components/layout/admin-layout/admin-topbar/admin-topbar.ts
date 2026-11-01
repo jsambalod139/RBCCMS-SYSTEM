@@ -5,16 +5,30 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+
+import {
+  Router,
+  RouterLink,
+} from '@angular/router';
+
 import Swal from 'sweetalert2';
 
-import { AuthService } from '../../../../core/services/auth.service';
-import { SettingsService } from '../../../../core/services/settings.service';
+import {
+  AuthService,
+} from '../../../../core/services/auth.service';
+
+import {
+  SettingsService,
+} from '../../../../core/services/settings.service';
+
+import {
+  Notifications,
+} from '../../../shared/notifications/notifications';
 
 @Component({
   selector: 'app-admin-topbar',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, Notifications],
   templateUrl: './admin-topbar.html',
   styleUrl: './admin-topbar.scss',
 })
@@ -23,7 +37,9 @@ export class AdminTopbar {
 
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
-  private readonly element = inject(ElementRef<HTMLElement>);
+
+  private readonly element =
+    inject(ElementRef<HTMLElement>);
 
   readonly isMenuOpen = signal(false);
   readonly loggingOut = signal(false);
@@ -43,8 +59,8 @@ export class AdminTopbar {
     const target = event.target;
 
     if (
-      target instanceof Node
-      && !this.element.nativeElement.contains(target)
+      target instanceof Node &&
+      !this.element.nativeElement.contains(target)
     ) {
       this.closeMenu();
     }
@@ -77,9 +93,12 @@ export class AdminTopbar {
       await this.auth.logout();
       this.closeMenu();
 
-      await this.router.navigate(['/login-components'], {
-        replaceUrl: true,
-      });
+      await this.router.navigate(
+        ['/login-components'],
+        {
+          replaceUrl: true,
+        }
+      );
 
       await Swal.fire({
         icon: 'success',

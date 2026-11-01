@@ -1,0 +1,417 @@
+:host {
+  display: block;
+  min-width: 0;
+  color: #21372a;
+  font-family: inherit;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.users-page {
+  min-height: 100%;
+  padding: clamp(18px, 2.4vw, 32px);
+  background: #f5f8f6;
+  animation: users-enter 200ms ease-out;
+}
+
+.page-heading {
+  margin-bottom: 24px;
+
+  h1 {
+    margin: 0 0 7px;
+    font-size: clamp(23px, 2.5vw, 27px);
+    line-height: 1.3;
+  }
+
+  p {
+    margin: 0;
+    color: #718078;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .eyebrow {
+    margin-bottom: 8px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+  }
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  margin-bottom: 22px;
+
+  label {
+    display: grid;
+    gap: 7px;
+    min-width: 0;
+    font-size: 12px;
+  }
+
+  .search-field {
+    flex: 1 1 260px;
+  }
+
+  > button {
+    min-height: 40px;
+  }
+}
+
+input,
+select,
+button {
+  font: inherit;
+}
+
+input,
+select {
+  width: 100%;
+  min-height: 40px;
+  padding: 9px 12px;
+  border: 1px solid #d4dfd7;
+  border-radius: 6px;
+  background: #fff;
+  color: #21372a;
+  font-size: 12px;
+
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+
+  &:focus {
+    border-color: #527b60;
+    box-shadow: 0 0 0 3px rgb(82 123 96 / 10%);
+  }
+}
+
+select {
+  min-width: 145px;
+}
+
+button {
+  min-height: 34px;
+  padding: 7px 12px;
+  border: 1px solid #ccd9d0;
+  border-radius: 6px;
+  background: #fff;
+  color: #21372a;
+  font-size: 12px;
+  cursor: pointer;
+
+  transition:
+    transform 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+.table-wrapper:focus-visible {
+  outline: 2px solid #527b60;
+  outline-offset: 3px;
+}
+
+.records-card,
+.details-card {
+  padding: 22px;
+  border: 1px solid #dfe8e2;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 3px 14px rgb(33 55 42 / 4%);
+}
+
+.section-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+
+  h2 {
+    margin: 0;
+    font-size: 18px;
+  }
+
+  > span {
+    color: #718078;
+    font-size: 12px;
+  }
+}
+
+.table-wrapper {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid #dfe7e2;
+  border-radius: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #b8cbbf #f5f8f6;
+}
+
+table {
+  width: 100%;
+  min-width: 950px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+th {
+  padding: 12px;
+  background: #f2f6f3;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+td {
+  padding: 12px;
+  border-top: 1px solid #e4eae6;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+tbody tr {
+  transition: background-color 150ms ease;
+
+  &:focus-within {
+    background: #eff6f1;
+  }
+}
+
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: #f0f2f1;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.approved {
+  background: #e2f3e9;
+  color: #087b49;
+}
+
+.suspended {
+  background: #fff0d8;
+  color: #a76500;
+}
+
+.danger {
+  border-color: #e5bcbc;
+  color: #bd3a3a;
+}
+
+.restore {
+  border-color: #087b49;
+  background: #087b49;
+  color: #fff;
+}
+
+.muted {
+  color: #718078;
+  font-size: 11px;
+}
+
+.notice {
+  padding: 35px 12px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.feedback {
+  padding: 13px;
+  border: 1px solid #c8e3d0;
+  border-radius: 7px;
+  background: #edf8f0;
+  color: #216b40;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 18px;
+
+  p,
+  span {
+    color: #718078;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  > div {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+}
+
+.details-card {
+  margin-top: 22px;
+  scroll-margin-top: 20px;
+  animation: users-enter 200ms ease-out;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 24px;
+  margin: 0;
+
+  > div {
+    min-width: 0;
+  }
+
+  dt {
+    margin-bottom: 6px;
+    color: #718078;
+    font-size: 12px;
+  }
+
+  dd {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+  }
+}
+
+@keyframes users-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button:hover:not(:disabled) {
+    border-color: #8eaa97;
+    background: #edf3ef;
+  }
+
+  .danger:hover:not(:disabled) {
+    border-color: #ce9696;
+    background: #fff1f1;
+  }
+
+  .restore:hover:not(:disabled) {
+    border-color: #06643b;
+    background: #06643b;
+    box-shadow: 0 3px 10px rgb(8 123 73 / 14%);
+  }
+
+  tbody tr:hover {
+    background: #f4f9f5;
+  }
+}
+
+@media (max-width: 900px) {
+  .filters .search-field {
+    flex-basis: 100%;
+  }
+
+  .pagination {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 600px) {
+  .users-page {
+    padding: 18px 12px;
+  }
+
+  .records-card,
+  .details-card {
+    padding: 18px 14px;
+  }
+
+  .filters label {
+    flex: 1 1 140px;
+  }
+
+  .filters > button {
+    flex: 1 1 100%;
+  }
+
+  input,
+  select {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  select {
+    min-width: 0;
+  }
+
+  button {
+    min-height: 44px;
+  }
+
+  .pagination > div {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  dl {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .users-page,
+  .details-card {
+    animation: none;
+  }
+
+  button,
+  input,
+  select,
+  tbody tr {
+    transition: none;
+  }
+
+  button:active:not(:disabled) {
+    transform: none;
+  }
+}
+

@@ -88,14 +88,16 @@
       Responsible Offices
     </button>
 
-    <button
-      type="button"
-      [class.active]="tab() === 'residents'"
-      [attr.aria-pressed]="tab() === 'residents'"
-      (click)="tab.set('residents')"
-    >
-      Resident Accounts
-    </button>
+    @if (canManageResidents()) {
+      <button
+        type="button"
+        [class.active]="tab() === 'residents'"
+        [attr.aria-pressed]="tab() === 'residents'"
+        (click)="tab.set('residents')"
+      >
+        Resident Accounts
+      </button>
+    }
   </nav>
 
   @if (exportError()) {
@@ -118,7 +120,7 @@
           Try Again
         </button>
       </div>
-    } @else if (tab() === 'residents') {
+    } @else if (tab() === 'residents' && canManageResidents()) {
       <h2>Resident Accounts</h2>
 
       <p class="note">

@@ -2,9 +2,13 @@
   position: fixed;
   inset: 0;
   display: block;
+  overflow-x: hidden;
   overflow-y: auto;
   background: #173e30;
+  color: #21372a;
   font-family: 'Inter', Arial, sans-serif;
+  scrollbar-width: thin;
+  scrollbar-color: #8ba697 #173e30;
 }
 
 *,
@@ -13,19 +17,26 @@
   box-sizing: border-box;
 }
 
+button,
+input,
+a {
+  font-family: inherit;
+}
+
 .login-container {
   display: grid;
   align-items: center;
+  width: 100%;
   min-height: 100vh;
   min-height: 100dvh;
-  padding: 48px 6%;
+  padding: 36px 6%;
   background-color: #173e30;
   background-image:
     linear-gradient(
       90deg,
-      rgba(8, 30, 21, 0.7) 0%,
-      rgba(8, 30, 21, 0.4) 48%,
-      rgba(8, 30, 21, 0.2) 100%
+      rgb(8 30 21 / 68%) 0%,
+      rgb(8 30 21 / 40%) 48%,
+      rgb(8 30 21 / 22%) 100%
     ),
     url('/assets/images/Background_logo.png');
   background-position: center;
@@ -35,80 +46,89 @@
 
 .login-layout {
   display: grid;
-  grid-template-columns:
-    minmax(0, 1fr) minmax(340px, 420px);
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 400px);
   align-items: center;
-  gap: clamp(36px, 7vw, 110px);
+  gap: clamp(32px, 6vw, 90px);
   width: 100%;
-  max-width: 1200px;
+  max-width: 1180px;
+  min-width: 0;
   margin: 0 auto;
 }
 
-/* System title */
+/* System introduction */
 
 .system-introduction {
   min-width: 0;
-  padding: 30px 0;
+  padding: 20px 0;
+  animation: introduction-enter 220ms ease-out;
 
   h1 {
     margin: 0;
     color: #fff;
-    font-size: clamp(30px, 3.4vw, 48px);
+    font-size: clamp(30px, 3.3vw, 46px);
     font-weight: 700;
     line-height: 1.3;
-    letter-spacing: -0.7px;
-    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+    letter-spacing: -.7px;
+    overflow-wrap: anywhere;
+    text-wrap: balance;
+    text-shadow: 0 2px 14px rgb(0 0 0 / 30%);
   }
 }
 
-/* Card */
+/* Login and reset cards */
 
 .login-card {
   width: 100%;
-  padding: 34px 36px 26px;
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.98);
+  min-width: 0;
+  padding: 30px 32px 24px;
+  border: 1px solid rgb(255 255 255 / 85%);
+  border-radius: 16px;
+  background: rgb(255 255 255 / 98%);
   box-shadow:
-    0 18px 50px rgba(0, 0, 0, 0.22),
-    0 2px 8px rgba(0, 0, 0, 0.08);
+    0 18px 48px rgb(0 0 0 / 20%),
+    0 2px 8px rgb(0 0 0 / 6%);
+  animation: login-card-enter 220ms ease-out;
 }
 
 .login-header {
-  margin-bottom: 28px;
+  margin-bottom: 24px;
   text-align: center;
 
   h2 {
     margin: 0 0 8px;
-    color: #202b25;
-    font-size: 27px;
+    color: #16271d;
+    font-size: 25px;
     font-weight: 700;
-    line-height: 1.25;
+    line-height: 1.35;
+    letter-spacing: -.4px;
+    overflow-wrap: anywhere;
   }
 
   p {
     margin: 0;
-    color: #768079;
-    font-size: 14px;
-    line-height: 1.6;
+    color: #617267;
+    font-size: 13px;
+    line-height: 1.7;
   }
 }
 
 .municipal-logo {
   display: block;
-  width: 180px;
-  height: 180px;
+  width: 150px;
+  height: 150px;
   margin: 0 auto 18px;
   border-radius: 50%;
   object-fit: contain;
 }
 
-/* Form */
+/* Form fields */
 
 form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
+  min-width: 0;
+  margin: 0;
 }
 
 .form-group {
@@ -119,84 +139,112 @@ form {
   position: relative;
   display: flex;
   align-items: center;
-  min-height: 52px;
-  border: 1px solid #dde5df;
-  border-radius: 9px;
+  min-width: 0;
+  min-height: 50px;
+  border: 1px solid #d4dfd7;
+  border-radius: 8px;
   background: #f8faf9;
   transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
 
   &:focus-within {
-    border-color: #148057;
+    border-color: #527b60;
     background: #fff;
-    box-shadow: 0 0 0 3px rgba(20, 128, 87, 0.12);
+    box-shadow: 0 0 0 3px rgb(82 123 96 / 13%);
+
+    .input-icon {
+      color: #087b49;
+    }
   }
 
   input {
     display: block;
     width: 100%;
     min-width: 0;
-    min-height: 52px;
-    padding: 14px 15px 14px 46px;
+    min-height: 50px;
+    padding: 13px 14px 13px 44px;
     border: 0;
-    outline: 0;
     border-radius: inherit;
+    outline: none;
     background: transparent;
-    color: #263b2d;
-    font-family: inherit;
+    color: #21372a;
     font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+    caret-color: #087b49;
 
     &::placeholder {
-      color: #8b9790;
+      color: #75867b;
+      opacity: 1;
     }
 
     &:disabled {
+      color: #617267;
+      opacity: .7;
       cursor: wait;
-      opacity: 0.7;
+    }
+
+    &[aria-invalid='true'] {
+      box-shadow: inset 0 0 0 1px #c95454;
+    }
+
+    &:-webkit-autofill {
+      -webkit-text-fill-color: #21372a;
+      box-shadow: inset 0 0 0 1000px #f8faf9;
     }
   }
 }
 
 .input-icon {
   position: absolute;
-  left: 15px;
-  width: 21px;
-  height: 21px;
-  color: #91a098;
+  left: 14px;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: #82958a;
   pointer-events: none;
+  transition: color 160ms ease;
 }
 
-/* Submit button */
+/* Submit buttons */
 
 .btn-login {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 9px;
   width: 100%;
-  min-height: 50px;
-  margin-top: 4px;
-  padding: 13px 18px;
-  border: 1px solid #087344;
-  border-radius: 8px;
-  background: #087c49;
+  min-height: 48px;
+  margin-top: 2px;
+  padding: 12px 18px;
+  border: 1px solid #087b49;
+  border-radius: 7px;
+  background: #087b49;
   color: #fff;
-  font-family: inherit;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
+  line-height: 1.5;
   cursor: pointer;
   transition:
-    background-color 0.2s ease,
-    box-shadow 0.2s ease;
+    transform 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
 
-  &:hover:not(:disabled) {
-    background: #06673d;
-    box-shadow: 0 5px 14px rgba(8, 124, 73, 0.2);
+  &:focus-visible {
+    outline: 2px solid #527b60;
+    outline-offset: 4px;
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(.98);
+    box-shadow: none;
   }
 
   &:disabled {
-    opacity: 0.65;
+    opacity: .6;
     cursor: not-allowed;
   }
 
@@ -204,44 +252,76 @@ form {
     opacity: 1;
     cursor: wait;
   }
-
-  &:focus-visible {
-    outline: 3px solid #6dbb93;
-    outline-offset: 3px;
-  }
 }
-
-/* Spinner */
 
 .login-spinner {
   display: inline-block;
   flex: 0 0 16px;
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.35);
+  border: 2px solid rgb(255 255 255 / 35%);
   border-top-color: #fff;
   border-radius: 50%;
-  animation: login-spin 0.75s linear infinite;
+  animation: login-spin 750ms linear infinite;
 }
 
-@keyframes login-spin {
-  to {
-    transform: rotate(360deg);
+/* Navigation links */
+
+.forgot-password-link {
+  margin-top: 12px;
+  text-align: center;
+}
+
+.forgot-password-link a,
+.back-to-login {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: #087344;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-decoration: none;
+  transition:
+    transform 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease;
+
+  &:visited {
+    color: #087344;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #527b60;
+    outline-offset: 3px;
+  }
+
+  &:active:not(.link-disabled) {
+    transform: scale(.97);
+  }
+
+  &.link-disabled {
+    opacity: .55;
+    pointer-events: none;
+    cursor: default;
   }
 }
 
-/* Footer */
+/* Help footer */
 
 .login-footer {
-  margin-top: 27px;
-  padding-top: 21px;
-  border-top: 1px solid #e9eeeb;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #e4ebe6;
   text-align: center;
 
   p {
     margin: 0;
-    color: #6c7870;
-    font-size: 13px;
+    color: #617267;
+    font-size: 12px;
     line-height: 1.7;
   }
 
@@ -251,64 +331,40 @@ form {
   }
 }
 
+/* Accessible hidden labels */
+
 .visually-hidden {
   position: absolute;
   width: 1px;
   height: 1px;
-  padding: 0;
   margin: -1px;
+  padding: 0;
   overflow: hidden;
+  clip: rect(0, 0, 0, 0);
   clip-path: inset(50%);
+  border: 0;
   white-space: nowrap;
 }
 
-/* Password recovery links */
-
-.forgot-password-link {
-  margin-top: 18px;
-  text-align: center;
-}
-
-.forgot-password-link a,
-.back-to-login {
-  color: #087344;
-  font-size: 13px;
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: underline;
-  }
-
-  &:focus-visible {
-    outline: 2px solid #087344;
-    outline-offset: 4px;
-  }
-}
-
-.link-disabled {
-  pointer-events: none;
-  opacity: 0.6;
-}
-
-/* Centered reset page */
+/* Forgot password */
 
 .reset-container {
   justify-items: center;
-  padding: 36px 18px;
+  padding: 32px 18px;
 }
 
 .reset-card {
   max-width: 400px;
-  padding: 30px 28px 24px;
-  border-radius: 12px;
+  padding: 28px;
+  border-radius: 14px;
 
   .login-header {
     margin-bottom: 24px;
   }
 
   .municipal-logo {
-    width: 180px;
-    height: 180px;
+    width: 150px;
+    height: 150px;
   }
 
   .login-header h2 {
@@ -323,9 +379,10 @@ form {
 .reset-label {
   display: block;
   margin-bottom: 8px;
-  color: #263b2d;
+  color: #21372a;
   font-size: 13px;
   font-weight: 500;
+  line-height: 1.5;
 }
 
 .reset-input input {
@@ -334,9 +391,10 @@ form {
 
 .reset-field-error {
   display: block;
-  margin-top: 5px;
-  color: #aa3030;
+  margin-top: 6px;
+  color: #a12f2f;
   font-size: 12px;
+  line-height: 1.6;
 
   &:empty {
     display: none;
@@ -345,50 +403,152 @@ form {
 
 .reset-notice {
   margin: 0 0 18px;
-  padding: 12px;
+  padding: 13px 14px;
   border: 1px solid;
-  border-radius: 6px;
+  border-radius: 7px;
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  animation: notice-enter 180ms ease-out;
 
   &.success {
-    background: #edf8f0;
-    color: #216b40;
-    border-color: #cce5d3;
+    border-color: #c4dfcb;
+    background: #eff8f1;
+    color: #245b34;
   }
 
   &.error {
+    border-color: #efc6c6;
     background: #fff2f2;
-    color: #aa3030;
-    border-color: #eccccc;
+    color: #a12f2f;
   }
 }
 
 .reset-wait {
   margin: 0;
-  color: #68776e;
+  color: #617267;
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.7;
   text-align: center;
 }
 
 .back-to-login {
-  display: block;
+  display: flex;
   width: fit-content;
-  margin: 20px auto 0;
+  margin: 16px auto 0;
+}
+
+/* Pointer interactions */
+
+@media (hover: hover) and (pointer: fine) {
+  .input-wrapper:hover:not(:focus-within) {
+    border-color: #a9c2b1;
+  }
+
+  .btn-login:hover:not(:disabled) {
+    border-color: #06643b;
+    background: #06643b;
+    box-shadow: 0 5px 14px rgb(8 123 73 / 18%);
+  }
+
+  .forgot-password-link a:hover:not(.link-disabled),
+  .back-to-login:hover {
+    background: #edf3ef;
+    color: #06643b;
+  }
+}
+
+/* Entrance animations */
+
+@keyframes introduction-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes login-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes notice-enter {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes login-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Short desktop screens */
+
+@media (min-width: 851px) and (max-height: 760px) {
+  .login-container {
+    padding-block: 24px;
+  }
+
+  .login-card {
+    padding: 24px 30px 20px;
+  }
+
+  .municipal-logo {
+    width: 125px;
+    height: 125px;
+    margin-bottom: 14px;
+  }
+
+  .login-header {
+    margin-bottom: 20px;
+
+    h2 {
+      font-size: 24px;
+    }
+  }
+
+  .login-footer {
+    margin-top: 12px;
+    padding-top: 14px;
+  }
+
+  .reset-card .municipal-logo {
+    width: 125px;
+    height: 125px;
+  }
 }
 
 /* Tablet */
 
 @media (max-width: 850px) {
   .login-container {
-    padding: 36px 24px;
+    padding: 32px 24px;
   }
 
   .login-layout {
     grid-template-columns: minmax(0, 1fr);
     justify-items: center;
-    gap: 26px;
+    gap: 24px;
     max-width: 520px;
   }
 
@@ -397,7 +557,8 @@ form {
     text-align: center;
 
     h1 {
-      font-size: 29px;
+      font-size: 28px;
+      line-height: 1.3;
     }
   }
 
@@ -412,45 +573,103 @@ form {
 
 /* Mobile */
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
   .login-container {
-    padding: 28px 16px;
+    padding: 24px 16px;
+  }
+
+  .login-layout {
+    gap: 22px;
   }
 
   .system-introduction h1 {
-    font-size: 24px;
+    font-size: clamp(22px, 5.5vw, 28px);
+    letter-spacing: -.4px;
   }
 
   .login-card {
-    padding: 28px 23px 23px;
-    border-radius: 16px;
+    padding: 26px 22px 22px;
+    border-radius: 14px;
   }
 
-  .login-header h2 {
-    font-size: 25px;
+  .municipal-logo {
+    width: 125px;
+    height: 125px;
+    margin-bottom: 16px;
+  }
+
+  .login-header {
+    margin-bottom: 22px;
+
+    h2 {
+      font-size: 23px;
+    }
+  }
+
+  .input-wrapper,
+  .input-wrapper input {
+    min-height: 50px;
+  }
+
+  .input-wrapper input {
+    font-size: 16px;
+  }
+
+  .btn-login {
+    min-height: 48px;
+    font-size: 14px;
+  }
+
+  .forgot-password-link a,
+  .back-to-login {
+    min-height: 44px;
+  }
+
+  .reset-container {
+    padding: 24px 16px;
   }
 
   .reset-card {
-    padding: 24px 22px;
+    padding: 26px 22px;
 
     .municipal-logo {
-      width: 150px;
-      height: 150px;
+      width: 130px;
+      height: 130px;
     }
 
     .login-header h2 {
-      font-size: 24px;
+      font-size: 23px;
     }
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .input-wrapper,
-  .btn-login {
-    transition: none;
+@media (max-width: 360px) {
+  .login-container {
+    padding-inline: 12px;
   }
 
-  .login-spinner {
-    animation: none;
+  .login-card {
+    padding-inline: 18px;
+  }
+
+  .login-header h2 {
+    font-size: 21px;
+  }
+}
+
+/* Reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .btn-login:active:not(:disabled),
+  .forgot-password-link a:active,
+  .back-to-login:active {
+    transform: none;
   }
 }

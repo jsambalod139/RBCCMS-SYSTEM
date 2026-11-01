@@ -1,18 +1,28 @@
 :host {
+  position: relative;
+  z-index: 30;
   display: block;
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 .dashboard-topbar {
+  position: relative;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  min-height: 60px;
-  padding: 10px 20px;
+  min-height: 66px;
+  padding: 10px 24px;
+  border-bottom: 1px solid #e3ebe6;
   background: #fff;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
-  position: relative;
-  z-index: 10;
+  box-shadow: 0 2px 10px rgb(33 55 42 / 4%);
 }
 
 .topbar-left {
@@ -20,15 +30,19 @@
 
   h1 {
     margin: 0;
-    color: #0f1712;
-    font-size: 26px;
+    color: #16271d;
+    font-size: clamp(18px, 2.2vw, 26px);
+    font-weight: 700;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
   }
 }
 
 .topbar-right {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
-  gap: 14px;
+  gap: 6px;
 }
 
 .profile-wrapper {
@@ -36,25 +50,37 @@
 }
 
 .profile-trigger {
-  display: flex;
-  align-items: center;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
   padding: 3px;
   border: 0;
   border-radius: 50%;
   background: transparent;
   cursor: pointer;
+  transition:
+    transform 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
 
-  &:hover {
-    background: #edf3ef;
+  &[aria-expanded='true'] {
+    background: #eaf3ed;
+    box-shadow: 0 0 0 1px #8aaf96;
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(.97);
   }
 }
 
 .avatar {
-  box-sizing: border-box;
+  display: block;
   flex-shrink: 0;
   width: 40px;
   height: 40px;
-  border: 2px solid #e5e7eb;
+  overflow: hidden;
+  border: 2px solid #e2eae5;
   border-radius: 50%;
   object-fit: cover;
 }
@@ -64,23 +90,28 @@
   place-items: center;
   background: #e7f0e9;
   color: #21372a;
-  font: 600 14px Arial, sans-serif;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .dropdown {
-  box-sizing: border-box;
   position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
   z-index: 999;
+  top: calc(100% + 9px);
+  right: 0;
   width: 260px;
-  max-width: calc(100vw - 32px);
+  max-width: calc(100vw - 24px);
+  max-height: min(440px, 70dvh);
   padding: 8px;
-  border: 1px solid #e5ebe7;
+  overflow-y: auto;
+  border: 1px solid #dfe9e2;
   border-radius: 12px;
   background: #fff;
   color: #21372a;
-  box-shadow: 0 8px 20px rgb(0 0 0 / 15%);
+  box-shadow: 0 12px 32px rgb(24 49 33 / 16%);
+  transform-origin: top right;
+  animation: resident-account-enter 180ms ease-out;
 }
 
 .profile-info {
@@ -88,9 +119,9 @@
   align-items: center;
   gap: 10px;
   margin-bottom: 6px;
-  padding: 10px;
+  padding: 11px;
   border-radius: 8px;
-  background: #f3f4f6;
+  background: #f2f6f3;
 
   .avatar {
     width: 35px;
@@ -109,20 +140,22 @@
   color: #21372a;
   font-size: 13px;
   font-weight: 600;
+  line-height: 1.5;
   overflow-wrap: anywhere;
 }
 
 .profile-role {
-  color: #718078;
+  color: #617267;
   font-size: 11px;
+  line-height: 1.5;
 }
 
 .menu-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  box-sizing: border-box;
   width: 100%;
+  min-height: 44px;
   padding: 11px 10px;
   border: 0;
   border-radius: 7px;
@@ -133,6 +166,9 @@
   text-align: left;
   text-decoration: none;
   cursor: pointer;
+  transition:
+    transform 160ms ease,
+    background-color 160ms ease;
 
   svg {
     flex-shrink: 0;
@@ -140,36 +176,72 @@
     height: 20px;
   }
 
-  &:hover {
-    background: #edf3ef;
+  &:active:not(:disabled) {
+    transform: scale(.97);
   }
 }
 
 .logout {
-  color: #bd3a3a;
+  color: #b33131;
 }
 
 button:disabled {
-  opacity: 0.6;
+  opacity: .6;
   cursor: default;
 }
 
 button:focus-visible,
 a:focus-visible {
   outline: 2px solid #527b60;
-  outline-offset: 2px;
+  outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .profile-trigger:hover:not(:disabled),
+  .menu-item:hover:not(:disabled) {
+    background: #edf3ef;
+  }
+
+  .logout:hover:not(:disabled) {
+    background: #fff0f0;
+  }
+}
+
+@keyframes resident-account-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-5px) scale(.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @media (max-width: 600px) {
   .dashboard-topbar {
-    padding: 10px 12px;
-  }
-
-  .topbar-left h1 {
-    font-size: 20px;
+    gap: 10px;
+    min-height: 62px;
+    padding: 8px 12px;
   }
 
   .topbar-right {
-    gap: 10px;
+    gap: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropdown {
+    animation: none;
+  }
+
+  .profile-trigger,
+  .menu-item {
+    transition: none;
+
+    &:active:not(:disabled) {
+      transform: none;
+    }
   }
 }

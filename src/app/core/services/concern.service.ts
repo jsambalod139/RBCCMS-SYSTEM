@@ -76,10 +76,29 @@ export class ConcernService implements OnDestroy {
   readonly error = this.failure.asReadonly();
   readonly photoError = this.photoFailure.asReadonly();
 
+  readonly accessUid = signal('');
+  readonly officeId = signal('');
+
   private stopAuth?: Unsubscribe;
   private stopProfile?: Unsubscribe;
   private stopRecords?: Unsubscribe;
   private stopOffices?: Unsubscribe;
+  private stopResidents?: Unsubscribe;
+
+  private activeRole = '';
+
+  private readonly residentProfiles = signal(
+    new Map<string, { name: string; id: string }>()
+  );
+
+  readonly adminResidentLoading = signal(false);
+  readonly adminResidentError = signal('');
+
+  readonly photoUrl = signal('');
+  readonly photoLoading = signal(false);
+
+  private selectedPhotoKey = '';
+  private selectedPhotoGeneration = 0;
 
   private offices = new Map<string, ConcernOffice>();
 
@@ -87,8 +106,7 @@ export class ConcernService implements OnDestroy {
   private profileGeneration = 0;
   private photoGeneration = 0;
 
-  private readonly objectUrls =
-    new Map<string, string>();
+  private readonly objectUrls = new Map<string, string>();
 
   constructor() {
     this.stopAuth = onAuthStateChanged(
@@ -103,6 +121,15 @@ export class ConcernService implements OnDestroy {
     this.stopProfile?.();
     this.stopRecords?.();
     this.stopOffices?.();
+    this.stopResidents?.();
+
+    this.activeRole = '';
+    this.accessUid.set('');
+    this.officeId.set('');
+
+    this.residentProfiles.set(new Map());
+    this.adminResidentLoading.set(false);
+    this.adminResidentError.set('');
 
     this.offices.clear();
     this.clearRecords();
@@ -127,6 +154,15 @@ export class ConcernService implements OnDestroy {
 
         this.stopRecords?.();
         this.stopOffices?.();
+        this.stopResidents?.();
+
+        this.activeRole = '';
+        this.accessUid.set('');
+        this.officeId.set('');
+
+        this.residentProfiles.set(new Map());
+        this.adminResidentLoading.set(false);
+        this.adminResidentError.set('');
 
         this.offices.clear();
         this.clearRecords();
@@ -137,18 +173,98 @@ export class ConcernService implements OnDestroy {
         if (
           !profile ||
           profile['accountStatus'] !== 'approved' ||
-          !['resident', 'personnel'].includes(profile['role'])
+          !['resident', 'personnel', 'admin'].includes(
+            profile['role']
+          )
         ) {
           this.busy.set(false);
           this.failure.set(
-            'An approved resident or personnel account is required.'
+            'An approved account is required.'
           );
           return;
         }
 
         this.busy.set(true);
+        this.activeRole = profile['role'];
 
-        const resident = profile['role'] === 'resident';
+        const resident = this.activeRole === 'resident';
+        const personnel = this.activeRole === 'personnel';
+        const assignedOffice = profile['officeId'];
+
+        if (
+          personnel &&
+          (
+            typeof assignedOffice !== 'string' ||
+            !assignedOffice.trim() ||
+            assignedOffice !== assignedOffice.trim() ||
+            assignedOffice.includes('/')
+          )
+        ) {
+          this.busy.set(false);
+          this.failure.set(
+            'Your personnel account has no valid assigned office. Contact the administrator.'
+          );
+          return;
+        }
+
+        this.accessUid.set(user.uid);
+        this.officeId.set(
+          personnel ? assignedOffice : ''
+        );
+
+        if (this.activeRole === 'admin') {
+          this.adminResidentLoading.set(true);
+
+          this.stopResidents = onSnapshot(
+            query(
+              collection(this.db, 'users'),
+              where('role', '==', 'resident')
+            ),
+            result => {
+              if (
+                generation !== this.generation ||
+                profileGeneration !== this.profileGeneration
+              ) return;
+
+              this.residentProfiles.set(
+                new Map(
+                  result.docs.map(item => {
+                    const data = item.data();
+
+                    return [
+                      item.id,
+                      {
+                        name:
+                          typeof data['name'] === 'string'
+                            ? data['name'].trim()
+                            : 'Name not recorded',
+                        id:
+                          typeof data['residentId'] === 'string'
+                            ? data['residentId'].trim()
+                            : '',
+                      },
+                    ];
+                  })
+                )
+              );
+
+              this.adminResidentLoading.set(false);
+              this.adminResidentError.set('');
+            },
+            () => {
+              if (
+                generation !== this.generation ||
+                profileGeneration !== this.profileGeneration
+              ) return;
+
+              this.residentProfiles.set(new Map());
+              this.adminResidentLoading.set(false);
+              this.adminResidentError.set(
+                'Unable to load resident information. Try again.'
+              );
+            }
+          );
+        }
 
         this.stopOffices = onSnapshot(
           collection(this.db, 'offices'),
@@ -156,9 +272,7 @@ export class ConcernService implements OnDestroy {
             if (
               generation !== this.generation ||
               profileGeneration !== this.profileGeneration
-            ) {
-              return;
-            }
+            ) return;
 
             this.offices = new Map(
               result.docs.map(item => [
@@ -184,9 +298,7 @@ export class ConcernService implements OnDestroy {
             if (
               generation !== this.generation ||
               profileGeneration !== this.profileGeneration
-            ) {
-              return;
-            }
+            ) return;
 
             this.offices.clear();
 
@@ -204,7 +316,12 @@ export class ConcernService implements OnDestroy {
               collection(this.db, 'concerns'),
               where('resident_id', '==', user.uid)
             )
-          : query(collection(this.db, 'concerns'));
+          : personnel
+            ? query(
+                collection(this.db, 'concerns'),
+                where('office_id', '==', assignedOffice)
+              )
+            : query(collection(this.db, 'concerns'));
 
         this.stopRecords = onSnapshot(
           scopedQuery,
@@ -212,9 +329,7 @@ export class ConcernService implements OnDestroy {
             if (
               generation !== this.generation ||
               profileGeneration !== this.profileGeneration
-            ) {
-              return;
-            }
+            ) return;
 
             const concerns = result.docs
               .map(item =>
@@ -228,19 +343,21 @@ export class ConcernService implements OnDestroy {
             this.busy.set(false);
             this.failure.set('');
 
-            this.loadPhotos(generation);
+            if (this.activeRole !== 'admin') {
+              this.loadPhotos(generation);
+            }
           },
           error => {
             if (
               generation !== this.generation ||
               profileGeneration !== this.profileGeneration
-            ) {
-              return;
-            }
+            ) return;
 
             this.clearRecords();
             this.busy.set(false);
-            this.failure.set(this.errorMessage(error));
+            this.failure.set(
+              this.errorMessage(error)
+            );
           }
         );
       },
@@ -251,6 +368,15 @@ export class ConcernService implements OnDestroy {
 
         this.stopRecords?.();
         this.stopOffices?.();
+        this.stopResidents?.();
+
+        this.activeRole = '';
+        this.accessUid.set('');
+        this.officeId.set('');
+
+        this.residentProfiles.set(new Map());
+        this.adminResidentLoading.set(false);
+        this.adminResidentError.set('');
 
         this.offices.clear();
         this.clearRecords();
@@ -259,6 +385,111 @@ export class ConcernService implements OnDestroy {
         this.failure.set(this.errorMessage(error));
       }
     );
+  }
+
+  submittedBy(
+    concern: ConcernWithRelations
+  ): string {
+    const resident = this.residentProfiles().get(
+      concern.resident_id
+    );
+
+    if (!resident) {
+      return 'Resident record unavailable';
+    }
+
+    const name =
+      resident.name || 'Name not recorded';
+
+    return /^[1-9]\d*$/.test(resident.id)
+      ? `${name} (Resident ID: ${resident.id})`
+      : name;
+  }
+
+  async selectPhoto(
+    concern: ConcernWithRelations | null,
+    force = false
+  ): Promise<void> {
+    const path = concern?.photo_path || '';
+    const key = path
+      ? `${concern?.concern_id}:${path}`
+      : '';
+
+    if (!force && key === this.selectedPhotoKey) return;
+
+    this.clearSelectedPhoto();
+    this.selectedPhotoKey = key;
+
+    const uid = this.auth.currentUser?.uid;
+
+    if (
+      !path ||
+      !uid ||
+      this.activeRole !== 'admin'
+    ) return;
+
+    const generation = this.generation;
+    const photoGeneration =
+      this.selectedPhotoGeneration;
+
+    this.photoLoading.set(true);
+
+    try {
+      const blob =
+        await this.photoService.download(path);
+
+      if (
+        generation !== this.generation ||
+        photoGeneration !== this.selectedPhotoGeneration ||
+        this.auth.currentUser?.uid !== uid ||
+        this.activeRole !== 'admin'
+      ) return;
+
+      this.photoUrl.set(
+        URL.createObjectURL(blob)
+      );
+    } catch (error: unknown) {
+      if (
+        generation === this.generation &&
+        photoGeneration === this.selectedPhotoGeneration
+      ) {
+        this.photoFailure.set(
+          error instanceof Error
+            ? error.message
+            : 'Unable to load this photo.'
+        );
+      }
+    } finally {
+      if (
+        photoGeneration === this.selectedPhotoGeneration
+      ) {
+        this.photoLoading.set(false);
+      }
+    }
+  }
+
+  imageFailed(): void {
+    if (this.photoUrl()) {
+      URL.revokeObjectURL(this.photoUrl());
+    }
+
+    this.photoUrl.set('');
+    this.photoFailure.set(
+      'This photo could not be displayed. Try loading it again.'
+    );
+  }
+
+  private clearSelectedPhoto(): void {
+    ++this.selectedPhotoGeneration;
+    this.selectedPhotoKey = '';
+
+    if (this.photoUrl()) {
+      URL.revokeObjectURL(this.photoUrl());
+    }
+
+    this.photoUrl.set('');
+    this.photoLoading.set(false);
+    this.photoFailure.set('');
   }
 
   submitConcern(
@@ -274,14 +505,19 @@ export class ConcernService implements OnDestroy {
     payload: ConcernPayload,
     photo: File | null
   ): Promise<ConcernResponse> {
-    const user = await this.requireRole('resident');
+    const user =
+      await this.requireRole('resident');
 
-    const category = this.categoryService.getById(
-      payload.category_id
-    );
+    const category =
+      this.categoryService.getById(
+        payload.category_id
+      );
 
-    const location = payload.location_description.trim();
-    const description = payload.description.trim();
+    const location =
+      payload.location_description.trim();
+
+    const description =
+      payload.description.trim();
 
     if (
       !category ||
@@ -298,8 +534,9 @@ export class ConcernService implements OnDestroy {
     if (
       photo &&
       (
-        !['image/jpeg', 'image/png', 'image/webp']
-          .includes(photo.type) ||
+        !['image/jpeg', 'image/png', 'image/webp'].includes(
+          photo.type
+        ) ||
         photo.size <= 0 ||
         photo.size > 5 * 1024 * 1024
       )
@@ -336,7 +573,9 @@ export class ConcernService implements OnDestroy {
         uploaded = true;
       }
 
-      if (this.auth.currentUser?.uid !== user.uid) {
+      if (
+        this.auth.currentUser?.uid !== user.uid
+      ) {
         throw new Error(
           'Your login changed. Sign in again.'
         );
@@ -369,7 +608,6 @@ export class ConcernService implements OnDestroy {
             user.uid
           );
 
-          // Complete all reads before performing any writes.
           const [
             counterSnapshot,
             residentCounterSnapshot,
@@ -380,7 +618,8 @@ export class ConcernService implements OnDestroy {
             transaction.get(residentRef),
           ]);
 
-          const resident = residentSnapshot.data();
+          const resident =
+            residentSnapshot.data();
 
           if (
             resident?.['role'] !== 'resident' ||
@@ -391,7 +630,6 @@ export class ConcernService implements OnDestroy {
             );
           }
 
-          // Keep the stored value identical to the rules check.
           const residentName =
             typeof resident['name'] === 'string' &&
             resident['name'].length > 0
@@ -408,8 +646,7 @@ export class ConcernService implements OnDestroy {
             lastNumber >= Number.MAX_SAFE_INTEGER
           ) {
             throw new Error(
-              'The concern counter is unavailable or invalid. ' +
-              'Please contact the barangay.'
+              'The concern counter is unavailable or invalid. Please contact the barangay.'
             );
           }
 
@@ -429,9 +666,12 @@ export class ConcernService implements OnDestroy {
           }
 
           const nextNumber = lastNumber + 1;
-          const residentNumber = residentLastNumber + 1;
+          const residentNumber =
+            residentLastNumber + 1;
 
-          if (this.auth.currentUser?.uid !== user.uid) {
+          if (
+            this.auth.currentUser?.uid !== user.uid
+          ) {
             throw new Error(
               'Your login changed. Sign in again.'
             );
@@ -464,7 +704,6 @@ export class ConcernService implements OnDestroy {
             last_concern_id: concernRef.id,
           });
 
-          // Saved atomically with the new concern and counters.
           transaction.set(submissionAuditRef, {
             user_id: user.uid,
             user_name: residentName,
@@ -475,7 +714,8 @@ export class ConcernService implements OnDestroy {
             entity_id: concernRef.id,
             concern_number: nextNumber,
             resident_concern_number: residentNumber,
-            details: `Concern #${nextNumber} submitted.`,
+            details:
+              `Concern #${nextNumber} submitted.`,
             created_at: serverTimestamp(),
           });
 
@@ -500,7 +740,9 @@ export class ConcernService implements OnDestroy {
           .catch(() => undefined);
       }
 
-      throw new Error(this.errorMessage(error));
+      throw new Error(
+        this.errorMessage(error)
+      );
     }
   }
 
@@ -509,7 +751,8 @@ export class ConcernService implements OnDestroy {
     newStatus: ConcernStatus,
     remarks: string
   ): Promise<ConcernWithRelations> {
-    const user = await this.requireRole('personnel');
+    const user =
+      await this.requireRole('personnel');
 
     if (
       !STATUSES.includes(newStatus) ||
@@ -526,121 +769,169 @@ export class ConcernService implements OnDestroy {
       concernId
     );
 
-    await runTransaction(this.db, async transaction => {
-      const personnelSnapshot = await transaction.get(
-        doc(this.db, 'users', user.uid)
-      );
+    await runTransaction(
+      this.db,
+      async transaction => {
+        const personnelSnapshot =
+          await transaction.get(
+            doc(this.db, 'users', user.uid)
+          );
 
-      const snapshot = await transaction.get(concernRef);
+        const snapshot =
+          await transaction.get(concernRef);
 
-      if (!snapshot.exists()) {
-        throw new Error('Concern not found.');
-      }
+        if (!snapshot.exists()) {
+          throw new Error(
+            'Concern not found.'
+          );
+        }
 
-      const personnel = personnelSnapshot.data();
-      const data = snapshot.data();
+        const personnel =
+          personnelSnapshot.data();
 
-      if (
-        personnel?.['role'] !== 'personnel' ||
-        personnel?.['accountStatus'] !== 'approved'
-      ) {
-        throw new Error(
-          'An approved personnel account is required.'
+        const data = snapshot.data();
+
+        if (
+          personnel?.['role'] !== 'personnel' ||
+          personnel?.['accountStatus'] !== 'approved'
+        ) {
+          throw new Error(
+            'An approved personnel account is required.'
+          );
+        }
+
+        if (
+          this.auth.currentUser?.uid !== user.uid
+        ) {
+          throw new Error(
+            'Your login changed. Sign in again.'
+          );
+        }
+
+        const officeId =
+          personnel['officeId'];
+
+        if (
+          typeof officeId !== 'string' ||
+          !officeId.trim() ||
+          officeId !== officeId.trim() ||
+          officeId.includes('/') ||
+          data['office_id'] !== officeId
+        ) {
+          throw new Error(
+            'You can update only concerns assigned to your office.'
+          );
+        }
+
+        const personnelName =
+          typeof personnel['name'] === 'string' &&
+          personnel['name'].length > 0
+            ? personnel['name']
+            : 'Personnel';
+
+        const previousStatus =
+          data['current_status'];
+
+        if (!STATUSES.includes(previousStatus)) {
+          throw new Error(
+            'The existing concern status is invalid.'
+          );
+        }
+
+        if (previousStatus === newStatus) {
+          throw new Error(
+            'Select a different status.'
+          );
+        }
+
+        const previousRevision =
+          data['revision'];
+
+        const concernNumber =
+          data['concern_number'];
+
+        if (
+          !Number.isSafeInteger(previousRevision) ||
+          previousRevision < 0 ||
+          previousRevision >= Number.MAX_SAFE_INTEGER
+        ) {
+          throw new Error(
+            'The concern revision is invalid. Contact the administrator.'
+          );
+        }
+
+        if (
+          !Number.isSafeInteger(concernNumber) ||
+          concernNumber <= 0
+        ) {
+          throw new Error(
+            'The concern number is invalid. Contact the administrator.'
+          );
+        }
+
+        const revision =
+          previousRevision + 1;
+
+        const auditId =
+          `concern_${concernId}_${revision}`;
+
+        const auditRef = doc(
+          this.db,
+          'audit_logs',
+          auditId
         );
-      }
 
-      if (this.auth.currentUser?.uid !== user.uid) {
-        throw new Error(
-          'Your login changed. Sign in again.'
-        );
-      }
-
-      const previousStatus = data['current_status'];
-
-      if (!STATUSES.includes(previousStatus)) {
-        throw new Error(
-          'The existing concern status is invalid.'
-        );
-      }
-
-      if (previousStatus === newStatus) {
-        throw new Error('Select a different status.');
-      }
-
-      const previousRevision = data['revision'];
-      const concernNumber = data['concern_number'];
-
-      if (
-        !Number.isSafeInteger(previousRevision) ||
-        previousRevision < 0 ||
-        previousRevision >= Number.MAX_SAFE_INTEGER
-      ) {
-        throw new Error(
-          'The concern revision is invalid. Contact the administrator.'
-        );
-      }
-
-      if (
-        !Number.isSafeInteger(concernNumber) ||
-        concernNumber <= 0
-      ) {
-        throw new Error(
-          'The concern number is invalid. Contact the administrator.'
-        );
-      }
-
-      const revision = previousRevision + 1;
-      const auditId = `concern_${concernId}_${revision}`;
-
-      const auditRef = doc(
-        this.db,
-        'audit_logs',
-        auditId
-      );
-
-      transaction.update(concernRef, {
-        current_status: newStatus,
-        updated_at: serverTimestamp(),
-        revision,
-        updates: {
-          ...data['updates'],
-          [String(revision)]: {
-            update_id: revision,
-            previous_status: previousStatus,
-            new_status: newStatus,
-            remarks: remarks.trim() || null,
-            created_at: serverTimestamp(),
-            updated_by: user.uid,
+        transaction.update(concernRef, {
+          current_status: newStatus,
+          updated_at: serverTimestamp(),
+          revision,
+          updates: {
+            ...data['updates'],
+            [String(revision)]: {
+              update_id: revision,
+              previous_status: previousStatus,
+              new_status: newStatus,
+              remarks: remarks.trim() || null,
+              created_at: serverTimestamp(),
+              updated_by: user.uid,
+              updated_by_name: personnelName,
+            },
           },
-        },
-      });
+        });
 
-      transaction.set(auditRef, {
-        user_id: user.uid,
-        user_name: 'Personnel',
-        user_role: 'personnel',
-        category: 'Concern',
-        action: 'Status changed',
-        entity_type: 'concern',
-        entity_id: concernId,
-        concern_number: concernNumber,
-        revision,
-        previous_status: previousStatus,
-        new_status: newStatus,
-        details:
-          `Concern #${concernNumber}: ` +
-          `${previousStatus} → ${newStatus}`,
-        created_at: serverTimestamp(),
-      });
-    });
+        transaction.set(auditRef, {
+          user_id: user.uid,
+          user_name: personnelName,
+          user_role: 'personnel',
+          category: 'Concern',
+          action: 'Status changed',
+          entity_type: 'concern',
+          entity_id: concernId,
+          concern_number: concernNumber,
+          revision,
+          previous_status: previousStatus,
+          new_status: newStatus,
+          details:
+            `Concern #${concernNumber}: ` +
+            `${previousStatus} → ${newStatus}`,
+          created_at: serverTimestamp(),
+        });
+      }
+    );
 
-    const saved = await getDoc(concernRef);
+    const saved =
+      await getDoc(concernRef);
 
     if (!saved.exists()) {
-      throw new Error('Saved concern is unavailable.');
+      throw new Error(
+        'Saved concern is unavailable.'
+      );
     }
 
-    return this.toConcern(saved.id, saved.data());
+    return this.toConcern(
+      saved.id,
+      saved.data()
+    );
   }
 
   private async requireRole(
@@ -648,10 +939,13 @@ export class ConcernService implements OnDestroy {
   ) {
     await this.auth.authStateReady();
 
-    const user = this.auth.currentUser;
+    const user =
+      this.auth.currentUser;
 
     if (!user) {
-      throw new Error('Please sign in first.');
+      throw new Error(
+        'Please sign in first.'
+      );
     }
 
     const profile = (
@@ -660,7 +954,9 @@ export class ConcernService implements OnDestroy {
       )
     ).data();
 
-    if (this.auth.currentUser?.uid !== user.uid) {
+    if (
+      this.auth.currentUser?.uid !== user.uid
+    ) {
       throw new Error(
         'Your login changed. Sign in again.'
       );
@@ -700,63 +996,94 @@ export class ConcernService implements OnDestroy {
         remarks: update['remarks'],
         created_at: this.iso(update['created_at']),
         updated_by: update['updated_by'],
+        updated_by_name:
+          typeof update['updated_by_name'] === 'string'
+            ? update['updated_by_name']
+            : undefined,
+        updated_by_label: this.personnelLabel(
+          update['updated_by_name'],
+          update['updated_by']
+        ),
       }))
-      .sort((a, b) => a.update_id - b.update_id);
+      .sort(
+        (a, b) => a.update_id - b.update_id
+      );
 
-    const latestUpdate = updates[updates.length - 1];
+    const latestUpdate =
+      updates[updates.length - 1];
 
     return {
       concern_id: id,
-
       concern_number:
         Number.isSafeInteger(data['concern_number']) &&
         data['concern_number'] > 0
           ? data['concern_number']
           : null,
-
       resident_concern_number:
         Number.isSafeInteger(data['resident_concern_number']) &&
         data['resident_concern_number'] > 0
           ? data['resident_concern_number']
           : null,
-
       resident_id: data['resident_id'],
-
       assigned_personnel_id:
         data['assigned_personnel_id'] ?? null,
-
       office_id: data['office_id'] ?? null,
-      office: this.offices.get(data['office_id']),
-
+      office: this.offices.get(
+        data['office_id']
+      ),
       last_updated_by:
         latestUpdate?.updated_by ?? null,
-
+      last_updated_by_name:
+        latestUpdate?.updated_by_name ?? null,
+      last_updated_by_label: latestUpdate
+        ? latestUpdate.updated_by_label
+        : 'No personnel update yet',
       category_id: data['category_id'],
-
       category: this.categoryService.getById(
         data['category_id']
       ),
-
-      location_description: data['location_description'],
+      location_description:
+        data['location_description'],
       description: data['description'],
       photo_path: data['photo_path'],
-
       photo_url:
         this.objectUrls.get(data['photo_path']) ?? null,
-
       current_status: data['current_status'],
-      reported_at: this.iso(data['reported_at']),
-
+      reported_at: this.iso(
+        data['reported_at']
+      ),
       updated_at: data['updated_at']
         ? this.iso(data['updated_at'])
         : null,
-
       updates,
     };
   }
 
-  private loadPhotos(generation: number): void {
-    const photoGeneration = ++this.photoGeneration;
+  private personnelLabel(
+    name: unknown,
+    uid: unknown
+  ): string {
+    const label =
+      typeof name === 'string'
+        ? name.trim()
+        : '';
+
+    if (label) {
+      return label === 'Personnel'
+        ? label
+        : `${label} Personnel`;
+    }
+
+    return uid
+      ? 'Personnel (name not recorded)'
+      : 'Updater not recorded';
+  }
+
+  private loadPhotos(
+    generation: number
+  ): void {
+    const photoGeneration =
+      ++this.photoGeneration;
 
     this.photoFailure.set('');
 
@@ -776,21 +1103,20 @@ export class ConcernService implements OnDestroy {
     for (const concern of this.records()) {
       const path = concern.photo_path;
 
-      if (!path || this.objectUrls.has(path)) {
-        continue;
-      }
+      if (
+        !path ||
+        this.objectUrls.has(path)
+      ) continue;
 
-      void this.photoService
-        .download(path)
+      void this.photoService.download(path)
         .then(blob => {
           if (
             generation !== this.generation ||
             photoGeneration !== this.photoGeneration
-          ) {
-            return;
-          }
+          ) return;
 
-          const url = URL.createObjectURL(blob);
+          const url =
+            URL.createObjectURL(blob);
 
           this.objectUrls.set(path, url);
 
@@ -816,6 +1142,7 @@ export class ConcernService implements OnDestroy {
   }
 
   private clearRecords(): void {
+    this.clearSelectedPhoto();
     ++this.photoGeneration;
 
     this.records.set([]);
@@ -828,7 +1155,9 @@ export class ConcernService implements OnDestroy {
     this.objectUrls.clear();
   }
 
-  private errorMessage(error: unknown): string {
+  private errorMessage(
+    error: unknown
+  ): string {
     const code =
       typeof error === 'object' &&
       error !== null &&
@@ -837,15 +1166,11 @@ export class ConcernService implements OnDestroy {
         : '';
 
     if (code.includes('permission-denied')) {
-      return (
-        'Access denied. Check account approval and Firestore rules.'
-      );
+      return 'Access denied. Check account approval, office assignment, and Firestore rules.';
     }
 
     if (code.includes('unavailable')) {
-      return (
-        'Firebase is unavailable. Check your connection and retry.'
-      );
+      return 'Firebase is unavailable. Check your connection and retry.';
     }
 
     return error instanceof Error
@@ -860,6 +1185,15 @@ export class ConcernService implements OnDestroy {
     this.stopProfile?.();
     this.stopRecords?.();
     this.stopOffices?.();
+    this.stopResidents?.();
+
+    this.activeRole = '';
+    this.accessUid.set('');
+    this.officeId.set('');
+
+    this.residentProfiles.set(new Map());
+    this.adminResidentLoading.set(false);
+    this.adminResidentError.set('');
 
     this.offices.clear();
     this.clearRecords();

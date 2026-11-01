@@ -153,45 +153,47 @@
             </tr>
           </thead>
 
-          <tbody>
-            @for (entry of pagedEntries(); track entry.id) {
-              <tr>
-                <td class="date-cell">
-                  @if (entry.createdAt) {
-                    <time [attr.datetime]="entry.createdAt">
-                      {{
-                        entry.createdAt
-                          | date:'MMM d, y, h:mm a':'GMT+08:00'
-                      }}
-                    </time>
-                  } @else {
-                    Date unavailable
-                  }
-                </td>
+          @for (page of [displayedPage()]; track page) {
+            <tbody class="audit-page-rows">
+              @for (entry of pagedEntries(); track entry.id) {
+                <tr>
+                  <td class="date-cell">
+                    @if (entry.createdAt) {
+                      <time [attr.datetime]="entry.createdAt">
+                        {{
+                          entry.createdAt
+                            | date:'MMM d, y, h:mm a':'GMT+08:00'
+                        }}
+                      </time>
+                    } @else {
+                      Date unavailable
+                    }
+                  </td>
 
-                <td class="user-cell">
-                  {{ entry.userName }}
-                </td>
+                  <td class="user-cell">
+                    {{ entry.userName }}
+                  </td>
 
-                <td>
-                  <span
-                    class="category-badge"
-                    [ngClass]="categoryClass(entry.category)"
-                  >
-                    {{ entry.category }}
-                  </span>
-                </td>
+                  <td>
+                    <span
+                      class="category-badge"
+                      [ngClass]="categoryClass(entry.category)"
+                    >
+                      {{ entry.category }}
+                    </span>
+                  </td>
 
-                <td class="action-cell">
-                  {{ entry.action }}
-                </td>
+                  <td class="action-cell">
+                    {{ entry.action }}
+                  </td>
 
-                <td class="details-cell">
-                  {{ displayDetails(entry) }}
-                </td>
-              </tr>
-            }
-          </tbody>
+                  <td class="details-cell">
+                    {{ displayDetails(entry) }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          }
         </table>
       </div>
 

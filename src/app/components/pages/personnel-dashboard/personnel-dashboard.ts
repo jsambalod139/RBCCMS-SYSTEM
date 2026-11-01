@@ -4,18 +4,18 @@ import {
   Component,
   computed,
   inject,
-  signal
+  signal,
 } from '@angular/core';
 
 import { Router } from '@angular/router';
 
 import {
   Concern,
-  ConcernStatus
+  ConcernStatus,
 } from '../../../core/models/concern.model';
 
 import {
-  ConcernService
+  ConcernService,
 } from '../../../core/services/concern.service';
 
 @Component({
@@ -23,12 +23,10 @@ import {
   standalone: true,
   imports: [CommonModule],
   templateUrl: './personnel-dashboard.html',
-  styleUrl: './personnel-dashboard.scss'
+  styleUrl: './personnel-dashboard.scss',
 })
 export class PersonnelDashboard {
-  private readonly concernService =
-    inject(ConcernService);
-
+  private readonly concernService = inject(ConcernService);
   private readonly router = inject(Router);
 
   readonly concerns = this.concernService.concerns;
@@ -36,49 +34,47 @@ export class PersonnelDashboard {
   readonly loadError = this.concernService.error;
 
   readonly period = signal<6 | 12>(6);
-
   private readonly today = signal(new Date());
 
-  private readonly monthFormatter =
-    new Intl.DateTimeFormat('en-US', {
+  private readonly monthFormatter = new Intl.DateTimeFormat(
+    'en-US',
+    {
       timeZone: 'Asia/Manila',
       year: 'numeric',
-      month: '2-digit'
-    });
-
-  readonly totalConcerns = computed(
-    () => this.concerns().length
+      month: '2-digit',
+    }
   );
 
-  readonly pendingCount = computed(
-    () => this.countByStatus('Pending')
+  readonly totalConcerns = computed(() =>
+    this.concerns().length
   );
 
-  readonly inProgressCount = computed(
-    () => this.countByStatus('In Progress')
+  readonly pendingCount = computed(() =>
+    this.countByStatus('Pending')
   );
 
-  readonly resolvedCount = computed(
-    () => this.countByStatus('Resolved')
+  readonly inProgressCount = computed(() =>
+    this.countByStatus('In Progress')
+  );
+
+  readonly resolvedCount = computed(() =>
+    this.countByStatus('Resolved')
   );
 
   readonly recentConcerns = computed(() =>
     [...this.concerns()]
-      .sort(
-        (a, b) =>
-          this.dateValue(b.reported_at) -
-          this.dateValue(a.reported_at)
+      .sort((a, b) =>
+        this.dateValue(b.reported_at) -
+        this.dateValue(a.reported_at)
       )
       .slice(0, 5)
   );
 
   readonly monthlySubmissions = computed(() => {
-    const current =
-      this.monthParts(this.today())!;
+    const current = this.monthParts(this.today())!;
 
     const rows = Array.from(
       { length: this.period() },
-
       (_, index) => {
         const date = new Date(
           Date.UTC(
@@ -91,20 +87,13 @@ export class PersonnelDashboard {
         return {
           key:
             `${date.getUTCFullYear()}-` +
-            String(
-              date.getUTCMonth() + 1
-            ).padStart(2, '0'),
-
-          label: date.toLocaleDateString(
-            'en-US',
-            {
-              timeZone: 'UTC',
-              month: 'short',
-              year: 'numeric'
-            }
-          ),
-
-          count: 0
+            String(date.getUTCMonth() + 1).padStart(2, '0'),
+          label: date.toLocaleDateString('en-US', {
+            timeZone: 'UTC',
+            month: 'short',
+            year: 'numeric',
+          }),
+          count: 0,
         };
       }
     );
@@ -126,37 +115,29 @@ export class PersonnelDashboard {
 
       const row = byMonth.get(key);
 
-      if (row) {
-        row.count++;
-      }
+      if (row) row.count++;
     }
 
     return rows;
   });
 
-  // Integer tick values and room above the tallest bar.
   readonly chartStep = computed(() => {
     const highest = Math.max(
       0,
-      ...this.monthlySubmissions().map(
-        row => row.count
-      )
+      ...this.monthlySubmissions().map(row => row.count)
     );
 
-    return Math.max(
-      1,
-      Math.ceil((highest + 1) / 4)
-    );
+    return Math.max(1, Math.ceil((highest + 1) / 4));
   });
 
-  readonly chartMaximum = computed(
-    () => this.chartStep() * 4
+  readonly chartMaximum = computed(() =>
+    this.chartStep() * 4
   );
 
   readonly chartTicks = computed(() =>
     [0, 1, 2, 3, 4].map(index => ({
       value: index * this.chartStep(),
-      position: index * 25
+      position: index * 25,
     }))
   );
 
@@ -170,82 +151,70 @@ export class PersonnelDashboard {
   readonly officeBreakdown = computed(() => {
     const offices = new Map<
       string,
-      {
-        id: string;
-        name: string;
-        count: number;
-      }
+      { id: string; name: string; count: number }
     >([
       [
         'menro',
         {
           id: 'menro',
-          name:
-            'Municipal Environment and Natural Resources Office',
-          count: 0
-        }
+          name: 'Municipal Environment and Natural Resources Office',
+          count: 0,
+        },
       ],
       [
         'municipal-engineering',
         {
           id: 'municipal-engineering',
           name: 'Municipal Engineering Office',
-          count: 0
-        }
+          count: 0,
+        },
       ],
       [
         'municipal-waterworks',
         {
           id: 'municipal-waterworks',
           name: 'Municipal Waterworks',
-          count: 0
-        }
+          count: 0,
+        },
       ],
       [
         'barangay-office',
         {
           id: 'barangay-office',
           name: 'Barangay Office',
-          count: 0
-        }
-      ]
+          count: 0,
+        },
+      ],
     ]);
 
     for (const concern of this.concerns()) {
-      const id =
-        concern.office_id || 'unassigned';
+      const id = concern.office_id || 'unassigned';
 
       const row = offices.get(id) ?? {
         id,
-        name:
-          id === 'unassigned'
-            ? 'Not assigned'
-            : id,
-        count: 0
+        name: id === 'unassigned' ? 'Not assigned' : id,
+        count: 0,
       };
 
       row.name =
-        concern.office?.office_name?.trim() ||
-        row.name;
+        concern.office?.office_name?.trim() || row.name;
 
       row.count++;
-
       offices.set(id, row);
     }
 
-    return [...offices.values()].sort(
-      (a, b) =>
+    return [...offices.values()]
+      .filter(row => row.id === this.concernService.officeId())
+      .sort((a, b) =>
         b.count - a.count ||
         a.name.localeCompare(b.name)
-    );
+      );
   });
 
   readonly officeMaximum = computed(() =>
     Math.max(
       1,
-      ...this.officeBreakdown().map(
-        row => row.count
-      )
+      ...this.officeBreakdown().map(row => row.count)
     )
   );
 
@@ -268,31 +237,21 @@ export class PersonnelDashboard {
   private monthParts(
     date: Date
   ): { year: number; month: number } | null {
-    if (Number.isNaN(date.getTime())) {
-      return null;
-    }
+    if (Number.isNaN(date.getTime())) return null;
 
-    const parts =
-      this.monthFormatter.formatToParts(date);
+    const parts = this.monthFormatter.formatToParts(date);
 
     return {
       year: Number(
-        parts.find(
-          part => part.type === 'year'
-        )!.value
+        parts.find(part => part.type === 'year')!.value
       ),
-
       month: Number(
-        parts.find(
-          part => part.type === 'month'
-        )!.value
-      )
+        parts.find(part => part.type === 'month')!.value
+      ),
     };
   }
 
-  private countByStatus(
-    status: ConcernStatus
-  ): number {
+  private countByStatus(status: ConcernStatus): number {
     return this.concerns().filter(
       concern => concern.current_status === status
     ).length;
@@ -300,41 +259,26 @@ export class PersonnelDashboard {
 
   private dateValue(value: string): number {
     const timestamp = Date.parse(value);
-
-    return Number.isNaN(timestamp)
-      ? 0
-      : timestamp;
+    return Number.isNaN(timestamp) ? 0 : timestamp;
   }
 
   categoryName(concern: Concern): string {
-    return (
-      concern.category?.category_name ??
-      'Uncategorized'
-    );
+    return concern.category?.category_name ?? 'Uncategorized';
   }
 
   statusClass(status: ConcernStatus): string {
     switch (status) {
-      case 'Pending':
-        return 'status-pending';
-
-      case 'In Progress':
-        return 'status-progress';
-
-      case 'Resolved':
-        return 'status-resolved';
-
-      case 'Rejected':
-        return 'status-rejected';
-
-      default:
-        return 'status-default';
+      case 'Pending': return 'status-pending';
+      case 'In Progress': return 'status-progress';
+      case 'Resolved': return 'status-resolved';
+      case 'Rejected': return 'status-rejected';
+      default: return 'status-default';
     }
   }
 
   viewConcerns(): void {
     void this.router.navigate([
-      '/perso-dashboard/personnel-concern'
+      '/perso-dashboard/personnel-concern',
     ]);
   }
 }

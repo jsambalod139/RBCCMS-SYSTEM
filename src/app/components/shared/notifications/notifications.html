@@ -50,9 +50,10 @@
           class="read-all"
           (click)="feed.markAllRead()"
           [disabled]="
-            feed.saving()
-            || !feed.unreadCount()
-            || feed.loading()
+            feed.saving() ||
+            !feed.unreadCount() ||
+            feed.loading() ||
+            navigating()
           "
         >
           {{
@@ -97,15 +98,19 @@
       } @else if (feed.notificationsDisabled()) {
         <div class="state">
           <strong>Notifications are off</strong>
+
           <p>
             Turn them on in Settings → Preferences
-            to see concern notifications.
+            to see notifications.
           </p>
         </div>
       } @else if (!feed.visibleNotifications().length) {
         <div class="state">
           <strong>No notifications yet</strong>
-          <p>Concern updates will appear here.</p>
+
+          <p>
+            Activity updates will appear here.
+          </p>
         </div>
       } @else {
         <ul class="notification-list">
@@ -118,12 +123,15 @@
                 type="button"
                 class="notification-item"
                 [class.unread]="!item.read"
-                [disabled]="feed.saving()"
+                [disabled]="feed.saving() || navigating()"
                 (click)="openConcern(item)"
               >
                 <span
                   class="event-icon"
-                  [class.resolved]="item.kind === 'resolved'"
+                  [class.resolved]="
+                    item.kind === 'resolved' ||
+                    item.kind === 'resident'
+                  "
                   aria-hidden="true"
                 >
                   {{
@@ -131,7 +139,8 @@
                       ? '✓'
                       : item.kind === 'rejected'
                         ? '!'
-                        : item.kind === 'submitted'
+                        : item.kind === 'submitted' ||
+                            item.kind === 'resident'
                           ? '+'
                           : '↻'
                   }}
@@ -167,7 +176,11 @@
                   </time>
 
                   <span class="view-link">
-                    View concern →
+                    {{
+                      item.target === 'audit'
+                        ? 'View audit log →'
+                        : 'View concern →'
+                    }}
                   </span>
                 </span>
               </button>

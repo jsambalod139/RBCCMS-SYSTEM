@@ -1,8 +1,8 @@
 :host {
   display: block;
   min-width: 0;
-  font-family: 'Inter', sans-serif;
-  color: #243044;
+  color: #21372a;
+  font-family: var(--font-ui, 'Inter', Arial, sans-serif);
 }
 
 *,
@@ -14,8 +14,10 @@
 .profile-page {
   width: 100%;
   min-width: 0;
-  padding: 22px 28px;
-  background: #f6f8fb;
+  min-height: 100%;
+  padding: 22px;
+  background: #f5f8f6;
+  animation: personnel-profile-enter 200ms ease-out;
 }
 
 .page-header {
@@ -23,10 +25,11 @@
 
   h1 {
     margin: 0;
-    color: #243044;
-    font-size: 21px;
+    color: #172b20;
+    font-size: clamp(24px, 2.3vw, 28px);
     font-weight: 700;
-    line-height: 1.4;
+    line-height: 1.3;
+    letter-spacing: -0.025em;
   }
 }
 
@@ -36,11 +39,16 @@
   gap: 20px;
   width: 100%;
   min-width: 0;
-  padding: 16px 20px;
-  border: 1px solid #e9edf2;
-  border-radius: 11px;
+  padding: 22px;
+  border: 1px solid #dfe8e2;
+  border-radius: 12px;
   background: #fff;
-  box-shadow: 0 2px 4px rgb(15 23 42 / 3.5%);
+  box-shadow: 0 3px 14px rgb(33 55 42 / 4%);
+
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
 }
 
 .profile-avatar {
@@ -51,13 +59,15 @@
   width: 64px;
   height: 64px;
   overflow: hidden;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dce7df;
   border-radius: 50%;
-  background: #edf1f5;
+  background: #edf2ee;
   color: #64748b;
+  box-shadow: 0 0 0 4px #f4f8f5;
 }
 
-.profile-photo {
+.profile-photo,
+.profile-avatar img {
   display: block;
   width: 100%;
   height: 100%;
@@ -76,27 +86,30 @@
 
   h2 {
     margin: 0 0 5px;
-    color: #172033;
-    font-size: 16px;
+    color: #17251d;
+    font-size: 18px;
     font-weight: 600;
-    line-height: 1.4;
+    line-height: 1.5;
     overflow-wrap: anywhere;
   }
 }
 
 .profile-email {
-  margin: 0 0 4px;
+  margin: 0 0 7px;
   color: #64748b;
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.7;
   overflow-wrap: anywhere;
 }
 
 .profile-role {
   display: inline-block;
-  color: #2563eb;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: #e7f3eb;
+  color: #24613b;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
@@ -104,52 +117,58 @@
 .photo-loading {
   margin: 12px 0 0;
   color: #64748b;
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.7;
 }
 
 .empty-profile {
   margin-top: 16px;
-  padding: 20px;
-  border: 1px solid #e9edf2;
-  border-radius: 11px;
+  padding: 24px;
+  border: 1px solid #dfe8e2;
+  border-radius: 12px;
   background: #fff;
   text-align: center;
 
   h3 {
-    margin: 0 0 6px;
+    margin: 0 0 8px;
     color: #334155;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
   }
 
   p {
     margin: 0;
     color: #64748b;
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1.7;
     overflow-wrap: anywhere;
   }
 }
 
 .btn-retry {
+  min-height: 40px;
   margin-top: 14px;
   padding: 9px 16px;
   border: 1px solid #21372a;
-  border-radius: 5px;
+  border-radius: 6px;
   background: #21372a;
   color: #fff;
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
 
-  &:hover:not(:disabled) {
-    background: #304c39;
+  transition:
+    transform 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+
+  &:active:not(:disabled) {
+    transform: scale(0.97);
   }
 
   &:focus-visible {
-    outline: 2px solid #527c60;
+    outline: 2px solid #527b60;
     outline-offset: 3px;
   }
 
@@ -159,33 +178,37 @@
   }
 }
 
-@media (max-width: 768px) {
-  .profile-page {
-    padding: 20px;
+@keyframes personnel-profile-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .profile-card:hover {
+    transform: translateY(-2px);
+    border-color: #b5cdbd;
+    box-shadow: 0 7px 22px rgb(33 55 42 / 8%);
   }
 
-  .profile-card {
-    gap: 16px;
-    padding: 16px;
+  .btn-retry:hover:not(:disabled) {
+    background: #304c39;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 900px) {
+  .profile-page {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 600px) {
   .profile-page {
     padding: 16px 12px;
   }
 
-  .page-header {
-    margin-bottom: 16px;
-
-    h1 {
-      font-size: 19px;
-    }
-  }
-
   .profile-card {
-    gap: 14px;
-    padding: 14px;
+    gap: 16px;
+    padding: 18px 16px;
   }
 
   .profile-avatar {
@@ -200,6 +223,33 @@
   }
 
   .profile-information h2 {
-    font-size: 15px;
+    font-size: 16px;
+  }
+
+  .btn-retry {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 380px) {
+  .profile-card {
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-page {
+    animation: none;
+  }
+
+  .profile-card,
+  .btn-retry {
+    transition: none;
+  }
+
+  .profile-card:hover,
+  .btn-retry:active:not(:disabled) {
+    transform: none;
   }
 }

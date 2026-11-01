@@ -2,6 +2,7 @@
   display: block;
   min-width: 0;
   color: #21372a;
+  font-family: var(--font-ui, 'Inter', Arial, sans-serif);
 }
 
 *,
@@ -12,50 +13,59 @@
 
 .reports-page {
   min-width: 0;
-  padding: 28px;
+  min-height: 100%;
+  padding: 22px;
+  background: #f5f8f6;
+  animation: reports-enter 200ms ease-out;
 }
 
 .page-heading,
 .report-heading,
 .actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
 }
 
 .page-heading {
-  flex-wrap: wrap;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .eyebrow {
   color: #597764;
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 1px;
+  letter-spacing: 0.13em;
 }
 
 h1 {
   margin: 5px 0 8px;
-  font-size: 28px;
+  color: #172b20;
+  font-size: clamp(24px, 2.3vw, 28px);
+  line-height: 1.3;
+  letter-spacing: -0.025em;
 }
 
 h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.45;
 }
 
 h3 {
   margin: 24px 0 12px;
   font-size: 15px;
+  font-weight: 600;
 }
 
 p {
   margin: 0;
-  color: #718078;
+  color: #5d7063;
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.75;
 }
 
 button,
@@ -66,37 +76,40 @@ input {
 button {
   min-height: 40px;
   padding: 9px 14px;
-  border: 1px solid #d5e1d8;
-  border-radius: 5px;
+  border: 1px solid #cbd9cf;
+  border-radius: 6px;
   background: #fff;
   color: #21372a;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
+  line-height: 1.4;
   cursor: pointer;
 
-  &:hover {
-    background: #edf4ef;
+  transition:
+    transform 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+
+  &:active:not(:disabled) {
+    transform: scale(0.97);
   }
 
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.55;
     cursor: not-allowed;
   }
 }
 
-button.primary,
-.tabs button.active {
+button.primary {
   border-color: #21372a;
   background: #21372a;
   color: #fff;
 }
 
-button.primary:hover {
-  background: #304c3a;
-}
-
 button:focus-visible,
-input:focus-visible {
+input:focus-visible,
+.table-scroll:focus-visible {
   outline: 2px solid #527b60;
   outline-offset: 3px;
 }
@@ -107,10 +120,11 @@ input:focus-visible {
   align-items: flex-end;
   gap: 14px;
   margin-bottom: 20px;
-  padding: 18px;
-  border: 1px solid #dfe7e1;
-  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #dfe8e2;
+  border-radius: 12px;
   background: #fff;
+  box-shadow: 0 3px 14px rgb(33 55 42 / 4%);
 
   .error {
     flex-basis: 100%;
@@ -121,16 +135,28 @@ label {
   display: flex;
   flex-direction: column;
   gap: 7px;
-  font-size: 12px;
+  min-width: 0;
+  font-size: 13px;
 }
 
 input {
+  min-width: 0;
   min-height: 40px;
   padding: 8px 12px;
   border: 1px solid #d5e1d8;
-  border-radius: 5px;
+  border-radius: 6px;
   background: #fff;
   color: #21372a;
+  font-size: 14px;
+
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+
+  &:focus {
+    border-color: #527b60;
+    box-shadow: 0 0 0 3px rgb(82 123 96 / 10%);
+  }
 }
 
 .tabs {
@@ -138,13 +164,16 @@ input {
   gap: 4px;
   margin-bottom: 18px;
   padding: 4px;
+  overflow-x: auto;
   border: 1px solid #dfe7e1;
-  border-radius: 8px;
+  border-radius: 9px;
+  background: #f2f6f3;
 
   button {
     flex: 1;
     border-color: transparent;
     background: transparent;
+    color: #5d7063;
 
     &.active {
       border-color: #21372a;
@@ -156,18 +185,30 @@ input {
 
 .report-panel {
   padding: 24px;
-  border: 1px solid #dfe7e1;
-  border-radius: 8px;
+  border: 1px solid #dfe8e2;
+  border-radius: 12px;
   background: #fff;
+  box-shadow: 0 3px 14px rgb(33 55 42 / 4%);
+  animation-duration: 180ms;
+  animation-timing-function: ease-out;
 }
 
-.report-heading {
-  flex-wrap: wrap;
+/* Different animation names replay the fade on each tab change. */
+.reports-page:has(.tabs button:nth-child(1).active) .report-panel {
+  animation-name: report-summary-enter;
+}
 
-  span {
-    color: #68776d;
-    font-size: 13px;
-  }
+.reports-page:has(.tabs button:nth-child(2).active) .report-panel {
+  animation-name: report-offices-enter;
+}
+
+.reports-page:has(.tabs button:nth-child(3).active) .report-panel {
+  animation-name: report-residents-enter;
+}
+
+.report-heading span {
+  color: #627267;
+  font-size: 13px;
 }
 
 .note {
@@ -180,16 +221,16 @@ input {
 
 .summary-strip {
   display: grid;
-  grid-template-columns:
-    repeat(auto-fit, minmax(110px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
   margin-top: 20px;
+  overflow: hidden;
   border: 1px solid #dfe7e1;
-  border-radius: 7px;
+  border-radius: 9px;
   background: #f2f7f3;
 
   div {
     padding: 14px 10px;
-    color: #68776d;
+    color: #627267;
     font-size: 12px;
     text-align: center;
   }
@@ -199,20 +240,25 @@ input {
     margin-top: 5px;
     color: #21372a;
     font-size: 24px;
+    font-variant-numeric: tabular-nums;
   }
 }
 
 .table-scroll {
+  max-width: 100%;
   overflow-x: auto;
   border: 1px solid #dfe7e1;
-  border-radius: 6px;
+  border-radius: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #b8cbbf #f5f8f6;
 }
 
 table {
   width: 100%;
   min-width: 720px;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
 }
 
 th,
@@ -220,6 +266,7 @@ td {
   padding: 12px;
   border-bottom: 1px solid #e7ede8;
   text-align: right;
+  line-height: 1.6;
 }
 
 th:first-child,
@@ -229,10 +276,15 @@ td:first-child {
 }
 
 thead th {
-  background: #f4f7f4;
+  background: #f3f7f4;
   color: #536158;
-  font-size: 11px;
+  font-size: 12px;
+  font-weight: 600;
   white-space: nowrap;
+}
+
+tbody tr {
+  transition: background-color 150ms ease;
 }
 
 tfoot {
@@ -248,44 +300,172 @@ tfoot {
 .error {
   margin: 10px 0;
   color: #a52e2e;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
 }
 
 .empty {
   padding: 28px;
   border: 1px dashed #d5e1d8;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #f7faf8;
   text-align: center;
 }
 
-@media (max-width: 800px) {
+@keyframes reports-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes report-summary-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes report-offices-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes report-residents-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button:hover:not(:disabled) {
+    border-color: #8eaa97;
+    background: #edf4ef;
+  }
+
+  button.primary:hover:not(:disabled) {
+    border-color: #304c3a;
+    background: #304c3a;
+    box-shadow: 0 3px 10px rgb(33 55 42 / 12%);
+  }
+
+  .tabs button.active:hover {
+    border-color: #21372a;
+    background: #21372a;
+    color: #fff;
+  }
+
+  tbody tr:hover {
+    background: #f4f9f5;
+  }
+}
+
+@media (max-width: 900px) {
   .reports-page {
     padding: 18px;
   }
 
   .report-panel {
-    padding: 18px;
+    padding: 20px;
   }
 }
 
 @media (max-width: 600px) {
   .reports-page {
-    padding: 12px;
+    padding: 16px 12px;
   }
 
-  h1 {
-    font-size: 23px;
+  .filters,
+  .report-panel {
+    padding: 18px 14px;
   }
 
   .actions {
-    flex-wrap: wrap;
+    width: 100%;
+
+    button {
+      flex: 1 1 140px;
+    }
   }
 
   .tabs {
     flex-direction: column;
   }
 
-  label {
-    width: 100%;    
+  .filters label {
+    width: 100%;
   }
-}    
+
+  input {
+    width: 100%;
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  button {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reports-page,
+  .reports-page .report-panel {
+    animation: none;
+  }
+
+  button,
+  input,
+  tbody tr {
+    transition: none;
+  }
+
+  button:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+@media print {
+  .reports-page {
+    padding: 0;
+    background: #fff;
+    animation: none;
+  }
+
+  .actions,
+  .filters,
+  .tabs {
+    display: none;
+  }
+
+  .reports-page .report-panel {
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    animation: none;
+  }
+
+  .table-scroll {
+    overflow: visible;
+    border: 0;
+  }
+
+  table {
+    min-width: 0;
+    table-layout: fixed;
+  }
+
+  th,
+  td {
+    padding: 6px;
+    font-size: 10px;
+    overflow-wrap: anywhere;
+  }
+
+  thead th {
+    white-space: normal;
+  }
+
+  th:first-child,
+  td:first-child {
+    min-width: 0;
+  }
+
+  tr {
+    break-inside: avoid;
+  }
+}

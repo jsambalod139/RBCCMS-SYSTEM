@@ -33,6 +33,7 @@ export class Notifications {
 
   private readonly account = inject(SettingsService);
   private readonly router = inject(Router);
+
   private readonly element =
     inject(ElementRef<HTMLElement>);
 
@@ -41,6 +42,7 @@ export class Notifications {
 
   readonly opened = output<void>();
   readonly isOpen = signal(false);
+  readonly navigating = signal(false);
 
   toggle(): void {
     this.isOpen.update(value => !value);
@@ -61,10 +63,11 @@ export class Notifications {
 
   @HostListener('document:click', ['$event'])
   outside(event: MouseEvent): void {
+    const target = event.target;
+
     if (
-      !this.element.nativeElement.contains(
-        event.target as Node
-      )
+      target instanceof Node &&
+      !this.element.nativeElement.contains(target)
     ) {
       this.close();
     }
@@ -82,30 +85,72 @@ export class Notifications {
   ): Promise<void> {
     const profile = this.account.profile();
 
-    if (!profile || this.feed.saving()) return;
-
-    const uid = profile.uid;
-
-    await this.feed.markRead(item);
-
-    if (this.account.profile()?.uid !== uid) return;
-
-    const path =
-      profile.role === 'resident'
-        ? '/res-dashboard/resident-my-concern'
-        : '/perso-dashboard/personnel-concern';
-
-    const navigated = await this.router.navigate(
-      [path],
-      {
-        queryParams: {
-          concern: item.concernId,
-        },
-      }
+    const current = this.feed.notifications().find(
+      notification => notification.id === item.id
     );
 
-    if (navigated) {
-      this.close();
+    if (
+      !profile ||
+      profile.accountStatus !== 'approved' ||
+      !current ||
+      this.feed.saving() ||
+      this.navigating()
+    ) {
+      return;
+    }
+
+    const uid = profile.uid;
+    const role = profile.role;
+
+    this.navigating.set(true);
+
+    try {
+      await this.feed.markRead(current);
+
+      const latest = this.account.profile();
+
+      if (
+        latest?.uid !== uid ||
+        latest.role !== role ||
+        latest.accountStatus !== 'approved'
+      ) {
+        return;
+      }
+
+      let path: string;
+
+      if (role === 'admin') {
+        path =
+          current.target === 'audit'
+            ? '/ad-dashboard/admin-audit-logs'
+            : '/ad-dashboard/admin-concern';
+      } else if (role === 'resident') {
+        path = '/res-dashboard/resident-my-concern';
+      } else {
+        path = '/perso-dashboard/personnel-concern';
+      }
+
+      const navigated = await this.router.navigate(
+        [path],
+        {
+          queryParams:
+            current.target === 'audit'
+              ? {}
+              : {
+                  concern: current.concernId,
+                },
+        }
+      );
+
+      if (navigated) {
+        this.close();
+      }
+    } catch {
+      this.feed.actionError.set(
+        'Unable to open this notification. Please try again.'
+      );
+    } finally {
+      this.navigating.set(false);
     }
   }
 }

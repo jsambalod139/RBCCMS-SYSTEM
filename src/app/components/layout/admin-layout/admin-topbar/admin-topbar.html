@@ -1,9 +1,16 @@
-<nav class="dashboard-topbar" aria-label="Administrator header">
+<nav
+  class="dashboard-topbar"
+  aria-label="Administrator header"
+>
   <div class="topbar-left">
     <h1>Welcome to RBCCMS!</h1>
   </div>
 
   <div class="topbar-right">
+    <app-notifications
+      (opened)="closeMenu()"
+    ></app-notifications>
+
     <div class="profile-wrapper">
       <button
         type="button"
@@ -55,7 +62,10 @@
 
             <div class="profile-text">
               <span class="profile-name">
-                {{ account.profile()?.name || 'Administrator' }}
+                {{
+                  account.profile()?.name ||
+                  'Administrator'
+                }}
               </span>
 
               <span class="profile-role">
