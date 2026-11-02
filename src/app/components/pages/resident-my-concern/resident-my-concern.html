@@ -1,8 +1,6 @@
 <section class="my-concerns-page">
   @if (photoError()) {
-    <p class="photo-message" role="status">
-      {{ photoError() }}
-    </p>
+    <p class="photo-message" role="status">{{ photoError() }}</p>
   }
 
   @if (selectedConcern; as concern) {
@@ -10,13 +8,9 @@
       <header class="details-page-header">
         <div>
           <h1>Concern Details</h1>
-
           <p class="reference-tag">
             Concern ID:
-            {{
-              concern.resident_concern_number ??
-              'Not numbered'
-            }}
+            {{ concern.resident_concern_number ?? 'Not numbered' }}
           </p>
         </div>
 
@@ -139,7 +133,6 @@
 
       <section class="details-section">
         <h2>Description</h2>
-
         <div class="description-card">
           <p>{{ concern.description }}</p>
         </div>
@@ -198,10 +191,13 @@
                     </time>
                   </div>
 
-                  @if (update.previous_status) {
+                  @if (update.previous_status === update.new_status) {
                     <p class="status-transition">
-                      {{ update.previous_status }}
-                      → {{ update.new_status }}
+                      <strong>Progress update</strong> — Status unchanged
+                    </p>
+                  } @else if (update.previous_status) {
+                    <p class="status-transition">
+                      {{ update.previous_status }} → {{ update.new_status }}
                     </p>
                   }
 
@@ -222,7 +218,7 @@
           </ol>
         } @else {
           <p class="history-empty">
-            No status updates have been recorded yet.
+            No updates have been recorded yet.
           </p>
         }
       </section>
@@ -231,9 +227,7 @@
     <header class="page-header">
       <div>
         <h1>My Concerns</h1>
-        <p>
-          View and track the status of your submitted concerns.
-        </p>
+        <p>View and track the status of your submitted concerns.</p>
       </div>
     </header>
 
@@ -261,10 +255,7 @@
       </div>
 
       <div class="filter-box">
-        <label
-          for="statusFilter"
-          class="visually-hidden"
-        >
+        <label for="statusFilter" class="visually-hidden">
           Filter by status
         </label>
 
@@ -331,10 +322,7 @@
               "
             >
               <td class="concern-id">
-                {{
-                  concern.resident_concern_number ??
-                  'Not numbered'
-                }}
+                {{ concern.resident_concern_number ?? 'Not numbered' }}
               </td>
 
               <td>
@@ -403,10 +391,7 @@
       </p>
 
       <button
-        *ngIf="
-          searchTerm ||
-          selectedStatus !== 'All Status'
-        "
+        *ngIf="searchTerm || selectedStatus !== 'All Status'"
         type="button"
         class="btn-reset"
         (click)="clearFilters()"
@@ -415,10 +400,7 @@
       </button>
 
       <button
-        *ngIf="
-          !searchTerm &&
-          selectedStatus === 'All Status'
-        "
+        *ngIf="!searchTerm && selectedStatus === 'All Status'"
         type="button"
         class="btn-primary"
         (click)="onSubmitConcernClick()"

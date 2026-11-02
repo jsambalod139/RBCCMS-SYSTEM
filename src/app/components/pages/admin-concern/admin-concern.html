@@ -7,10 +7,7 @@
       Loading community concerns...
     </p>
   } @else if (loadError()) {
-    <div
-      class="page-notice error-notice"
-      role="alert"
-    >
+    <div class="page-notice error-notice" role="alert">
       <p>{{ loadError() }}</p>
 
       <button
@@ -22,19 +19,11 @@
       </button>
     </div>
   } @else if (selectedConcern(); as concern) {
-    <article
-      class="details-page"
-      aria-labelledby="details-title"
-    >
+    <article class="details-page" aria-labelledby="details-title">
       <header class="details-header">
         <div>
-          <p class="eyebrow">
-            ADMINISTRATOR PORTAL
-          </p>
-
-          <h1 id="details-title">
-            Concern Details
-          </h1>
+          <p class="eyebrow">ADMINISTRATOR PORTAL</p>
+          <h1 id="details-title">Concern Details</h1>
         </div>
 
         <button
@@ -47,17 +36,11 @@
       </header>
 
       <p class="read-only-note">
-        View-only access. Concern status updates
-        are managed by personnel.
+        View-only access. Concern status updates are managed by personnel.
       </p>
 
-      <section
-        aria-labelledby="information-title"
-      >
-        <h2
-          id="information-title"
-          class="information-heading"
-        >
+      <section aria-labelledby="information-title">
+        <h2 id="information-title" class="information-heading">
           Concern Information
         </h2>
 
@@ -69,12 +52,7 @@
 
           <div>
             <dt>Concern ID</dt>
-            <dd>
-              {{
-                concern.concern_number
-                  ?? 'Not numbered'
-              }}
-            </dd>
+            <dd>{{ concern.concern_number ?? 'Not numbered' }}</dd>
           </div>
 
           <div>
@@ -84,9 +62,7 @@
 
           <div>
             <dt>Location</dt>
-            <dd>
-              {{ concern.location_description }}
-            </dd>
+            <dd>{{ concern.location_description }}</dd>
           </div>
 
           <div>
@@ -94,10 +70,7 @@
             <dd>
               {{
                 concern.reported_at
-                  ? (
-                      concern.reported_at
-                        | date:'MMMM d, y, h:mm a':'GMT+08:00'
-                    )
+                  ? (concern.reported_at | date:'MMMM d, y, h:mm a':'GMT+08:00')
                   : 'Not recorded'
               }}
             </dd>
@@ -120,10 +93,7 @@
             <dd>
               {{
                 concern.updated_at
-                  ? (
-                      concern.updated_at
-                        | date:'MMM d, y, h:mm a':'GMT+08:00'
-                    )
+                  ? (concern.updated_at | date:'MMM d, y, h:mm a':'GMT+08:00')
                   : 'No updates yet'
               }}
             </dd>
@@ -133,12 +103,12 @@
             <dt>Responsible Office</dt>
             <dd>
               {{
-                concern.office?.office_name
-                  || (
-                    concern.office_id
-                      ? 'Office information unavailable'
-                      : 'Not assigned'
-                  )
+                concern.office?.office_name ||
+                (
+                  concern.office_id
+                    ? 'Office information unavailable'
+                    : 'Not assigned'
+                )
               }}
             </dd>
           </div>
@@ -147,9 +117,8 @@
             <dt>Last Updated By</dt>
             <dd>
               {{
-                concern.last_updated_by
-                  ? 'Personnel'
-                  : 'Not recorded'
+                concern.last_updated_by_label ||
+                'No personnel update yet'
               }}
             </dd>
           </div>
@@ -162,23 +131,13 @@
       </section>
 
       @if (concern.photo_path) {
-        <section
-          class="photo-section"
-          aria-labelledby="photo-title"
-        >
-          <h2 id="photo-title">
-            Attached Photo
-          </h2>
+        <section class="photo-section" aria-labelledby="photo-title">
+          <h2 id="photo-title">Attached Photo</h2>
 
           @if (photoLoading()) {
-            <p role="status">
-              Loading attached photo...
-            </p>
+            <p role="status">Loading attached photo...</p>
           } @else if (photoError()) {
-            <div
-              class="page-notice error-notice"
-              role="alert"
-            >
+            <div class="page-notice error-notice" role="alert">
               <p>{{ photoError() }}</p>
 
               <button
@@ -195,7 +154,7 @@
               target="_blank"
               rel="noopener noreferrer"
             >
-              Open full photo
+              Open Full Photo
             </a>
 
             <img
@@ -211,10 +170,7 @@
       <section class="history-section">
         <h2>Status History &amp; Remarks</h2>
 
-        @for (
-          update of concern.updates;
-          track update.update_id
-        ) {
+        @for (update of concern.updates; track update.update_id) {
           <article class="history-item">
             <div>
               <span
@@ -225,55 +181,45 @@
               </span>
 
               <p class="status-transition">
-                {{
-                  update.previous_status
-                    || 'Created'
-                }}
-                → {{ update.new_status }}
+                @if (update.previous_status === update.new_status) {
+                  <strong>Progress update</strong> — Status unchanged
+                } @else {
+                  {{ update.previous_status || 'Created' }}
+                  → {{ update.new_status }}
+                }
               </p>
 
               <p>
+                Updated by
                 {{
-                  update.updated_by
-                    ? 'Updated by Personnel'
-                    : 'Updater not recorded'
+                  update.updated_by_label ||
+                  'Personnel (name not recorded)'
                 }}
               </p>
 
               <p class="remarks">
-                {{
-                  update.remarks
-                    || 'No remarks provided.'
-                }}
+                {{ update.remarks || 'No remarks provided.' }}
               </p>
             </div>
 
-            <time
-              [attr.datetime]="update.created_at"
-            >
+            <time [attr.datetime]="update.created_at">
               {{
                 update.created_at
-                  ? (
-                      update.created_at
-                        | date:'MMM d, y, h:mm a':'GMT+08:00'
-                    )
+                  ? (update.created_at | date:'MMM d, y, h:mm a':'GMT+08:00')
                   : 'Date not recorded'
               }}
             </time>
           </article>
         } @empty {
           <p class="history-empty">
-            No status updates have been recorded yet.
+            No updates have been recorded yet.
           </p>
         }
       </section>
     </article>
   } @else if (requestedId()) {
     <div class="page-notice" role="status">
-      <p>
-        This concern was not found or is no longer
-        available.
-      </p>
+      <p>This concern was not found or is no longer available.</p>
 
       <button
         type="button"
@@ -285,22 +231,14 @@
     </div>
   } @else {
     <header class="page-header">
-      <p class="eyebrow">
-        ADMINISTRATOR PORTAL
-      </p>
-
+      <p class="eyebrow">ADMINISTRATOR PORTAL</p>
       <h1>Community Concerns</h1>
-
       <p class="page-description">
-        View submitted community concerns and their
-        latest updates.
+        View submitted community concerns and their latest updates.
       </p>
     </header>
 
-    <section
-      class="toolbar"
-      aria-label="Concern filters"
-    >
+    <section class="toolbar" aria-label="Concern filters">
       <div class="search-box">
         <span aria-hidden="true">⌕</span>
 
@@ -316,22 +254,15 @@
       </div>
 
       <div class="filter-box">
-        <label for="adminStatusFilter">
-          Status
-        </label>
+        <label for="adminStatusFilter">Status</label>
 
         <select
           id="adminStatusFilter"
           [ngModel]="selectedStatus()"
           (ngModelChange)="selectedStatus.set($event)"
         >
-          @for (
-            status of statusOptions;
-            track status
-          ) {
-            <option [ngValue]="status">
-              {{ status }}
-            </option>
+          @for (status of statusOptions; track status) {
+            <option [ngValue]="status">{{ status }}</option>
           }
         </select>
       </div>
@@ -347,20 +278,13 @@
 
     <div class="results-heading">
       <h2>Concern Records</h2>
-
-      <span>
-        {{ filteredConcerns().length }} record(s)
-      </span>
+      <span>{{ filteredConcerns().length }} record(s)</span>
     </div>
 
     @if (filteredConcerns().length === 0) {
       <section class="empty-state">
         <h3>No concerns found</h3>
-
-        <p>
-          No concerns match the current search and
-          status filter.
-        </p>
+        <p>No concerns match the current search and status filter.</p>
       </section>
     } @else {
       <section class="table-card">
@@ -388,17 +312,8 @@
                 track concern.concern_id
               ) {
                 <tr>
-                  <td>
-                    {{
-                      concern.concern_number
-                        ?? 'Not numbered'
-                    }}
-                  </td>
-
-                  <td>
-                    {{ categoryName(concern) }}
-                  </td>
-
+                  <td>{{ concern.concern_number ?? 'Not numbered' }}</td>
+                  <td>{{ categoryName(concern) }}</td>
                   <td class="location-cell">
                     {{ concern.location_description }}
                   </td>
@@ -406,10 +321,7 @@
                   <td>
                     {{
                       concern.reported_at
-                        ? (
-                            concern.reported_at
-                              | date:'MMM d, y':'GMT+08:00'
-                          )
+                        ? (concern.reported_at | date:'MMM d, y':'GMT+08:00')
                         : 'Not recorded'
                     }}
                   </td>
@@ -429,8 +341,8 @@
                       class="view-button"
                       (click)="viewDetails(concern)"
                       [attr.aria-label]="
-                        'View details for concern '
-                        + (concern.concern_number ?? '')
+                        'View details for concern ' +
+                        (concern.concern_number ?? '')
                       "
                     >
                       View Details

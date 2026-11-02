@@ -157,12 +157,14 @@ export class NotificationService implements OnDestroy {
               `update_${concern.concern_id}_${update.update_id}`;
 
             const status = update.new_status;
+            const progressOnly = update.previous_status === status;
 
             items.push({
               id,
               concernId: concern.concern_id,
-              title:
-                status === 'Resolved'
+              title: progressOnly
+                ? 'New progress update'
+                : status === 'Resolved'
                   ? 'Concern resolved'
                   : status === 'Rejected'
                     ? 'Concern rejected'
@@ -170,11 +172,16 @@ export class NotificationService implements OnDestroy {
               message:
                 `Your ${category} concern ` +
                 `#${concern.resident_concern_number ?? '—'} ` +
-                `is now ${status}.`,
+                (
+                  progressOnly
+                    ? `has a new progress note. Status remains ${status}.`
+                    : `is now ${status}.`
+                ),
               remarks: update.remarks || '',
               createdAt: update.created_at,
-              kind:
-                status === 'Resolved'
+              kind: progressOnly
+                ? 'updated'
+                : status === 'Resolved'
                   ? 'resolved'
                   : status === 'In Progress'
                     ? 'progress'
@@ -257,7 +264,6 @@ export class NotificationService implements OnDestroy {
         this.readIds.set(
           new Set(snapshot.docs.map(item => item.id))
         );
-
         this.receiptLoading.set(false);
         this.receiptError.set('');
       },
@@ -291,7 +297,11 @@ export class NotificationService implements OnDestroy {
           const concernEvent =
             data['category'] === 'Concern' &&
             data['entity_type'] === 'concern' &&
-            ['Concern submitted', 'Status changed'].includes(action);
+            [
+              'Concern submitted',
+              'Status changed',
+              'Progress update added',
+            ].includes(action);
 
           const residentEvent =
             data['category'] === 'Resident' &&
@@ -313,7 +323,6 @@ export class NotificationService implements OnDestroy {
           ) continue;
 
           const id = `audit_${document.id}`;
-
           if (id.length > 180) continue;
 
           const actor =
@@ -331,8 +340,9 @@ export class NotificationService implements OnDestroy {
           items.push({
             id,
             concernId: concernEvent ? entityId : '',
-            title:
-              action === 'Concern submitted'
+            title: action === 'Progress update added'
+              ? 'New progress update'
+              : action === 'Concern submitted'
                 ? 'New concern submitted'
                 : action === 'Status changed'
                   ? 'Concern status updated'
@@ -342,12 +352,11 @@ export class NotificationService implements OnDestroy {
             message: `${actor}: ${details || action}.`,
             remarks: '',
             createdAt: data['created_at'].toDate().toISOString(),
-            kind:
-              residentEvent
-                ? 'resident'
-                : action === 'Concern submitted'
-                  ? 'submitted'
-                  : 'updated',
+            kind: residentEvent
+              ? 'resident'
+              : action === 'Concern submitted'
+                ? 'submitted'
+                : 'updated',
             read: false,
             target: concernEvent ? 'concern' : 'audit',
           });
@@ -406,7 +415,6 @@ export class NotificationService implements OnDestroy {
     if (this.saving() || !items.length) return;
 
     const uid = this.account.profile()?.uid;
-
     if (!uid || uid !== this.receiptUid()) return;
 
     const generation = this.generation;
@@ -415,11 +423,7 @@ export class NotificationService implements OnDestroy {
     this.actionError.set('');
 
     try {
-      for (
-        let offset = 0;
-        offset < items.length;
-        offset += 400
-      ) {
+      for (let offset = 0; offset < items.length; offset += 400) {
         if (
           generation !== this.generation ||
           this.account.profile()?.uid !== uid

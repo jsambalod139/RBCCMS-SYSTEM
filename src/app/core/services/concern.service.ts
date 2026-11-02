@@ -46,6 +46,9 @@ import {
   ConcernPhotoService,
 } from './concern-photo.service';
 
+const SUBMITTER_ENDPOINT =
+  'https://nlwjwvhjojnjrmlaykym.supabase.co/functions/v1/concern-photos';
+
 const STATUSES: ConcernStatus[] = [
   'Pending',
   'In Progress',
@@ -106,13 +109,213 @@ export class ConcernService implements OnDestroy {
   private profileGeneration = 0;
   private photoGeneration = 0;
 
-  private readonly objectUrls = new Map<string, string>();
+  private readonly objectUrls =
+    new Map<string, string>();
+
+  private submitterGeneration = 0;
+  private submitterRequestKey = '';
+  private submitterLoadedKey = '';
+  private submitterValue = '';
+  private submitterDestroyed = false;
+
+  readonly submitterLoading = signal(false);
+  readonly submitterError = signal('');
 
   constructor() {
     this.stopAuth = onAuthStateChanged(
       this.auth,
       () => this.reload()
     );
+  }
+
+  private submitterKey(
+    concern: ConcernWithRelations
+  ): string {
+    const uid = this.auth.currentUser?.uid;
+    const office = this.officeId();
+
+    if (
+      !uid ||
+      uid !== this.accessUid() ||
+      !office ||
+      concern.office_id !== office
+    ) {
+      return '';
+    }
+
+    return [
+      uid,
+      office,
+      concern.concern_id,
+      concern.resident_id,
+    ].join(':');
+  }
+
+  submitterLabel(
+    concern: ConcernWithRelations
+  ): string {
+    const key = this.submitterKey(concern);
+
+    if (
+      !key ||
+      key !== this.submitterRequestKey
+    ) {
+      return 'Resident information unavailable';
+    }
+
+    if (this.submitterLoading()) {
+      return 'Loading resident information...';
+    }
+
+    if (this.submitterError()) {
+      return 'Resident information unavailable';
+    }
+
+    return key === this.submitterLoadedKey
+      ? this.submitterValue
+      : 'Resident information unavailable';
+  }
+
+  async loadSubmitter(
+    concern: ConcernWithRelations,
+    force = false
+  ): Promise<void> {
+    const key = this.submitterKey(concern);
+
+    if (this.submitterDestroyed) return;
+
+    if (!key) {
+      this.clearSubmitter();
+      return;
+    }
+
+    if (
+      !force &&
+      this.submitterRequestKey === key
+    ) return;
+
+    const generation =
+      ++this.submitterGeneration;
+
+    this.submitterRequestKey = key;
+    this.submitterLoadedKey = '';
+    this.submitterValue = '';
+
+    this.submitterError.set('');
+    this.submitterLoading.set(true);
+
+    try {
+      await this.auth.authStateReady();
+
+      const user = this.auth.currentUser;
+
+      if (
+        !user ||
+        key !== this.submitterKey(concern)
+      ) {
+        throw new Error(
+          'Your account or office changed. Refresh the page.'
+        );
+      }
+
+      const token = await user.getIdToken();
+
+      if (
+        generation !== this.submitterGeneration ||
+        key !== this.submitterKey(concern)
+      ) return;
+
+      const response = await fetch(
+        SUBMITTER_ENDPOINT,
+        {
+          method: 'POST',
+          credentials: 'omit',
+          cache: 'no-store',
+
+          headers: {
+            Authorization: 'Bearer ' + token,
+            'Content-Type': 'application/json',
+          },
+
+          body: JSON.stringify({
+            action: 'submitter',
+            concern_id: concern.concern_id,
+          }),
+
+          signal: AbortSignal.timeout(30000),
+        }
+      );
+
+      const data = await response
+        .json()
+        .catch(() => null);
+
+      if (
+        generation !== this.submitterGeneration ||
+        key !== this.submitterKey(concern)
+      ) return;
+
+      if (!response.ok) {
+        throw new Error(
+          typeof data?.error === 'string'
+            ? data.error
+            : 'Unable to load the submitter. Please try again.'
+        );
+      }
+
+      if (
+        data?.concern_id !== concern.concern_id ||
+        typeof data.name !== 'string' ||
+        typeof data.resident_id !== 'string'
+      ) {
+        throw new Error(
+          'The submitter response was invalid.'
+        );
+      }
+
+      const name =
+        data.name.trim() ||
+        'Name not recorded';
+
+      const residentId =
+        data.resident_id.trim();
+
+      this.submitterValue =
+        /^[1-9]\d*$/.test(residentId)
+          ? `${name} (Resident ID: ${residentId})`
+          : `${name} (Resident ID not assigned)`;
+
+      this.submitterLoadedKey = key;
+    } catch (error: unknown) {
+      if (
+        !this.submitterDestroyed &&
+        generation === this.submitterGeneration &&
+        key === this.submitterKey(concern)
+      ) {
+        this.submitterError.set(
+          error instanceof Error
+            ? error.message
+            : 'Unable to load resident information. Please try again.'
+        );
+      }
+    } finally {
+      if (
+        generation === this.submitterGeneration
+      ) {
+        this.submitterLoading.set(false);
+      }
+    }
+  }
+
+  clearSubmitter(): void {
+    ++this.submitterGeneration;
+
+    this.submitterRequestKey = '';
+    this.submitterLoadedKey = '';
+    this.submitterValue = '';
+
+    this.submitterLoading.set(false);
+    this.submitterError.set('');
   }
 
   reload(): void {
@@ -173,9 +376,8 @@ export class ConcernService implements OnDestroy {
         if (
           !profile ||
           profile['accountStatus'] !== 'approved' ||
-          !['resident', 'personnel', 'admin'].includes(
-            profile['role']
-          )
+          !['resident', 'personnel', 'admin']
+            .includes(profile['role'])
         ) {
           this.busy.set(false);
           this.failure.set(
@@ -187,9 +389,14 @@ export class ConcernService implements OnDestroy {
         this.busy.set(true);
         this.activeRole = profile['role'];
 
-        const resident = this.activeRole === 'resident';
-        const personnel = this.activeRole === 'personnel';
-        const assignedOffice = profile['officeId'];
+        const resident =
+          this.activeRole === 'resident';
+
+        const personnel =
+          this.activeRole === 'personnel';
+
+        const assignedOffice =
+          profile['officeId'];
 
         if (
           personnel &&
@@ -279,8 +486,10 @@ export class ConcernService implements OnDestroy {
                 item.id,
                 {
                   office_id: item.id,
-                  office_name: item.data()['office_name'],
-                  description: item.data()['description'],
+                  office_name:
+                    item.data()['office_name'],
+                  description:
+                    item.data()['description'],
                 },
               ])
             );
@@ -321,7 +530,9 @@ export class ConcernService implements OnDestroy {
                 collection(this.db, 'concerns'),
                 where('office_id', '==', assignedOffice)
               )
-            : query(collection(this.db, 'concerns'));
+            : query(
+                collection(this.db, 'concerns')
+              );
 
         this.stopRecords = onSnapshot(
           scopedQuery,
@@ -333,10 +544,15 @@ export class ConcernService implements OnDestroy {
 
             const concerns = result.docs
               .map(item =>
-                this.toConcern(item.id, item.data())
+                this.toConcern(
+                  item.id,
+                  item.data()
+                )
               )
               .sort((a, b) =>
-                b.reported_at.localeCompare(a.reported_at)
+                b.reported_at.localeCompare(
+                  a.reported_at
+                )
               );
 
             this.records.set(concerns);
@@ -382,7 +598,9 @@ export class ConcernService implements OnDestroy {
         this.clearRecords();
 
         this.busy.set(false);
-        this.failure.set(this.errorMessage(error));
+        this.failure.set(
+          this.errorMessage(error)
+        );
       }
     );
   }
@@ -390,16 +608,18 @@ export class ConcernService implements OnDestroy {
   submittedBy(
     concern: ConcernWithRelations
   ): string {
-    const resident = this.residentProfiles().get(
-      concern.resident_id
-    );
+    const resident =
+      this.residentProfiles().get(
+        concern.resident_id
+      );
 
     if (!resident) {
       return 'Resident record unavailable';
     }
 
     const name =
-      resident.name || 'Name not recorded';
+      resident.name ||
+      'Name not recorded';
 
     return /^[1-9]\d*$/.test(resident.id)
       ? `${name} (Resident ID: ${resident.id})`
@@ -411,11 +631,15 @@ export class ConcernService implements OnDestroy {
     force = false
   ): Promise<void> {
     const path = concern?.photo_path || '';
+
     const key = path
       ? `${concern?.concern_id}:${path}`
       : '';
 
-    if (!force && key === this.selectedPhotoKey) return;
+    if (
+      !force &&
+      key === this.selectedPhotoKey
+    ) return;
 
     this.clearSelectedPhoto();
     this.selectedPhotoKey = key;
@@ -534,9 +758,11 @@ export class ConcernService implements OnDestroy {
     if (
       photo &&
       (
-        !['image/jpeg', 'image/png', 'image/webp'].includes(
-          photo.type
-        ) ||
+        ![
+          'image/jpeg',
+          'image/png',
+          'image/webp',
+        ].includes(photo.type) ||
         photo.size <= 0 ||
         photo.size > 5 * 1024 * 1024
       )
@@ -666,6 +892,7 @@ export class ConcernService implements OnDestroy {
           }
 
           const nextNumber = lastNumber + 1;
+
           const residentNumber =
             residentLastNumber + 1;
 
@@ -736,7 +963,10 @@ export class ConcernService implements OnDestroy {
     } catch (error) {
       if (uploaded && photoPath) {
         await this.photoService
-          .cleanup(concernRef.id, user.uid)
+          .cleanup(
+            concernRef.id,
+            user.uid
+          )
           .catch(() => undefined);
       }
 
@@ -749,7 +979,8 @@ export class ConcernService implements OnDestroy {
   async updateStatus(
     concernId: string,
     newStatus: ConcernStatus,
-    remarks: string
+    remarks: string,
+    expectedStatus?: ConcernStatus
   ): Promise<ConcernWithRelations> {
     const user =
       await this.requireRole('personnel');
@@ -774,7 +1005,11 @@ export class ConcernService implements OnDestroy {
       async transaction => {
         const personnelSnapshot =
           await transaction.get(
-            doc(this.db, 'users', user.uid)
+            doc(
+              this.db,
+              'users',
+              user.uid
+            )
           );
 
         const snapshot =
@@ -832,15 +1067,32 @@ export class ConcernService implements OnDestroy {
         const previousStatus =
           data['current_status'];
 
-        if (!STATUSES.includes(previousStatus)) {
+        if (
+          !STATUSES.includes(previousStatus)
+        ) {
           throw new Error(
             'The existing concern status is invalid.'
           );
         }
 
-        if (previousStatus === newStatus) {
+        if (
+          expectedStatus !== undefined &&
+          previousStatus !== expectedStatus
+        ) {
           throw new Error(
-            'Select a different status.'
+            'This concern status changed. Review the latest status and try again.'
+          );
+        }
+
+        const progressOnly =
+          previousStatus === newStatus;
+
+        if (
+          progressOnly &&
+          !remarks.trim()
+        ) {
+          throw new Error(
+            'Enter a progress note or select a different status.'
           );
         }
 
@@ -872,21 +1124,20 @@ export class ConcernService implements OnDestroy {
         const revision =
           previousRevision + 1;
 
-        const auditId =
-          `concern_${concernId}_${revision}`;
-
         const auditRef = doc(
           this.db,
           'audit_logs',
-          auditId
+          `concern_${concernId}_${revision}`
         );
 
         transaction.update(concernRef, {
           current_status: newStatus,
           updated_at: serverTimestamp(),
           revision,
+
           updates: {
             ...data['updates'],
+
             [String(revision)]: {
               update_id: revision,
               previous_status: previousStatus,
@@ -904,16 +1155,22 @@ export class ConcernService implements OnDestroy {
           user_name: personnelName,
           user_role: 'personnel',
           category: 'Concern',
-          action: 'Status changed',
+
+          action: progressOnly
+            ? 'Progress update added'
+            : 'Status changed',
+
           entity_type: 'concern',
           entity_id: concernId,
           concern_number: concernNumber,
           revision,
           previous_status: previousStatus,
           new_status: newStatus,
-          details:
-            `Concern #${concernNumber}: ` +
-            `${previousStatus} → ${newStatus}`,
+
+          details: progressOnly
+            ? `Concern #${concernNumber}: Progress update added; status remains ${newStatus}.`
+            : `Concern #${concernNumber}: ${previousStatus} → ${newStatus}`,
+
           created_at: serverTimestamp(),
         });
       }
@@ -950,7 +1207,11 @@ export class ConcernService implements OnDestroy {
 
     const profile = (
       await getDoc(
-        doc(this.db, 'users', user.uid)
+        doc(
+          this.db,
+          'users',
+          user.uid
+        )
       )
     ).data();
 
@@ -991,22 +1252,31 @@ export class ConcernService implements OnDestroy {
     const updates: ConcernUpdate[] = entries
       .map(update => ({
         update_id: update['update_id'],
-        previous_status: update['previous_status'],
-        new_status: update['new_status'],
-        remarks: update['remarks'],
-        created_at: this.iso(update['created_at']),
-        updated_by: update['updated_by'],
+        previous_status:
+          update['previous_status'],
+        new_status:
+          update['new_status'],
+        remarks:
+          update['remarks'],
+        created_at:
+          this.iso(update['created_at']),
+        updated_by:
+          update['updated_by'],
+
         updated_by_name:
           typeof update['updated_by_name'] === 'string'
             ? update['updated_by_name']
             : undefined,
-        updated_by_label: this.personnelLabel(
-          update['updated_by_name'],
-          update['updated_by']
-        ),
+
+        updated_by_label:
+          this.personnelLabel(
+            update['updated_by_name'],
+            update['updated_by']
+          ),
       }))
       .sort(
-        (a, b) => a.update_id - b.update_id
+        (a, b) =>
+          a.update_id - b.update_id
       );
 
     const latestUpdate =
@@ -1014,47 +1284,79 @@ export class ConcernService implements OnDestroy {
 
     return {
       concern_id: id,
+
       concern_number:
         Number.isSafeInteger(data['concern_number']) &&
         data['concern_number'] > 0
           ? data['concern_number']
           : null,
+
       resident_concern_number:
         Number.isSafeInteger(data['resident_concern_number']) &&
         data['resident_concern_number'] > 0
           ? data['resident_concern_number']
           : null,
-      resident_id: data['resident_id'],
+
+      resident_id:
+        data['resident_id'],
+
       assigned_personnel_id:
         data['assigned_personnel_id'] ?? null,
-      office_id: data['office_id'] ?? null,
-      office: this.offices.get(
-        data['office_id']
-      ),
+
+      office_id:
+        data['office_id'] ?? null,
+
+      office:
+        this.offices.get(
+          data['office_id']
+        ),
+
       last_updated_by:
         latestUpdate?.updated_by ?? null,
+
       last_updated_by_name:
         latestUpdate?.updated_by_name ?? null,
-      last_updated_by_label: latestUpdate
-        ? latestUpdate.updated_by_label
-        : 'No personnel update yet',
-      category_id: data['category_id'],
-      category: this.categoryService.getById(
-        data['category_id']
-      ),
+
+      last_updated_by_label:
+        latestUpdate
+          ? latestUpdate.updated_by_label
+          : 'No personnel update yet',
+
+      category_id:
+        data['category_id'],
+
+      category:
+        this.categoryService.getById(
+          data['category_id']
+        ),
+
       location_description:
         data['location_description'],
-      description: data['description'],
-      photo_path: data['photo_path'],
+
+      description:
+        data['description'],
+
+      photo_path:
+        data['photo_path'],
+
       photo_url:
-        this.objectUrls.get(data['photo_path']) ?? null,
-      current_status: data['current_status'],
-      reported_at: this.iso(
-        data['reported_at']
-      ),
-      updated_at: data['updated_at']
-        ? this.iso(data['updated_at'])
-        : null,
+        this.objectUrls.get(
+          data['photo_path']
+        ) ?? null,
+
+      current_status:
+        data['current_status'],
+
+      reported_at:
+        this.iso(
+          data['reported_at']
+        ),
+
+      updated_at:
+        data['updated_at']
+          ? this.iso(data['updated_at'])
+          : null,
+
       updates,
     };
   }
@@ -1093,15 +1395,22 @@ export class ConcernService implements OnDestroy {
         .filter(Boolean)
     );
 
-    for (const [path, url] of this.objectUrls) {
+    for (
+      const [path, url]
+      of this.objectUrls
+    ) {
       if (!visiblePaths.has(path)) {
         URL.revokeObjectURL(url);
         this.objectUrls.delete(path);
       }
     }
 
-    for (const concern of this.records()) {
-      const path = concern.photo_path;
+    for (
+      const concern
+      of this.records()
+    ) {
+      const path =
+        concern.photo_path;
 
       if (
         !path ||
@@ -1123,7 +1432,10 @@ export class ConcernService implements OnDestroy {
           this.records.update(items =>
             items.map(item =>
               item.photo_path === path
-                ? { ...item, photo_url: url }
+                ? {
+                    ...item,
+                    photo_url: url,
+                  }
                 : item
             )
           );
@@ -1142,13 +1454,18 @@ export class ConcernService implements OnDestroy {
   }
 
   private clearRecords(): void {
+    this.clearSubmitter();
     this.clearSelectedPhoto();
+
     ++this.photoGeneration;
 
     this.records.set([]);
     this.photoFailure.set('');
 
-    for (const url of this.objectUrls.values()) {
+    for (
+      const url
+      of this.objectUrls.values()
+    ) {
       URL.revokeObjectURL(url);
     }
 
@@ -1165,11 +1482,15 @@ export class ConcernService implements OnDestroy {
         ? String(error.code)
         : '';
 
-    if (code.includes('permission-denied')) {
+    if (
+      code.includes('permission-denied')
+    ) {
       return 'Access denied. Check account approval, office assignment, and Firestore rules.';
     }
 
-    if (code.includes('unavailable')) {
+    if (
+      code.includes('unavailable')
+    ) {
       return 'Firebase is unavailable. Check your connection and retry.';
     }
 
@@ -1179,6 +1500,7 @@ export class ConcernService implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.submitterDestroyed = true;
     ++this.generation;
 
     this.stopAuth?.();
