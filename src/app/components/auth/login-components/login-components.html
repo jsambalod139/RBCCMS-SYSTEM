@@ -1,4 +1,80 @@
-@if (isResetPage) {
+@if (isContactPage) {
+  <!-- Help & Contact page -->
+  <main class="login-container contact-container">
+    <section
+      class="login-card contact-card"
+      aria-labelledby="contact-title"
+    >
+      <header class="contact-header">
+        <img
+          src="assets/images/dashboard_logo.png"
+          alt="Municipality of Villanueva seal"
+          class="municipal-logo"
+          width="120"
+          height="120"
+        />
+
+        <p class="system-name">
+          Remote Barangay Community Concern<br />
+          Reporting and Monitoring System
+        </p>
+
+        <h1 id="contact-title">Help &amp; Contact</h1>
+
+        <p class="introduction">
+          For registration, login issues, or account
+          assistance, please contact the authorized
+          registration office.
+        </p>
+      </header>
+
+      <div class="contact-content">
+        <p>
+          <strong>Account registration.</strong>
+          Visit the barangay office in person for residency
+          verification. Authorized personnel will assist
+          you with validation and account creation.
+          Provide an email address that you own and
+          can access.
+        </p>
+
+        <p>
+          <strong>Forgot your password?</strong>
+          Use
+          <a routerLink="/forgot-password">
+            Forgot Password
+          </a>
+          to request a reset link using your registered
+          email address. Check your inbox and spam folder,
+          then follow the link to set a new RBCCMS password.
+        </p>
+
+        <p>
+          <strong>
+            Unable to access your email or account?
+          </strong>
+          Visit the authorized registration office during
+          office hours and ask for the personnel responsible
+          for RBCCMS. They can review your account and
+          advise you on the next steps after verifying
+          your identity.
+        </p>
+
+        <p class="contact-note">
+          Never share your password or password-reset
+          link with anyone.
+        </p>
+      </div>
+
+      <a
+        class="back-button"
+        routerLink="/login-components"
+      >
+        Back to Login
+      </a>
+    </section>
+  </main>
+} @else if (isResetPage) {
   <!-- Forgot password page -->
   <main class="login-container reset-container">
     <section
@@ -42,7 +118,10 @@
         novalidate
       >
         <div class="form-group">
-          <label for="reset-email" class="reset-label">
+          <label
+            for="reset-email"
+            class="reset-label"
+          >
             Email Address
           </label>
 
@@ -292,7 +371,16 @@
         <footer class="login-footer">
           <p>
             Need help?
-            <strong>Contact the barangay.</strong>
+
+            <a
+              class="help-contact-link"
+              routerLink="/contact"
+              [attr.tabindex]="loading() ? -1 : null"
+              [class.link-disabled]="loading()"
+              [attr.aria-disabled]="loading()"
+            >
+              Help &amp; Contact
+            </a>
           </p>
         </footer>
       </section>

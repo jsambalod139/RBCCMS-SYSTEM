@@ -1,8 +1,12 @@
-import { barangayResidentsGuard } from './core/guard/barangay-residents.guard';
 import { Routes } from '@angular/router';
+
+import {
+  barangayResidentsGuard,
+} from './core/guard/barangay-residents.guard';
+
 import { roleGuard } from './core/guard/role.guard';
 
-// Login and password recovery
+// Login, password recovery, and contact
 import { LoginComponents } from './components/auth/login-components/login-components';
 
 // Resident
@@ -22,7 +26,7 @@ import { PersonnelReports } from './components/pages/personnel-reports/personnel
 import { PersonnelResidents } from './components/pages/personnel-residents/personnel-residents';
 import { PersonnelSettings } from './components/pages/personnel-settings/personnel-settings';
 
-// Administrator layout
+// Administrator
 import { AdDashboard } from './components/layout/admin-layout/ad-dashboard/ad-dashboard';
 import { AdminDashboard } from './components/pages/admin-dashboard/admin-dashboard';
 import { AdminMyProfile } from './components/pages/admin-my-profile/admin-my-profile';
@@ -48,6 +52,14 @@ export const routes: Routes = [
     component: LoginComponents,
     data: {
       passwordReset: true,
+    },
+  },
+  {
+    path: 'contact',
+    component: LoginComponents,
+    title: 'Help & Contact | RBCCMS',
+    data: {
+      contactPage: true,
     },
   },
 
@@ -167,9 +179,6 @@ export const routes: Routes = [
         path: 'admin-settings',
         component: AdminSettings,
       },
-      
-
-
     ],
   },
 

@@ -31,6 +31,7 @@ a {
   min-height: 100dvh;
   padding: 36px 6%;
   background-color: #173e30;
+
   background-image:
     linear-gradient(
       90deg,
@@ -39,6 +40,7 @@ a {
       rgb(8 30 21 / 22%) 100%
     ),
     url('/assets/images/Background_logo.png');
+
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -46,7 +48,8 @@ a {
 
 .login-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(340px, 400px);
+  grid-template-columns:
+    minmax(0, 1fr) minmax(340px, 400px);
   align-items: center;
   gap: clamp(32px, 6vw, 90px);
   width: 100%;
@@ -54,8 +57,6 @@ a {
   min-width: 0;
   margin: 0 auto;
 }
-
-/* System introduction */
 
 .system-introduction {
   min-width: 0;
@@ -68,14 +69,12 @@ a {
     font-size: clamp(30px, 3.3vw, 46px);
     font-weight: 700;
     line-height: 1.3;
-    letter-spacing: -.7px;
+    letter-spacing: -0.7px;
     overflow-wrap: anywhere;
     text-wrap: balance;
     text-shadow: 0 2px 14px rgb(0 0 0 / 30%);
   }
 }
-
-/* Login and reset cards */
 
 .login-card {
   width: 100%;
@@ -84,9 +83,11 @@ a {
   border: 1px solid rgb(255 255 255 / 85%);
   border-radius: 16px;
   background: rgb(255 255 255 / 98%);
+
   box-shadow:
     0 18px 48px rgb(0 0 0 / 20%),
     0 2px 8px rgb(0 0 0 / 6%);
+
   animation: login-card-enter 220ms ease-out;
 }
 
@@ -100,7 +101,7 @@ a {
     font-size: 25px;
     font-weight: 700;
     line-height: 1.35;
-    letter-spacing: -.4px;
+    letter-spacing: -0.4px;
     overflow-wrap: anywhere;
   }
 
@@ -120,8 +121,6 @@ a {
   border-radius: 50%;
   object-fit: contain;
 }
-
-/* Form fields */
 
 form {
   display: flex;
@@ -144,6 +143,7 @@ form {
   border: 1px solid #d4dfd7;
   border-radius: 8px;
   background: #f8faf9;
+
   transition:
     border-color 160ms ease,
     background-color 160ms ease,
@@ -182,7 +182,7 @@ form {
 
     &:disabled {
       color: #617267;
-      opacity: .7;
+      opacity: 0.7;
       cursor: wait;
     }
 
@@ -208,8 +208,6 @@ form {
   transition: color 160ms ease;
 }
 
-/* Submit buttons */
-
 .btn-login {
   display: inline-flex;
   align-items: center;
@@ -227,6 +225,7 @@ form {
   font-weight: 600;
   line-height: 1.5;
   cursor: pointer;
+
   transition:
     transform 160ms ease,
     background-color 160ms ease,
@@ -239,12 +238,12 @@ form {
   }
 
   &:active:not(:disabled) {
-    transform: scale(.98);
+    transform: scale(0.98);
     box-shadow: none;
   }
 
   &:disabled {
-    opacity: .6;
+    opacity: 0.6;
     cursor: not-allowed;
   }
 
@@ -265,8 +264,6 @@ form {
   animation: login-spin 750ms linear infinite;
 }
 
-/* Navigation links */
-
 .forgot-password-link {
   margin-top: 12px;
   text-align: center;
@@ -285,6 +282,7 @@ form {
   font-weight: 500;
   line-height: 1.5;
   text-decoration: none;
+
   transition:
     transform 160ms ease,
     background-color 160ms ease,
@@ -300,17 +298,15 @@ form {
   }
 
   &:active:not(.link-disabled) {
-    transform: scale(.97);
+    transform: scale(0.97);
   }
 
   &.link-disabled {
-    opacity: .55;
+    opacity: 0.55;
     pointer-events: none;
     cursor: default;
   }
 }
-
-/* Help footer */
 
 .login-footer {
   margin-top: 18px;
@@ -331,8 +327,6 @@ form {
   }
 }
 
-/* Accessible hidden labels */
-
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -346,7 +340,7 @@ form {
   white-space: nowrap;
 }
 
-/* Forgot password */
+/* Forgot Password */
 
 .reset-container {
   justify-items: center;
@@ -438,6 +432,184 @@ form {
   margin: 16px auto 0;
 }
 
+/* Password visibility */
+
+.password-wrapper input {
+  flex: 1 1 auto;
+  width: 0;
+}
+
+.password-toggle {
+  flex: 0 0 auto;
+  min-width: 56px;
+  min-height: 44px;
+  margin-right: 3px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #087344;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+
+  transition:
+    background-color 160ms ease,
+    transform 160ms ease;
+
+  &:focus-visible {
+    outline: 2px solid #527b60;
+    outline-offset: -2px;
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.96);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: wait;
+  }
+}
+
+/* Help & Contact */
+
+.contact-container {
+  justify-items: center;
+  padding: 28px 18px;
+}
+
+.contact-card {
+  max-width: 430px;
+  padding: 26px 24px 22px;
+
+  .municipal-logo {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 12px;
+  }
+}
+
+.contact-header {
+  text-align: center;
+
+  h1 {
+    margin: 0 0 12px;
+    color: #21372a;
+    font-size: 25px;
+    line-height: 1.3;
+    font-weight: 700;
+  }
+}
+
+.system-name {
+  margin: 0 0 18px;
+  color: #617267;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.introduction {
+  margin: 0 0 20px;
+  color: #617267;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.contact-content {
+  display: grid;
+  gap: 14px;
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.75;
+    overflow-wrap: anywhere;
+  }
+
+  strong {
+    font-weight: 600;
+  }
+
+  a {
+    color: #087344;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    border-radius: 3px;
+  }
+
+  .contact-note {
+    color: #617267;
+    font-size: 12px;
+  }
+}
+
+.back-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 22px;
+  padding: 11px 16px;
+  border: 1px solid #087b49;
+  border-radius: 7px;
+  background: #087b49;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+
+  transition:
+    background-color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+
+  &:visited {
+    color: #fff;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.help-contact-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 4px 6px;
+  border-radius: 5px;
+  color: #087344;
+  font-weight: 600;
+  text-decoration: none;
+
+  transition:
+    background-color 160ms ease,
+    transform 160ms ease;
+
+  &:visited {
+    color: #087344;
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  &.link-disabled {
+    opacity: 0.55;
+    pointer-events: none;
+  }
+}
+
+.contact-content a:focus-visible,
+.back-button:focus-visible,
+.help-contact-link:focus-visible {
+  outline: 2px solid #527b60;
+  outline-offset: 3px;
+}
+
 /* Pointer interactions */
 
 @media (hover: hover) and (pointer: fine) {
@@ -456,9 +628,19 @@ form {
     background: #edf3ef;
     color: #06643b;
   }
+
+  .password-toggle:hover:not(:disabled),
+  .help-contact-link:hover {
+    background: #edf3ef;
+  }
+
+  .back-button:hover {
+    background: #06643b;
+    box-shadow: 0 4px 12px rgb(8 123 73 / 18%);
+  }
 }
 
-/* Entrance animations */
+/* Animations */
 
 @keyframes introduction-enter {
   from {
@@ -584,7 +766,7 @@ form {
 
   .system-introduction h1 {
     font-size: clamp(22px, 5.5vw, 28px);
-    letter-spacing: -.4px;
+    letter-spacing: -0.4px;
   }
 
   .login-card {
@@ -641,6 +823,18 @@ form {
       font-size: 23px;
     }
   }
+
+  .contact-container {
+    padding: 20px 14px;
+  }
+
+  .contact-card {
+    padding: 24px 20px 20px;
+  }
+
+  .contact-header h1 {
+    font-size: 23px;
+  }
 }
 
 @media (max-width: 360px) {
@@ -669,59 +863,10 @@ form {
 
   .btn-login:active:not(:disabled),
   .forgot-password-link a:active,
-  .back-to-login:active {
-    transform: none;
-  }
-}
-
-/* Password visibility control */
-
-.password-wrapper input {
-  flex: 1 1 auto;
-  width: 0;
-}
-
-.password-toggle {
-  flex: 0 0 auto;
-  min-width: 56px;
-  min-height: 44px;
-  margin-right: 3px;
-  padding: 8px 10px;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: #087344;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-
-  transition:
-    background-color 160ms ease,
-    transform 160ms ease;
-
-  &:focus-visible {
-    outline: 2px solid #527b60;
-    outline-offset: -2px;
-  }
-
-  &:active:not(:disabled) {
-    transform: scale(0.96);
-  }
-
-  &:disabled {
-    opacity: 0.55;
-    cursor: wait;
-  }
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .password-toggle:hover:not(:disabled) {
-    background: #edf3ef;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .password-toggle:active:not(:disabled) {
+  .back-to-login:active,
+  .password-toggle:active:not(:disabled),
+  .back-button:active,
+  .help-contact-link:active {
     transform: none;
   }
 }

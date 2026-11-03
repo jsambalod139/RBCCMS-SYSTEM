@@ -4,25 +4,25 @@ import {
   Component,
   OnDestroy,
   inject,
-  signal
+  signal,
 } from '@angular/core';
 
 import {
   FormsModule,
-  NgForm
+  NgForm,
 } from '@angular/forms';
 
 import {
   ActivatedRoute,
   Router,
-  RouterLink
+  RouterLink,
 } from '@angular/router';
 
 import Swal from 'sweetalert2';
 
 import {
   AuthService,
-  UserRole
+  UserRole,
 } from '../../../core/services/auth.service';
 
 @Component({
@@ -30,7 +30,7 @@ import {
   standalone: true,
   imports: [FormsModule, CommonModule, RouterLink],
   templateUrl: './login-components.html',
-  styleUrl: './login-components.scss'
+  styleUrl: './login-components.scss',
 })
 export class LoginComponents implements OnDestroy {
   private readonly auth = inject(AuthService);
@@ -39,6 +39,9 @@ export class LoginComponents implements OnDestroy {
 
   readonly isResetPage =
     this.route.snapshot.data['passwordReset'] === true;
+
+  readonly isContactPage =
+    this.route.snapshot.data['contactPage'] === true;
 
   email = '';
   password = '';
@@ -128,7 +131,7 @@ export class LoginComponents implements OnDestroy {
       await Swal.fire({
         icon: 'warning',
         title: 'Missing Fields',
-        text: 'Please enter your email and password.'
+        text: 'Please enter your email and password.',
       });
 
       return;
@@ -145,7 +148,7 @@ export class LoginComponents implements OnDestroy {
       const destinations: Record<UserRole, string> = {
         resident: '/res-dashboard',
         personnel: '/perso-dashboard',
-        admin: '/ad-dashboard'
+        admin: '/ad-dashboard',
       };
 
       await this.router.navigateByUrl(
@@ -170,7 +173,7 @@ export class LoginComponents implements OnDestroy {
           'auth/invalid-login-credentials',
           'auth/user-not-found',
           'auth/wrong-password',
-          'auth/invalid-email'
+          'auth/invalid-email',
         ].includes(code)
       ) {
         message = 'Invalid email or password.';
@@ -199,7 +202,7 @@ export class LoginComponents implements OnDestroy {
       await Swal.fire({
         icon: 'error',
         title: 'Login Failed',
-        text: message
+        text: message,
       });
     } finally {
       this.password = '';
