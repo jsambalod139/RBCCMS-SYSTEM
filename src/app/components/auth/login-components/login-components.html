@@ -126,7 +126,7 @@
     </section>
   </main>
 } @else {
-  <!-- Existing login page -->
+  <!-- Login page -->
   <main class="login-container">
     <div class="login-layout">
       <section
@@ -213,7 +213,7 @@
               Password
             </label>
 
-            <div class="input-wrapper">
+            <div class="input-wrapper password-wrapper">
               <svg
                 class="input-icon"
                 viewBox="0 0 24 24"
@@ -243,6 +243,18 @@
                 required
                 [disabled]="loading()"
               />
+
+              <button
+                type="button"
+                class="password-toggle"
+                (click)="togglePassword()"
+                [disabled]="loading()"
+                [attr.aria-pressed]="showPassword"
+                aria-controls="password"
+                aria-label="Show password"
+              >
+                {{ showPassword ? 'Hide' : 'Show' }}
+              </button>
             </div>
           </div>
 

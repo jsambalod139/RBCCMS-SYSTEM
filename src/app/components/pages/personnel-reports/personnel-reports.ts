@@ -33,7 +33,11 @@ import {
   ResidentService,
 } from '../../../core/services/resident.service';
 
-type Tab = 'summary' | 'offices' | 'residents';
+type Tab =
+  | 'summary'
+  | 'offices'
+  | 'locations'
+  | 'residents';
 
 interface ReportPeriod {
   from: string;
@@ -53,7 +57,7 @@ interface ResidentRow {
   approved: number;
 }
 
-// Keeps navigation state if browser storage is unavailable.
+// Preserves navigation state if browser storage is unavailable.
 const reportPeriods = new Map<string, ReportPeriod>();
 
 @Component({
@@ -146,6 +150,7 @@ export class PersonnelReports {
   readonly filtered = computed(() => {
     const period = this.period();
 
+    // ConcernService supplies concerns permitted for this account.
     return this.concernService.concerns().filter(concern => {
       const date = new Date(concern.reported_at);
 
@@ -183,10 +188,42 @@ export class PersonnelReports {
     ])
   );
 
+  readonly locations = computed(() =>
+    this.group(this.filtered(), concern => {
+      const label = (concern.location_description || '')
+        .normalize('NFKC')
+        .trim()
+        .replace(/\s+/g, ' ');
+
+      return [
+        label.toLowerCase(),
+        label || 'Location not recorded',
+      ];
+    })
+  );
+
+  readonly reportTitle = computed(() =>
+    this.tab() === 'offices'
+      ? 'Responsible Offices'
+      : this.tab() === 'locations'
+        ? 'Concerns by Location'
+        : 'Concern Summary'
+  );
+
+  readonly groupLabel = computed(() =>
+    this.tab() === 'offices'
+      ? 'Responsible Office'
+      : this.tab() === 'locations'
+        ? 'Location'
+        : 'Category'
+  );
+
   readonly rows = computed(() =>
     this.tab() === 'offices'
       ? this.offices()
-      : this.categories()
+      : this.tab() === 'locations'
+        ? this.locations()
+        : this.categories()
   );
 
   readonly residents = computed(() =>
@@ -327,7 +364,7 @@ export class PersonnelReports {
         JSON.stringify(range)
       );
     } catch {
-      // The memory fallback preserves page navigation state.
+      // Memory fallback preserves page navigation state.
     }
   }
 
@@ -529,20 +566,20 @@ export class PersonnelReports {
     ];
 
     return {
-      title:
-        this.tab() === 'offices'
-          ? 'Responsible Offices'
-          : 'Concern Summary',
+      title: this.reportTitle(),
 
       note:
         `${this.periodLabel()}. ` +
-        'Concerns submitted during this period, grouped by current status at generation time.',
+        'Concerns submitted during this period, grouped by current status at generation time.' +
+        (
+          this.tab() === 'locations'
+            ? ' Locations use the submitted location description; capitalization and extra spaces are ignored. No Purok is inferred.'
+            : ''
+        ),
 
       cells: [
         [
-          this.tab() === 'offices'
-            ? 'Responsible Office'
-            : 'Category',
+          this.groupLabel(),
           ...this.statuses,
           'Total',
           'Share',
@@ -697,6 +734,7 @@ export class PersonnelReports {
             th:first-child,
             td:first-child {
               text-align: left;
+              overflow-wrap: anywhere;
             }
 
             th,

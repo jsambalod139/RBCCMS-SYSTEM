@@ -1,5 +1,9 @@
 <main class="offices-page">
-  @if (!selectedId() && !personnelOfficeId()) {
+  @if (
+    !creatingOffice() &&
+    !selectedId() &&
+    !personnelOfficeId()
+  ) {
     <header class="page-heading">
       <p class="eyebrow">ADMINISTRATOR PORTAL</p>
 
@@ -8,8 +12,8 @@
       </h1>
 
       <p>
-        Maintain office information and view assigned categories
-        and authorized personnel.
+        Maintain office information and view assigned
+        categories and authorized personnel.
       </p>
     </header>
   }
@@ -26,11 +30,19 @@
     </p>
   }
 
-  @if (!selectedId() && !personnelOfficeId()) {
+  @if (
+    !creatingOffice() &&
+    !selectedId() &&
+    !personnelOfficeId()
+  ) {
     <div class="directory-view">
       @if (offices.loading()) {
         <section class="notice" role="status">
-          <span class="spinner" aria-hidden="true"></span>
+          <span
+            class="spinner"
+            aria-hidden="true"
+          ></span>
+
           <p>Loading offices and assignments...</p>
         </section>
       } @else if (offices.error()) {
@@ -46,12 +58,26 @@
           </button>
         </section>
       } @else {
+        <div class="directory-actions">
+          <button
+            type="button"
+            class="primary"
+            (click)="addOffice()"
+            [disabled]="saving()"
+          >
+            <span aria-hidden="true">+</span>
+            Add Office
+          </button>
+        </div>
+
         <section
           class="records-card"
           aria-labelledby="directory-title"
         >
           <div class="section-heading">
-            <h2 id="directory-title">Office Directory</h2>
+            <h2 id="directory-title">
+              Office Directory
+            </h2>
 
             <span>
               {{ offices.records().length }} office(s)
@@ -82,7 +108,9 @@
                 ) {
                   <tr>
                     <td class="office-name">
-                      <strong>{{ office.office_name }}</strong>
+                      <strong>
+                        {{ office.office_name }}
+                      </strong>
 
                       <p class="muted">
                         {{
@@ -130,13 +158,17 @@
                     </td>
 
                     <td>
-                      <ul class="assignment-list personnel-list">
+                      <ul
+                        class="assignment-list personnel-list"
+                      >
                         @for (
                           person of offices.personnelFor(office.office_id);
                           track person.uid
                         ) {
                           <li>
-                            <strong>{{ person.name }}</strong>
+                            <strong>
+                              {{ person.name }}
+                            </strong>
 
                             <span class="muted">
                               {{ person.email }}
@@ -173,6 +205,36 @@
                         >
                           Add Personnel
                         </button>
+
+                        <button
+                          type="button"
+                          class="danger delete-office"
+                          (click)="deleteOffice(office)"
+                          [disabled]="saving() || !!deleteHint(office)"
+                          [attr.aria-describedby]="
+                            deleteHint(office)
+                              ? 'delete-hint-' + office.office_id
+                              : null
+                          "
+                          [attr.aria-busy]="
+                            deletingId() === office.office_id
+                          "
+                        >
+                          {{
+                            deletingId() === office.office_id
+                              ? 'Please wait...'
+                              : 'Delete Office'
+                          }}
+                        </button>
+
+                        @if (deleteHint(office)) {
+                          <small
+                            class="delete-hint"
+                            [id]="'delete-hint-' + office.office_id"
+                          >
+                            {{ deleteHint(office) }}
+                          </small>
+                        }
                       </div>
                     </td>
                   </tr>
@@ -188,15 +250,16 @@
           </div>
 
           <p class="section-note">
-            Personnel accounts belong to individual staff members.
-            Multiple personnel members may be assigned to the same office.
+            Personnel accounts belong to individual staff
+            members. Multiple personnel members may be
+            assigned to the same office.
           </p>
         </section>
       }
     </div>
   }
 
-  @if (selectedId()) {
+  @if (creatingOffice() || selectedId()) {
     <section
       class="editor-card detail-view"
       aria-labelledby="edit-title"
@@ -210,11 +273,19 @@
             #viewHeading
             tabindex="-1"
           >
-            Edit Office Information
+            {{
+              creatingOffice()
+                ? 'Add Office'
+                : 'Edit Office Information'
+            }}
           </h1>
 
           <p class="view-description">
-            Update the selected office's information and availability.
+            {{
+              creatingOffice()
+                ? 'Create a participating office and its new concern category.'
+                : 'Update the selected office information and availability.'
+            }}
           </p>
         </div>
 
@@ -236,7 +307,9 @@
       >
         <fieldset [disabled]="saving()">
           <div class="form-field">
-            <label for="office-name">Office Name *</label>
+            <label for="office-name">
+              Office Name *
+            </label>
 
             <input
               id="office-name"
@@ -248,7 +321,9 @@
           </div>
 
           <div class="form-field">
-            <label for="office-description">Description</label>
+            <label for="office-description">
+              Description
+            </label>
 
             <textarea
               id="office-description"
@@ -263,6 +338,42 @@
             </small>
           </div>
 
+          @if (creatingOffice()) {
+            <div class="form-field">
+              <label for="new-category-name">
+                New Category Name *
+              </label>
+
+              <input
+                id="new-category-name"
+                name="categoryName"
+                [(ngModel)]="categoryName"
+                #categoryControl="ngModel"
+                required
+                maxlength="150"
+              />
+
+              @if (
+                (
+                  categoryControl.touched ||
+                  officeForm.submitted
+                ) &&
+                !categoryName.trim()
+              ) {
+                <small class="field-error">
+                  Enter a new concern category name.
+                </small>
+              }
+
+              <small class="muted">
+                This category will become available to
+                residents after an approved personnel
+                account is created for this office.
+                Existing categories stay unchanged.
+              </small>
+            </div>
+          }
+
           <label class="checkbox-field">
             <input
               type="checkbox"
@@ -274,9 +385,10 @@
           </label>
 
           <p class="section-note">
-            Office status controls whether new personnel can be
-            registered here. Existing personnel access and concern
-            routing are handled separately.
+            Office status controls whether new personnel
+            can be registered here. Existing personnel
+            access and concern routing are handled
+            separately.
           </p>
 
           <div class="form-actions">
@@ -294,7 +406,11 @@
               [disabled]="
                 saving() ||
                 officeForm.invalid ||
-                !officeName.trim()
+                !officeName.trim() ||
+                (
+                  creatingOffice() &&
+                  !categoryName.trim()
+                )
               "
               [attr.aria-busy]="saving()"
             >
@@ -305,7 +421,15 @@
                 ></span>
               }
 
-              {{ saving() ? 'Saving...' : 'Save Changes' }}
+              {{
+                saving()
+                  ? 'Saving...'
+                  : (
+                      creatingOffice()
+                        ? 'Save Office & Category'
+                        : 'Save Changes'
+                    )
+              }}
             </button>
           </div>
         </fieldset>
@@ -331,7 +455,8 @@
           </h1>
 
           <p class="view-description">
-            Create an authorized personnel account for the selected office.
+            Create an authorized personnel account for
+            the selected office.
           </p>
         </div>
 
@@ -348,7 +473,10 @@
 
       <p class="selected-office">
         Assigned office:
-        <strong>{{ officeLabel(personnelOfficeId()) }}</strong>
+
+        <strong>
+          {{ officeLabel(personnelOfficeId()) }}
+        </strong>
       </p>
 
       <form
@@ -359,7 +487,9 @@
         <fieldset [disabled]="saving()">
           <div class="form-grid">
             <div class="form-field">
-              <label for="personnel-name">Full Name *</label>
+              <label for="personnel-name">
+                Full Name *
+              </label>
 
               <input
                 id="personnel-name"
@@ -372,8 +502,14 @@
               />
 
               @if (
-                (nameControl.invalid || !personnelName.trim()) &&
-                (nameControl.touched || personnelForm.submitted)
+                (
+                  nameControl.invalid ||
+                  !personnelName.trim()
+                ) &&
+                (
+                  nameControl.touched ||
+                  personnelForm.submitted
+                )
               ) {
                 <small class="field-error">
                   Enter the personnel member's full name.
@@ -402,7 +538,10 @@
 
               @if (
                 emailControl.invalid &&
-                (emailControl.touched || personnelForm.submitted)
+                (
+                  emailControl.touched ||
+                  personnelForm.submitted
+                )
               ) {
                 <small class="field-error">
                   Enter a valid email address.
@@ -428,14 +567,20 @@
                 aria-describedby="password-help"
               />
 
-              <small id="password-help" class="muted">
-                Use 8–128 characters. Firebase password-policy
-                requirements also apply.
+              <small
+                id="password-help"
+                class="muted"
+              >
+                Use 8–128 characters. Firebase
+                password-policy requirements also apply.
               </small>
 
               @if (
                 passwordControl.invalid &&
-                (passwordControl.touched || personnelForm.submitted)
+                (
+                  passwordControl.touched ||
+                  personnelForm.submitted
+                )
               ) {
                 <small class="field-error">
                   Enter a password of 8–128 characters.
@@ -461,7 +606,10 @@
               />
 
               @if (
-                (confirmControl.touched || personnelForm.submitted) &&
+                (
+                  confirmControl.touched ||
+                  personnelForm.submitted
+                ) &&
                 personnelPassword !== confirmPassword
               ) {
                 <small class="field-error">
@@ -483,9 +631,10 @@
 
           <p class="section-note">
             Create accounts only for authorized personnel.
-            After successful registration, give the personnel member
-            their login email and password privately.
-            No password setup email is required.
+            After successful registration, give the
+            personnel member their login email and
+            password privately. No password setup email
+            is required.
           </p>
 
           <div class="form-actions">

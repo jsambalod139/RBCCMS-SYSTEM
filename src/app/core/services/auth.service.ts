@@ -1,4 +1,9 @@
-import { Injectable, signal } from '@angular/core';
+import {
+  Injectable,
+  inject,
+  signal,
+} from '@angular/core';
+
 import {
   User,
   getAuth,
@@ -14,6 +19,7 @@ import {
 } from 'firebase/firestore';
 
 import { firebaseApp } from '../firebase.config';
+import { SettingsService } from './settings.service';
 
 export type UserRole = 'resident' | 'personnel' | 'admin';
 
@@ -32,6 +38,7 @@ export interface UserProfile {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private readonly accountSettings = inject(SettingsService);
   private readonly auth = getAuth(firebaseApp);
   private readonly db = getFirestore(firebaseApp);
 
@@ -39,15 +46,20 @@ export class AuthService {
     'https://nlwjwvhjojnjrmlaykym.supabase.co/functions/v1/auth-audit';
 
   private readonly auditFailure = signal('');
-
   readonly auditWarning = this.auditFailure.asReadonly();
 
   async getApprovedProfile(): Promise<UserProfile | null> {
     await this.auth.authStateReady();
 
     const user = this.auth.currentUser;
-
     if (!user) return null;
+
+    // Synchronization failures do not prevent an otherwise valid login.
+    await this.accountSettings.syncEmail().catch(() => undefined);
+
+    if (this.auth.currentUser?.uid !== user.uid) {
+      throw new Error('account/session-changed');
+    }
 
     const snapshot = await getDoc(
       doc(this.db, 'users', user.uid)
@@ -124,7 +136,6 @@ export class AuthService {
 
       return profile;
     } catch (error) {
-      // Avoid signing out a different account after an account switch.
       if (
         signedInUser &&
         this.auth.currentUser?.uid === signedInUser.uid
@@ -158,7 +169,6 @@ export class AuthService {
 
   async logout(): Promise<void> {
     const user = this.auth.currentUser;
-
     this.auditFailure.set('');
 
     if (!user) {
@@ -166,7 +176,6 @@ export class AuthService {
       return;
     }
 
-    // Logging is best effort. It must not block sign-out.
     await this.recordAuthEvent('logout', user);
 
     if (this.auth.currentUser?.uid === user.uid) {
@@ -179,25 +188,20 @@ export class AuthService {
     user: User
   ): Promise<void> {
     const controller = new AbortController();
-
     const timeout = setTimeout(
       () => controller.abort(),
       8000
     );
 
     try {
-      if (this.auth.currentUser?.uid !== user.uid) {
-        return;
-      }
+      if (this.auth.currentUser?.uid !== user.uid) return;
 
       const token = await user.getIdToken();
 
       if (
         controller.signal.aborted ||
         this.auth.currentUser?.uid !== user.uid
-      ) {
-        return;
-      }
+      ) return;
 
       const response = await fetch(this.auditEndpoint, {
         method: 'POST',

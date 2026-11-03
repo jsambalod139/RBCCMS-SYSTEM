@@ -7,7 +7,13 @@ import {
   untracked,
 } from '@angular/core';
 
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import {
+  EmailAuthProvider,
+  User,
+  getAuth,
+  onAuthStateChanged,
+  reauthenticateWithCredential,
+} from 'firebase/auth';
 
 import {
   doc,
@@ -18,14 +24,30 @@ import {
 } from 'firebase/firestore';
 
 import { firebaseApp } from '../firebase.config';
-import { compressProfilePhoto } from '../utils/compress-profile-photo';
 
-export type SettingsRole = 'resident' | 'personnel' | 'admin';
+import {
+  compressProfilePhoto,
+} from '../utils/compress-profile-photo';
+
+export interface AccountNameInput {
+  name: string;
+  firstName: string;
+  middleName: string;
+  lastName: string;
+}
+
+export type SettingsRole =
+  | 'resident'
+  | 'personnel'
+  | 'admin';
 
 export interface SettingsAccount {
   uid: string;
   name: string;
   email: string;
+  firstName: string;
+  middleName: string;
+  lastName: string;
   role: SettingsRole;
   accountStatus: string;
   photoPath: string;
@@ -39,7 +61,9 @@ export class SettingsService implements OnDestroy {
   private readonly endpoint =
     'https://nlwjwvhjojnjrmlaykym.supabase.co/functions/v1/profile-photos';
 
-  readonly profile = signal<SettingsAccount | null>(null);
+  readonly profile =
+    signal<SettingsAccount | null>(null);
+
   readonly loading = signal(true);
   readonly error = signal('');
 
@@ -54,7 +78,12 @@ export class SettingsService implements OnDestroy {
   readonly preferencesSaveError = signal('');
   readonly preferencesFeedback = signal('');
 
+  readonly syncError = signal('');
+
+  private syncedUid = '';
+
   private readonly preferenceUid = signal('');
+
   private stopPreferences?: () => void;
   private preferenceGeneration = 0;
 
@@ -65,6 +94,11 @@ export class SettingsService implements OnDestroy {
   private photoGeneration = 0;
   private loadedPath = '';
   private photoRequest?: AbortController;
+
+  private syncRequest?: {
+    uid: string;
+    promise: Promise<boolean>;
+  };
 
   readonly notificationsEnabled = computed(() => {
     const profile = this.profile();
@@ -102,8 +136,216 @@ export class SettingsService implements OnDestroy {
   constructor() {
     this.stopAuth = onAuthStateChanged(
       this.auth,
-      () => this.reload()
+      user => {
+        this.syncError.set('');
+        this.syncedUid = '';
+        this.reload();
+
+        if (user) {
+          void this.syncEmail()
+            .catch(() => undefined);
+        }
+      }
     );
+  }
+
+  private sameUser(user: User): void {
+    if (
+      this.auth.currentUser?.uid !== user.uid
+    ) {
+      throw new Error(
+        'Your account changed. Sign in again.'
+      );
+    }
+  }
+
+  private async requireUser(
+    expectedUid?: string
+  ): Promise<User> {
+    await this.auth.authStateReady();
+
+    const user = this.auth.currentUser;
+
+    if (
+      !user
+      || !expectedUid
+      || user.uid !== expectedUid
+    ) {
+      throw new Error(
+        'Your account changed. Sign in again.'
+      );
+    }
+
+    return user;
+  }
+
+  private async confirmPassword(
+    password: string,
+    expectedUid?: string
+  ): Promise<User> {
+    const user =
+      await this.requireUser(expectedUid);
+
+    if (!user.email || !password) {
+      throw new Error(
+        'Enter your current password.'
+      );
+    }
+
+    await reauthenticateWithCredential(
+      user,
+      EmailAuthProvider.credential(
+        user.email,
+        password
+      )
+    );
+
+    this.sameUser(user);
+
+    return user;
+  }
+
+  async saveAccount(
+    input: AccountNameInput,
+    email: string,
+    password: string,
+    requestId: string
+  ): Promise<{
+    saved: boolean;
+    emailChanged: boolean;
+  }> {
+    const uid = this.requireUid();
+
+    const user =
+      await this.confirmPassword(
+        password,
+        uid
+      );
+
+    return this.accountRequest(user, {
+      action: 'update-self-profile',
+      requestId,
+      name: input.name.trim(),
+      firstName: input.firstName.trim(),
+      middleName: input.middleName.trim(),
+      lastName: input.lastName.trim(),
+      email: email.trim().toLowerCase(),
+    });
+  }
+
+  async syncEmail(): Promise<boolean> {
+    const user = await this.requireUser(
+      this.auth.currentUser?.uid
+    );
+
+    if (this.syncedUid === user.uid) {
+      return false;
+    }
+
+    if (
+      this.syncRequest?.uid === user.uid
+    ) {
+      return this.syncRequest.promise;
+    }
+
+    const request = {
+      uid: user.uid,
+      promise: Promise.resolve(false),
+    };
+
+    request.promise = this.accountRequest(
+      user,
+      { action: 'sync-self' }
+    )
+      .then(result => {
+        this.sameUser(user);
+
+        this.syncedUid = user.uid;
+        this.syncError.set('');
+
+        return result.saved;
+      })
+      .catch(error => {
+        if (
+          this.auth.currentUser?.uid
+          === user.uid
+        ) {
+          this.syncError.set(
+            'Account synchronization failed. Sign in again to retry.'
+          );
+        }
+
+        throw error;
+      })
+      .finally(() => {
+        if (this.syncRequest === request) {
+          this.syncRequest = undefined;
+        }
+      });
+
+    this.syncRequest = request;
+
+    return request.promise;
+  }
+
+  private async accountRequest(
+    user: User,
+    body: object
+  ): Promise<{
+    saved: boolean;
+    emailChanged: boolean;
+  }> {
+    const token =
+      await user.getIdToken(true);
+
+    this.sameUser(user);
+
+    let response: Response;
+
+    try {
+      response = await fetch(
+        'https://nlwjwvhjojnjrmlaykym.supabase.co/functions/v1/manage-users',
+        {
+          method: 'POST',
+          credentials: 'omit',
+          cache: 'no-store',
+
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+
+          body: JSON.stringify(body),
+          signal: AbortSignal.timeout(60000),
+        }
+      );
+    } catch {
+      throw new Error(
+        'The change could not be confirmed. If you changed your email, try signing in with the new address before retrying.'
+      );
+    }
+
+    this.sameUser(user);
+
+    const result = await response
+      .json()
+      .catch(() => null);
+
+    if (
+      !response.ok
+      || typeof result?.saved !== 'boolean'
+    ) {
+      throw new Error(
+        result?.error
+        || 'Unable to update your account.'
+      );
+    }
+
+    return {
+      saved: result.saved,
+      emailChanged:
+        result.emailChanged === true,
+    };
   }
 
   reload(): void {
@@ -127,7 +369,11 @@ export class SettingsService implements OnDestroy {
     this.stopProfile = onSnapshot(
       doc(this.db, 'users', user.uid),
       snapshot => {
-        if (generation !== this.generation) return;
+        if (
+          generation !== this.generation
+        ) {
+          return;
+        }
 
         const data = snapshot.data();
         const role = data?.['role'];
@@ -135,11 +381,16 @@ export class SettingsService implements OnDestroy {
         if (
           !data
           || !this.isSupportedRole(role)
-          || data['accountStatus'] !== 'approved'
+          || data['accountStatus']
+            !== 'approved'
         ) {
           this.profile.set(null);
           this.clearPhoto();
-          this.error.set('An approved account is required.');
+
+          this.error.set(
+            'An approved account is required.'
+          );
+
           this.loading.set(false);
           return;
         }
@@ -149,12 +400,21 @@ export class SettingsService implements OnDestroy {
             ? data[key].trim()
             : '';
 
-        const path = text('profilePhotoPath');
+        const path =
+          text('profilePhotoPath');
 
         this.profile.set({
           uid: user.uid,
           name: text('name'),
-          email: user.email || text('email'),
+
+          email:
+            text('email')
+            || user.email
+            || '',
+
+          firstName: text('firstName'),
+          middleName: text('middleName'),
+          lastName: text('lastName'),
           role,
           accountStatus: 'approved',
           photoPath: path,
@@ -168,16 +428,24 @@ export class SettingsService implements OnDestroy {
           this.loadedPath = path;
 
           if (path) {
-            void this.loadPhoto(user.uid, path);
+            void this.loadPhoto(
+              user.uid,
+              path
+            );
           }
         }
       },
       () => {
-        if (generation !== this.generation) return;
+        if (
+          generation !== this.generation
+        ) {
+          return;
+        }
 
         this.profile.set(null);
         this.clearPhoto();
         this.loading.set(false);
+
         this.error.set(
           'Unable to load your account. Check your connection and try again.'
         );
@@ -193,7 +461,10 @@ export class SettingsService implements OnDestroy {
       .split(/\s+/)
       .filter(Boolean)
       .slice(0, 2)
-      .map(part => part.charAt(0).toUpperCase())
+      .map(
+        part =>
+          part.charAt(0).toUpperCase()
+      )
       .join('');
 
     if (initials) return initials;
@@ -201,24 +472,34 @@ export class SettingsService implements OnDestroy {
     switch (profile?.role) {
       case 'resident':
         return 'R';
+
       case 'personnel':
         return 'P';
+
       case 'admin':
         return 'A';
+
       default:
         return 'U';
     }
   }
 
-  async uploadPhoto(file: File): Promise<void> {
+  async uploadPhoto(
+    file: File
+  ): Promise<void> {
     const uid = this.requireUid();
-    const compressed = await compressProfilePhoto(file);
+
+    const compressed =
+      await compressProfilePhoto(file);
 
     if (uid !== this.requireUid()) {
-      throw new Error('Your login changed. Sign in again.');
+      throw new Error(
+        'Your login changed. Sign in again.'
+      );
     }
 
     const form = new FormData();
+
     form.set('action', 'upload');
     form.set('file', compressed);
 
@@ -227,26 +508,36 @@ export class SettingsService implements OnDestroy {
 
   async removePhoto(): Promise<void> {
     const uid = this.requireUid();
-    await this.request(uid, { action: 'remove' });
+
+    await this.request(uid, {
+      action: 'remove',
+    });
   }
 
   retryPhoto(): void {
     const profile = this.profile();
 
     if (profile?.photoPath) {
-      void this.loadPhoto(profile.uid, profile.photoPath);
+      void this.loadPhoto(
+        profile.uid,
+        profile.photoPath
+      );
     }
   }
 
   imageFailed(): void {
     this.releaseUrl();
+
     this.photoError.set(
       'Your profile photo could not be displayed. Try reloading it.'
     );
   }
 
-  private listenPreferences(uid: string): void {
-    const generation = ++this.preferenceGeneration;
+  private listenPreferences(
+    uid: string
+  ): void {
+    const generation =
+      ++this.preferenceGeneration;
 
     this.stopPreferences?.();
     this.stopPreferences = undefined;
@@ -269,10 +560,13 @@ export class SettingsService implements OnDestroy {
         'preferences',
         'notifications'
       ),
+
       { includeMetadataChanges: true },
+
       snapshot => {
         if (
-          generation !== this.preferenceGeneration
+          generation
+            !== this.preferenceGeneration
           || snapshot.metadata.hasPendingWrites
         ) {
           return;
@@ -282,26 +576,38 @@ export class SettingsService implements OnDestroy {
 
         if (
           snapshot.exists()
-          && typeof data?.['enabled'] !== 'boolean'
+          && typeof data?.['enabled']
+            !== 'boolean'
         ) {
           this.preferencesLoading.set(false);
+
           this.preferencesError.set(
             'Your notification preference could not be read. Contact the administrator.'
           );
+
           return;
         }
 
         this.notificationEnabled.set(
-          snapshot.exists() ? data!['enabled'] : true
+          snapshot.exists()
+            ? data!['enabled']
+            : true
         );
 
         this.preferencesLoading.set(false);
         this.preferencesError.set('');
       },
+
       () => {
-        if (generation !== this.preferenceGeneration) return;
+        if (
+          generation
+          !== this.preferenceGeneration
+        ) {
+          return;
+        }
 
         this.preferencesLoading.set(false);
+
         this.preferencesError.set(
           'Unable to load your notification preference. Check your connection and Firestore rules.'
         );
@@ -312,7 +618,9 @@ export class SettingsService implements OnDestroy {
   retryNotificationPreferences(): void {
     if (this.preferencesSaving()) return;
 
-    this.listenPreferences(this.profile()?.uid || '');
+    this.listenPreferences(
+      this.profile()?.uid || ''
+    );
   }
 
   async saveNotificationPreference(
@@ -328,7 +636,10 @@ export class SettingsService implements OnDestroy {
     try {
       uid = this.requireUid();
     } catch {
-      this.preferencesSaveError.set('Please sign in again.');
+      this.preferencesSaveError.set(
+        'Please sign in again.'
+      );
+
       return;
     }
 
@@ -341,10 +652,13 @@ export class SettingsService implements OnDestroy {
       this.preferencesSaveError.set(
         'Load your preferences before changing this setting.'
       );
+
       return;
     }
 
-    const generation = this.preferenceGeneration;
+    const generation =
+      this.preferenceGeneration;
+
     this.preferencesSaving.set(true);
 
     try {
@@ -363,24 +677,32 @@ export class SettingsService implements OnDestroy {
       );
 
       if (
-        generation !== this.preferenceGeneration
+        generation
+          !== this.preferenceGeneration
         || this.auth.currentUser?.uid !== uid
       ) {
         return;
       }
 
       this.notificationEnabled.set(enabled);
+
       this.preferencesFeedback.set(
         'Notification preference saved.'
       );
     } catch {
-      if (generation === this.preferenceGeneration) {
+      if (
+        generation
+        === this.preferenceGeneration
+      ) {
         this.preferencesSaveError.set(
           'Your preference was not saved. Check your connection and try again.'
         );
       }
     } finally {
-      if (generation === this.preferenceGeneration) {
+      if (
+        generation
+        === this.preferenceGeneration
+      ) {
         this.preferencesSaving.set(false);
       }
     }
@@ -395,7 +717,9 @@ export class SettingsService implements OnDestroy {
   }
 
   private requireUid(): string {
-    const uid = this.auth.currentUser?.uid;
+    const uid =
+      this.auth.currentUser?.uid;
+
     const profile = this.profile();
 
     if (
@@ -421,16 +745,25 @@ export class SettingsService implements OnDestroy {
     const user = this.auth.currentUser;
 
     if (!user || user.uid !== uid) {
-      throw new Error('Please sign in again.');
+      throw new Error(
+        'Please sign in again.'
+      );
     }
 
-    const token = await user.getIdToken();
+    const token =
+      await user.getIdToken();
 
-    if (this.auth.currentUser?.uid !== uid) {
-      throw new Error('Your login changed. Sign in again.');
+    if (
+      this.auth.currentUser?.uid !== uid
+    ) {
+      throw new Error(
+        'Your login changed. Sign in again.'
+      );
     }
 
-    const multipart = body instanceof FormData;
+    const multipart =
+      body instanceof FormData;
+
     let response: Response;
 
     try {
@@ -438,13 +771,22 @@ export class SettingsService implements OnDestroy {
         method: 'POST',
         credentials: 'omit',
         cache: 'no-store',
+
         headers: {
           Authorization: `Bearer ${token}`,
+
           ...(multipart
             ? {}
-            : { 'Content-Type': 'application/json' }),
+            : {
+                'Content-Type':
+                  'application/json',
+              }),
         },
-        body: multipart ? body : JSON.stringify(body),
+
+        body: multipart
+          ? body
+          : JSON.stringify(body),
+
         signal: abortSignal
           ? AbortSignal.any([
               abortSignal,
@@ -458,15 +800,22 @@ export class SettingsService implements OnDestroy {
       );
     }
 
-    if (this.auth.currentUser?.uid !== uid) {
-      throw new Error('Your login changed. Sign in again.');
+    if (
+      this.auth.currentUser?.uid !== uid
+    ) {
+      throw new Error(
+        'Your login changed. Sign in again.'
+      );
     }
 
     if (!response.ok) {
-      const result = await response.json().catch(() => null);
+      const result = await response
+        .json()
+        .catch(() => null);
 
       throw new Error(
-        result?.error || 'Unable to complete the photo request.'
+        result?.error
+        || 'Unable to complete the photo request.'
       );
     }
 
@@ -477,10 +826,13 @@ export class SettingsService implements OnDestroy {
     uid: string,
     path: string
   ): Promise<void> {
-    const generation = ++this.photoGeneration;
+    const generation =
+      ++this.photoGeneration;
 
     this.photoRequest?.abort();
-    this.photoRequest = new AbortController();
+
+    this.photoRequest =
+      new AbortController();
 
     this.photoLoading.set(true);
     this.photoError.set('');
@@ -488,7 +840,10 @@ export class SettingsService implements OnDestroy {
     try {
       const response = await this.request(
         uid,
-        { action: 'download', path },
+        {
+          action: 'download',
+          path,
+        },
         this.photoRequest.signal
       );
 
@@ -507,13 +862,20 @@ export class SettingsService implements OnDestroy {
         || !blob.size
         || blob.size > 250 * 1024
       ) {
-        throw new Error('Invalid profile photo response.');
+        throw new Error(
+          'Invalid profile photo response.'
+        );
       }
 
       this.releaseUrl();
-      this.photoUrl.set(URL.createObjectURL(blob));
+
+      this.photoUrl.set(
+        URL.createObjectURL(blob)
+      );
     } catch (error: unknown) {
-      if (generation === this.photoGeneration) {
+      if (
+        generation === this.photoGeneration
+      ) {
         this.photoError.set(
           error instanceof Error
             ? error.message
@@ -521,7 +883,9 @@ export class SettingsService implements OnDestroy {
         );
       }
     } finally {
-      if (generation === this.photoGeneration) {
+      if (
+        generation === this.photoGeneration
+      ) {
         this.photoLoading.set(false);
       }
     }
@@ -537,6 +901,7 @@ export class SettingsService implements OnDestroy {
 
   private clearPhoto(): void {
     ++this.photoGeneration;
+
     this.photoRequest?.abort();
     this.loadedPath = '';
 
@@ -547,10 +912,12 @@ export class SettingsService implements OnDestroy {
 
   ngOnDestroy(): void {
     ++this.preferenceGeneration;
+
     this.stopPreferences?.();
     this.watchPreferences.destroy();
 
     ++this.generation;
+
     this.stopAuth();
     this.stopProfile?.();
     this.clearPhoto();

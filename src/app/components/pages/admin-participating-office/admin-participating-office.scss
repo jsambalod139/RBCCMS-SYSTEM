@@ -110,7 +110,7 @@
   }
 
   &:active:not(:disabled) {
-    transform: scale(.97);
+    transform: scale(0.97);
   }
 }
 
@@ -133,6 +133,12 @@
     color: #617267;
     font-size: 12px;
   }
+}
+
+.directory-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
 }
 
 .table-wrapper {
@@ -277,11 +283,11 @@ button {
     box-shadow 160ms ease;
 
   &:active:not(:disabled) {
-    transform: scale(.97);
+    transform: scale(0.97);
   }
 
   &:disabled {
-    opacity: .55;
+    opacity: 0.55;
     cursor: not-allowed;
   }
 
@@ -305,7 +311,8 @@ fieldset {
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
   gap: 20px;
 }
 
@@ -342,7 +349,8 @@ textarea {
 
   &:focus {
     border-color: #527b60;
-    box-shadow: 0 0 0 3px rgb(82 123 96 / 12%);
+    box-shadow:
+      0 0 0 3px rgb(82 123 96 / 12%);
   }
 
   &.ng-invalid.ng-touched {
@@ -461,7 +469,8 @@ textarea {
   flex: 0 0 16px;
   width: 16px;
   height: 16px;
-  border-color: rgb(255 255 255 / 35%);
+  border-color:
+    rgb(255 255 255 / 35%);
   border-top-color: #fff;
 }
 
@@ -486,11 +495,14 @@ input[type='checkbox']:focus-visible,
     border-color: #06643b;
     background: #06643b;
     color: #fff;
-    box-shadow: 0 4px 10px rgb(8 123 73 / 14%);
+
+    box-shadow:
+      0 4px 10px rgb(8 123 73 / 14%);
   }
 
   .back-button:hover:not(:disabled) {
-    box-shadow: 0 3px 9px rgb(33 55 42 / 8%);
+    box-shadow:
+      0 3px 9px rgb(33 55 42 / 8%);
 
     span {
       transform: translateX(-3px);
@@ -546,12 +558,14 @@ input[type='checkbox']:focus-visible,
     }
   }
 
-  .back-button {
+  .back-button,
+  .directory-actions button {
     width: 100%;
   }
 
   .form-grid {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns:
+      minmax(0, 1fr);
     gap: 0;
   }
 
@@ -587,3 +601,58 @@ input[type='checkbox']:focus-visible,
     transform: none;
   }
 }
+
+.row-actions .delete-office {
+  border-color: #d79c9c;
+  background: #fff;
+  color: #a72c2c;
+
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 150ms ease;
+
+  &:hover:not(:disabled) {
+    background: #fff1f1;
+    border-color: #bd3a3a;
+
+    box-shadow:
+      0 3px 8px rgb(150 40 40 / 10%);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #a72c2c;
+    outline-offset: 3px;
+  }
+
+  &:disabled {
+    background: #f8eeee;
+    color: #936767;
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}
+
+.delete-hint {
+  display: block;
+  max-width: 220px;
+  color: #68736c;
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row-actions .delete-office {
+    transition: none;
+  }
+
+  .row-actions .delete-office:active:not(:disabled) {
+    transform: none;
+  }
+}   

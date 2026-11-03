@@ -88,6 +88,15 @@
       Responsible Offices
     </button>
 
+    <button
+      type="button"
+      [class.active]="tab() === 'locations'"
+      [attr.aria-pressed]="tab() === 'locations'"
+      (click)="tab.set('locations')"
+    >
+      Locations
+    </button>
+
     @if (canManageResidents()) {
       <button
         type="button"
@@ -164,17 +173,22 @@
           No registered resident accounts found.
         </p>
       } @else {
-        <div class="table-scroll">
+        <div
+          class="table-scroll"
+          tabindex="0"
+          role="region"
+          aria-label="Resident accounts by Purok"
+        >
           <table>
             <thead>
               <tr>
-                <th>Purok</th>
-                <th>Accounts</th>
-                <th>Verified</th>
-                <th>Not Verified</th>
-                <th>Approved</th>
-                <th>Other Account Statuses</th>
-                <th>Share</th>
+                <th scope="col">Purok</th>
+                <th scope="col">Accounts</th>
+                <th scope="col">Verified</th>
+                <th scope="col">Not Verified</th>
+                <th scope="col">Approved</th>
+                <th scope="col">Other Account Statuses</th>
+                <th scope="col">Share</th>
               </tr>
             </thead>
 
@@ -202,7 +216,7 @@
 
             <tfoot>
               <tr>
-                <th>Total</th>
+                <th scope="row">Total</th>
                 <td>{{ residentTotals().total }}</td>
                 <td>{{ residentTotals().verified }}</td>
 
@@ -237,14 +251,7 @@
       }
     } @else {
       <div class="report-heading">
-        <h2>
-          {{
-            tab() === 'offices'
-              ? 'Responsible Offices'
-              : 'Concern Summary'
-          }}
-        </h2>
-
+        <h2>{{ reportTitle() }}</h2>
         <span>{{ periodLabel() }}</span>
       </div>
 
@@ -268,37 +275,39 @@
         }
       </div>
 
-      <h3>
-        {{
-          tab() === 'offices'
-            ? 'Office Breakdown'
-            : 'Category Breakdown'
-        }}
-      </h3>
+      @if (tab() === 'locations') {
+        <p class="note footnote">
+          Grouped by the submitted location description.
+          Capitalization and extra spaces are ignored.
+          Different descriptions remain separate; no Purok
+          is inferred from a resident’s address.
+        </p>
+      }
+
+      <h3>{{ groupLabel() }} Breakdown</h3>
 
       @if (!rows().length) {
         <p class="empty">
           No concerns were submitted during this period.
         </p>
       } @else {
-        <div class="table-scroll">
+        <div
+          class="table-scroll"
+          tabindex="0"
+          role="region"
+          [attr.aria-label]="reportTitle() + ' table'"
+        >
           <table>
             <thead>
               <tr>
-                <th>
-                  {{
-                    tab() === 'offices'
-                      ? 'Responsible Office'
-                      : 'Category'
-                  }}
-                </th>
+                <th scope="col">{{ groupLabel() }}</th>
 
                 @for (status of statuses; track status) {
-                  <th>{{ status }}</th>
+                  <th scope="col">{{ status }}</th>
                 }
 
-                <th>Total</th>
-                <th>Share</th>
+                <th scope="col">Total</th>
+                <th scope="col">Share</th>
               </tr>
             </thead>
 
@@ -322,7 +331,7 @@
 
             <tfoot>
               <tr>
-                <th>Total</th>
+                <th scope="row">Total</th>
 
                 @for (status of statuses; track status) {
                   <td>{{ totals().counts[status] }}</td>
@@ -345,8 +354,8 @@
       }
 
       <p class="note footnote">
-        Only categories or offices with submissions are
-        listed. Share is the percentage of concerns in the
+        Only groups with submissions are listed.
+        Share is the percentage of concerns in the
         selected period.
       </p>
     }

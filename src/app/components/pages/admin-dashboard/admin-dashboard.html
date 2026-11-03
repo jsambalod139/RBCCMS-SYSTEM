@@ -4,11 +4,10 @@
 >
   <header class="page-heading">
     <p class="eyebrow">ADMINISTRATOR PORTAL</p>
-
     <h1>Admin Dashboard</h1>
 
     <p class="page-description">
-      Overview of community concerns and registered accounts.
+      Overview of community concerns across all participating offices.
     </p>
   </header>
 
@@ -30,17 +29,21 @@
       </button>
     </section>
   } @else {
+    <p class="scope-note">
+      System totals · All time
+    </p>
+
     <section
       class="summary-grid"
-      aria-label="System statistics"
+      aria-label="All-time system statistics"
     >
       <article class="summary-card residents-card">
         <div class="summary-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24">
             <circle cx="9" cy="8" r="3" />
-            <path d="M3 21v-2a6 6 0 0 1 12 0v2" />
-            <path d="M16 5a3 3 0 0 1 0 6" />
-            <path d="M21 21v-2a6 6 0 0 0-4-5.65" />
+            <path
+              d="M3 21v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6M21 21v-2a6 6 0 0 0-4-5.65"
+            />
           </svg>
         </div>
 
@@ -67,8 +70,9 @@
       <article class="summary-card concerns-card">
         <div class="summary-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24">
-            <path d="M6 3h8l4 4v14H6z" />
-            <path d="M14 3v5h4M9 12h6M9 16h6" />
+            <path
+              d="M6 3h8l4 4v14H6zM14 3v5h4M9 12h6M9 16h6"
+            />
           </svg>
         </div>
 
@@ -94,6 +98,328 @@
     </section>
 
     <section
+      class="analytics-section"
+      aria-labelledby="analytics-title"
+    >
+      <header class="analytics-heading">
+        <div>
+          <h2 id="analytics-title">
+            Concern Analytics
+          </h2>
+
+          <p>
+            All offices · Filter by submission date
+          </p>
+        </div>
+
+        <span class="live-label">
+          <span aria-hidden="true"></span>
+          Automatic updates
+        </span>
+      </header>
+
+      <form
+        class="analytics-filters"
+        (ngSubmit)="applyFilters()"
+        #filters="ngForm"
+      >
+        <label for="analytics-from">
+          Date From
+
+          <input
+            id="analytics-from"
+            type="date"
+            name="from"
+            [(ngModel)]="dateFrom"
+            min="1900-01-01"
+            [max]="today"
+            required
+          />
+        </label>
+
+        <label for="analytics-to">
+          Date To
+
+          <input
+            id="analytics-to"
+            type="date"
+            name="to"
+            [(ngModel)]="dateTo"
+            min="1900-01-01"
+            [max]="today"
+            required
+          />
+        </label>
+
+        <button
+          type="submit"
+          class="primary-button"
+          [disabled]="filters.invalid"
+        >
+          Apply Dates
+        </button>
+
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="resetFilters()"
+        >
+          Reset
+        </button>
+      </form>
+
+      @if (filterError()) {
+        <p class="filter-error" role="alert">
+          {{ filterError() }}
+        </p>
+      }
+
+      <div class="analytics-caption">
+        <p>
+          Applied period:
+          <strong>
+            {{ dashboard.period().from | date:'MMM d, y' }}
+            –
+            {{ dashboard.period().to | date:'MMM d, y' }}
+          </strong>
+        </p>
+
+        <p>
+          Charts count concerns submitted in this period using
+          their current status, rather than their historical status.
+        </p>
+
+        @if (dashboard.lastUpdated(); as updated) {
+          <p>
+            Last data update:
+            {{ updated | date:'MMM d, y, h:mm:ss a' }}
+          </p>
+        }
+      </div>
+
+      @if (dashboard.undatedConcerns()) {
+        <p class="data-note">
+          {{ dashboard.undatedConcerns() }}
+          concern(s) have no valid submission date.
+          They remain in all-time totals but are excluded
+          from date-filtered charts.
+        </p>
+      }
+
+      <div class="analytics-grid">
+        <article class="chart-card">
+          <header class="chart-heading">
+            <h3>
+              {{
+                dashboard.series().yearly
+                  ? 'Yearly Submissions'
+                  : 'Monthly Submissions'
+              }}
+            </h3>
+
+            <span>
+              {{ dashboard.filteredTotal() }} total
+            </span>
+          </header>
+
+          @if (dashboard.filteredTotal()) {
+            <div
+              class="monthly-scroll"
+              tabindex="0"
+              role="region"
+              aria-label="Submission counts by period"
+            >
+              <div
+                class="monthly-chart"
+                [style.grid-template-columns]="
+                  'repeat(' +
+                  dashboard.series().rows.length +
+                  ', minmax(64px, 1fr))'
+                "
+              >
+                @for (
+                  bar of dashboard.series().rows;
+                  track bar.id
+                ) {
+                  <div class="monthly-column">
+                    <div class="monthly-track">
+                      <div
+                        class="monthly-bar"
+                        [style.height.%]="bar.percent"
+                      >
+                        <span>{{ bar.count }}</span>
+                      </div>
+                    </div>
+
+                    <span class="month-label">
+                      {{ bar.label }}
+                    </span>
+                  </div>
+                }
+              </div>
+            </div>
+          } @else {
+            <p class="chart-empty">
+              No concerns were submitted in the selected period.
+            </p>
+          }
+
+          <p class="chart-note">
+            {{
+              dashboard.series().yearly
+                ? 'Ranges longer than 24 months are grouped by year.'
+                : 'Months without submissions are included.'
+            }}
+          </p>
+        </article>
+
+        <article class="chart-card">
+          <header class="chart-heading">
+            <h3>Concerns by Status</h3>
+            <span>Current status</span>
+          </header>
+
+          <div class="status-chart">
+            <div
+              class="donut"
+              [style.background]="dashboard.donutBackground()"
+              aria-hidden="true"
+            >
+              <div class="donut-center">
+                <span>Total</span>
+                <strong>
+                  {{ dashboard.filteredTotal() }}
+                </strong>
+              </div>
+            </div>
+
+            <ul class="status-legend">
+              @for (
+                slice of dashboard.statusSlices();
+                track slice.id
+              ) {
+                <li>
+                  <span
+                    class="legend-dot"
+                    [style.background]="slice.color"
+                    aria-hidden="true"
+                  ></span>
+
+                  <span>{{ slice.label }}</span>
+                  <strong>{{ slice.count }}</strong>
+
+                  <small>
+                    {{ slice.percent | number:'1.0-1' }}%
+                  </small>
+                </li>
+              }
+            </ul>
+          </div>
+
+          <div class="resolved-summary">
+            Resolved:
+            <strong>
+              {{ dashboard.resolvedPercent() | number:'1.0-1' }}%
+            </strong>
+
+            <span>
+              ({{ dashboard.resolvedCount() }}
+              of {{ dashboard.filteredTotal() }} concerns)
+            </span>
+          </div>
+        </article>
+
+        <article class="chart-card">
+          <header class="chart-heading">
+            <h3>Concerns by Category</h3>
+
+            <span>
+              {{ dashboard.categoryBars().length }}
+              categories
+            </span>
+          </header>
+
+          <div class="horizontal-chart">
+            @for (
+              bar of dashboard.categoryBars();
+              track bar.id
+            ) {
+              <div class="horizontal-row">
+                <span class="bar-label">
+                  {{ bar.label }}
+                </span>
+
+                <div
+                  class="bar-track"
+                  aria-hidden="true"
+                >
+                  <span
+                    [style.width.%]="bar.percent"
+                  ></span>
+                </div>
+
+                <strong>{{ bar.count }}</strong>
+              </div>
+            } @empty {
+              <p class="chart-empty">
+                No category data for this period.
+              </p>
+            }
+          </div>
+
+          <p class="chart-note">
+            New categories appear when they have
+            submissions in this period.
+          </p>
+        </article>
+
+        <article class="chart-card">
+          <header class="chart-heading">
+            <h3>Concerns by Responsible Office</h3>
+
+            <span>
+              {{ dashboard.officeBars().length }}
+              offices
+            </span>
+          </header>
+
+          <div class="horizontal-chart">
+            @for (
+              bar of dashboard.officeBars();
+              track bar.id
+            ) {
+              <div class="horizontal-row">
+                <span class="bar-label">
+                  {{ bar.label }}
+                </span>
+
+                <div
+                  class="bar-track"
+                  aria-hidden="true"
+                >
+                  <span
+                    [style.width.%]="bar.percent"
+                  ></span>
+                </div>
+
+                <strong>{{ bar.count }}</strong>
+              </div>
+            } @empty {
+              <p class="chart-empty">
+                No office data for this period.
+              </p>
+            }
+          </div>
+
+          <p class="chart-note">
+            Uses the office assigned to each concern,
+            including resolved and rejected concerns.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section
       class="concerns-section"
       aria-labelledby="recent-concerns-title"
     >
@@ -101,6 +427,8 @@
         <h2 id="recent-concerns-title">
           Recent Concerns
         </h2>
+
+        <span>Latest 5 · All time</span>
       </header>
 
       @if (dashboard.recentConcerns().length === 0) {
@@ -134,7 +462,6 @@
               ) {
                 <tr>
                   <td>{{ concern.category }}</td>
-
                   <td>{{ concern.submittedBy }}</td>
 
                   <td>

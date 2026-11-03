@@ -148,22 +148,14 @@
 
                 <td>
                   <div class="row-actions">
-                    <button
-                      type="button"
-                      (click)="selectedUid.set(account.uid)"
-                      [attr.aria-label]="
-                        'View account for ' + account.name
-                      "
-                    >
-                      View
-                    </button>
-
                     @if (account.uid === currentUid()) {
                       <span class="muted">
                         Current account
                       </span>
                     } @else if (account.role === 'admin') {
-                      <span class="muted">Protected</span>
+                      <span class="muted">
+                        Protected
+                      </span>
                     } @else if (canChange(account)) {
                       <button
                         type="button"
@@ -228,72 +220,4 @@
       </div>
     }
   </section>
-
-  @if (selectedAccount(); as account) {
-    <section
-      class="details-card"
-      aria-labelledby="account-details-title"
-    >
-      <div class="section-heading">
-        <h2 id="account-details-title">
-          Account Information
-        </h2>
-
-        <button
-          type="button"
-          (click)="selectedUid.set('')"
-        >
-          Close
-        </button>
-      </div>
-
-      <dl>
-        <div>
-          <dt>Name</dt>
-          <dd>{{ account.name }}</dd>
-        </div>
-
-        <div>
-          <dt>Email</dt>
-          <dd>{{ account.email || 'Not recorded' }}</dd>
-        </div>
-
-        <div>
-          <dt>Role</dt>
-          <dd>{{ roleLabel(account.role) }}</dd>
-        </div>
-
-        <div>
-          <dt>Account Status</dt>
-          <dd>{{ account.status | titlecase }}</dd>
-        </div>
-
-        @if (account.role === 'resident') {
-          <div>
-            <dt>Resident ID</dt>
-            <dd>{{ account.residentId || 'Not assigned' }}</dd>
-          </div>
-
-          <div>
-            <dt>Residency Verification</dt>
-            <dd>
-              {{ account.verified ? 'Verified' : 'Not verified' }}
-            </dd>
-          </div>
-
-          <div>
-            <dt>Address</dt>
-            <dd>{{ account.address || 'Not recorded' }}</dd>
-          </div>
-
-          <div>
-            <dt>Contact Number</dt>
-            <dd>
-              {{ account.contactNumber || 'Not recorded' }}
-            </dd>
-          </div>
-        }
-      </dl>
-    </section>
-  }
 </main>

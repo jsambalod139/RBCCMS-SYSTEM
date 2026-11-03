@@ -31,6 +31,7 @@ import { AdminSettings } from './components/pages/admin-settings/admin-settings'
 import { AdminUserManagement } from './components/pages/admin-user-management/admin-user-management';
 import { AdminConcern } from './components/pages/admin-concern/admin-concern';
 import { AdminParticipatingOffice } from './components/pages/admin-participating-office/admin-participating-office';
+import { AdminReports } from './components/pages/admin-reports/admin-reports';
 
 export const routes: Routes = [
   {
@@ -145,6 +146,10 @@ export const routes: Routes = [
       {
         path: 'admin-concern',
         component: AdminConcern,
+      },
+      {
+        path: 'admin-reports',
+        component: AdminReports,
       },
       {
         path: 'admin-participating-office',

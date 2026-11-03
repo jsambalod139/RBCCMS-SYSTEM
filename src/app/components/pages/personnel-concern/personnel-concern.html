@@ -8,6 +8,7 @@
   @if (loadError()) {
     <div class="page-notice error-notice" role="alert">
       <p>{{ loadError() }}</p>
+
       <button
         type="button"
         class="primary-button"
@@ -51,6 +52,7 @@
       @if (residentLoadError()) {
         <div class="page-notice error-notice" role="alert">
           <p>{{ residentLoadError() }}</p>
+
           <button
             type="button"
             class="secondary-button"
@@ -190,7 +192,9 @@
               [disabled]="saving()"
             >
               @for (status of availableStatuses; track status) {
-                <option [ngValue]="status">{{ status }}</option>
+                <option [ngValue]="status">
+                  {{ status }}
+                </option>
               }
             </select>
 
@@ -291,6 +295,7 @@
       <div>
         <p class="eyebrow">PERSONNEL PORTAL</p>
         <h1>Concerns</h1>
+
         <p class="page-description">
           Review concerns assigned to your office and manage their status.
         </p>
@@ -306,7 +311,7 @@
           name="searchTerm"
           [ngModel]="searchTerm()"
           (ngModelChange)="searchTerm.set($event)"
-          placeholder="Search concern ID, category, location, or description..."
+          placeholder="Search category, location, or description..."
           aria-label="Search concerns"
         />
 
@@ -332,7 +337,9 @@
           (ngModelChange)="selectedStatus.set($event)"
         >
           @for (status of statusOptions; track status) {
-            <option [ngValue]="status">{{ status }}</option>
+            <option [ngValue]="status">
+              {{ status }}
+            </option>
           }
         </select>
       </div>
@@ -388,7 +395,6 @@
             <table>
               <thead>
                 <tr>
-                  <th scope="col">Concern ID</th>
                   <th scope="col">Category</th>
                   <th scope="col">Location</th>
                   <th scope="col">Date Reported</th>
@@ -403,10 +409,6 @@
                   track concern.concern_id
                 ) {
                   <tr>
-                    <td class="concern-id">
-                      {{ concern.concern_number ?? 'Not numbered' }}
-                    </td>
-
                     <td>{{ categoryName(concern) }}</td>
 
                     <td class="location-cell">
