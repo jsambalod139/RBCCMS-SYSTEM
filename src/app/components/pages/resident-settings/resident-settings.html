@@ -1,37 +1,48 @@
 <main class="settings-page">
   <header class="page-heading">
     <h1>Settings</h1>
+
     <p>
       Manage your profile photo, name, login email,
-      and password.
+      password, notification preferences, and privacy information.
     </p>
   </header>
 
-  @if (account.profile()?.role !== 'admin') {
-    <div
-      class="settings-tabs"
-      role="group"
-      aria-label="Settings sections"
+  <div
+    class="settings-tabs"
+    role="group"
+    aria-label="Settings sections"
+  >
+    <button
+      type="button"
+      [class.active]="activeTab() === 'account'"
+      [attr.aria-pressed]="activeTab() === 'account'"
+      [disabled]="busy()"
+      (click)="activeTab.set('account')"
     >
-      <button
-        type="button"
-        [class.active]="activeTab() === 'account'"
-        [attr.aria-pressed]="activeTab() === 'account'"
-        (click)="activeTab.set('account')"
-      >
-        Account
-      </button>
+      Account
+    </button>
 
-      <button
-        type="button"
-        [class.active]="activeTab() === 'preferences'"
-        [attr.aria-pressed]="activeTab() === 'preferences'"
-        (click)="activeTab.set('preferences')"
-      >
-        Preferences
-      </button>
-    </div>
-  }
+    <button
+      type="button"
+      [class.active]="activeTab() === 'preferences'"
+      [attr.aria-pressed]="activeTab() === 'preferences'"
+      [disabled]="busy()"
+      (click)="activeTab.set('preferences')"
+    >
+      Preferences
+    </button>
+
+    <button
+      type="button"
+      [class.active]="activeTab() === 'privacy'"
+      [attr.aria-pressed]="activeTab() === 'privacy'"
+      [disabled]="busy()"
+      (click)="activeTab.set('privacy')"
+    >
+      Privacy
+    </button>
+  </div>
 
   @if (account.loading()) {
     <p class="notice" role="status">
@@ -183,19 +194,13 @@
       </section>
 
       @if (accountFeedback()) {
-        <p
-          class="message success-message"
-          role="status"
-        >
+        <p class="message success-message" role="status">
           {{ accountFeedback() }}
         </p>
       }
 
       @if (accountError()) {
-        <p
-          class="message error-message"
-          role="alert"
-        >
+        <p class="message error-message" role="alert">
           {{ accountError() }}
         </p>
       }
@@ -203,10 +208,7 @@
       @if (!editing()) {
         <div class="account-grid">
           <div class="form-field">
-            <label for="account-name">
-              Account Name
-            </label>
-
+            <label for="account-name">Account Name</label>
             <input
               id="account-name"
               [value]="profile.name"
@@ -215,10 +217,7 @@
           </div>
 
           <div class="form-field">
-            <label for="account-email">
-              Email Address
-            </label>
-
+            <label for="account-email">Email Address</label>
             <input
               id="account-email"
               [value]="profile.email"
@@ -228,7 +227,6 @@
 
           <div class="form-field">
             <label for="account-role">Role</label>
-
             <input
               id="account-role"
               [value]="profile.role | titlecase"
@@ -237,10 +235,7 @@
           </div>
 
           <div class="form-field">
-            <label for="account-status">
-              Account Status
-            </label>
-
+            <label for="account-status">Account Status</label>
             <input
               id="account-status"
               [value]="profile.accountStatus | titlecase"
@@ -268,72 +263,43 @@
             <legend>Update Account Information</legend>
 
             <div class="account-grid">
-              @if (profile.role === 'resident') {
-                <div class="form-field">
-                  <label for="edit-first">
-                    First Name *
-                  </label>
-
-                  <input
-                    id="edit-first"
-                    name="firstName"
-                    [(ngModel)]="draft.firstName"
-                    maxlength="60"
-                    required
-                    autocomplete="given-name"
-                  />
-                </div>
-
-                <div class="form-field">
-                  <label for="edit-middle">
-                    Middle Name
-                  </label>
-
-                  <input
-                    id="edit-middle"
-                    name="middleName"
-                    [(ngModel)]="draft.middleName"
-                    maxlength="60"
-                    autocomplete="additional-name"
-                  />
-                </div>
-
-                <div class="form-field">
-                  <label for="edit-last">
-                    Last Name *
-                  </label>
-
-                  <input
-                    id="edit-last"
-                    name="lastName"
-                    [(ngModel)]="draft.lastName"
-                    maxlength="60"
-                    required
-                    autocomplete="family-name"
-                  />
-                </div>
-              } @else {
-                <div class="form-field">
-                  <label for="edit-name">
-                    Account Name *
-                  </label>
-
-                  <input
-                    id="edit-name"
-                    name="name"
-                    [(ngModel)]="draft.name"
-                    maxlength="182"
-                    required
-                    autocomplete="name"
-                  />
-                </div>
-              }
+              <div class="form-field">
+                <label for="edit-first">First Name *</label>
+                <input
+                  id="edit-first"
+                  name="firstName"
+                  [(ngModel)]="draft.firstName"
+                  maxlength="60"
+                  required
+                  autocomplete="given-name"
+                />
+              </div>
 
               <div class="form-field">
-                <label for="edit-email">
-                  Login Email *
-                </label>
+                <label for="edit-middle">Middle Name</label>
+                <input
+                  id="edit-middle"
+                  name="middleName"
+                  [(ngModel)]="draft.middleName"
+                  maxlength="60"
+                  autocomplete="additional-name"
+                />
+              </div>
 
+              <div class="form-field">
+                <label for="edit-last">Last Name *</label>
+                <input
+                  id="edit-last"
+                  name="lastName"
+                  [(ngModel)]="draft.lastName"
+                  maxlength="60"
+                  required
+                  autocomplete="family-name"
+                />
+              </div>
+
+              <div class="form-field">
+                <label for="edit-email">Login Email *</label>
                 <input
                   id="edit-email"
                   name="email"
@@ -365,8 +331,7 @@
             <p class="account-note">
               Email changes apply immediately.
               Sign in again using the new email.
-              Your role, office, and approval
-              remain unchanged.
+              Your role, office, and approval remain unchanged.
             </p>
 
             <div class="form-actions">
@@ -398,9 +363,7 @@
         class="password-section"
         aria-labelledby="password-title"
       >
-        <h3 id="password-title">
-          Change Password
-        </h3>
+        <h3 id="password-title">Change Password</h3>
 
         <p class="section-description">
           Confirm your current password.
@@ -408,19 +371,13 @@
         </p>
 
         @if (passwordFeedback()) {
-          <p
-            class="message success-message"
-            role="status"
-          >
+          <p class="message success-message" role="status">
             {{ passwordFeedback() }}
           </p>
         }
 
         @if (passwordError()) {
-          <p
-            class="message error-message"
-            role="alert"
-          >
+          <p class="message error-message" role="alert">
             {{ passwordError() }}
           </p>
         }
@@ -459,9 +416,7 @@
               </div>
 
               <div class="form-field">
-                <label for="new-password">
-                  New Password
-                </label>
+                <label for="new-password">New Password</label>
 
                 <div class="password-input">
                   <input
@@ -536,10 +491,7 @@
       </section>
     </section>
 
-    @if (
-      activeTab() === 'preferences'
-      && profile.role !== 'admin'
-    ) {
+    @if (activeTab() === 'preferences') {
       <section
         class="settings-card preferences-card"
         aria-labelledby="preferences-title"
@@ -551,8 +503,8 @@
           </h2>
 
           <p>
-            Choose which in-app notifications
-            appear in your account.
+            Choose which in-app concern updates appear
+            in your account.
           </p>
         </header>
 
@@ -561,85 +513,205 @@
             Loading your preferences...
           </p>
         } @else if (account.preferencesError()) {
-          <div
-            class="notice error-message"
-            role="alert"
-          >
+          <div class="notice error-message" role="alert">
             <p>{{ account.preferencesError() }}</p>
 
             <button
               type="button"
               class="secondary-button"
               (click)="account.retryNotificationPreferences()"
+              [disabled]="busy()"
             >
               Try Again
             </button>
           </div>
         } @else {
-          <div class="preference-row">
-            <div class="preference-copy">
-              <h3 id="notification-label">
-                Concern notifications
-              </h3>
+          <form
+            class="notification-form"
+            (ngSubmit)="savePreferences()"
+          >
+            <fieldset [disabled]="busy()">
+              <legend>Notification Settings</legend>
 
-              <p id="notification-description">
-                Show concern notifications
-                available to your account.
-              </p>
+              <label class="notification-option master-option">
+                <input
+                  type="checkbox"
+                  name="enabled"
+                  [checked]="preferenceDraft().enabled"
+                  (change)="setPreference('enabled', $event)"
+                />
+
+                <span>
+                  <strong>Enable in-app notifications</strong>
+                  <small>
+                    Receive notifications through the bell
+                    in RBCCMS.
+                  </small>
+                </span>
+              </label>
+            </fieldset>
+
+            <fieldset
+              class="concern-preferences"
+              [disabled]="busy() || !preferenceDraft().enabled"
+            >
+              <legend>Concern Updates</legend>
+
+              <div class="notification-grid">
+                @for (
+                  option of preferenceOptions;
+                  track option.key
+                ) {
+                  <label class="notification-option">
+                    <input
+                      type="checkbox"
+                      [name]="option.key"
+                      [checked]="preferenceDraft()[option.key]"
+                      (change)="setPreference(option.key, $event)"
+                    />
+
+                    <span>
+                      <strong>{{ option.label }}</strong>
+                      <small>{{ option.description }}</small>
+                    </span>
+                  </label>
+                }
+              </div>
+            </fieldset>
+
+            <div class="preferences-footer">
+              <div>
+                <p>
+                  Changes apply after saving.
+                  Concern history and read status are preserved.
+                </p>
+
+                <p class="draft-status" role="status">
+                  {{
+                    preferencesDirty()
+                      ? 'You have unsaved changes.'
+                      : 'Your preferences are up to date.'
+                  }}
+                </p>
+              </div>
+
+              <div class="preference-actions">
+                <button
+                  type="button"
+                  class="secondary-button"
+                  (click)="resetPreferences()"
+                  [disabled]="busy() || !preferencesDirty()"
+                >
+                  Discard Changes
+                </button>
+
+                <button
+                  type="submit"
+                  class="primary-button"
+                  [disabled]="busy() || !preferencesDirty()"
+                  [attr.aria-busy]="account.preferencesSaving()"
+                >
+                  {{
+                    account.preferencesSaving()
+                      ? 'Saving...'
+                      : 'Save Changes'
+                  }}
+                </button>
+              </div>
             </div>
-
-            <label class="preference-switch">
-              <input
-                type="checkbox"
-                role="switch"
-                [checked]="account.notificationEnabled()"
-                [disabled]="account.preferencesSaving()"
-                (change)="changeNotificationPreference($event)"
-                aria-labelledby="notification-label"
-                aria-describedby="notification-description"
-              />
-
-              <span
-                class="switch-track"
-                aria-hidden="true"
-              ></span>
-            </label>
-          </div>
-
-          <p class="preference-status" role="status">
-            {{
-              account.preferencesSaving()
-                ? 'Saving preference...'
-                : account.notificationEnabled()
-                  ? 'Notifications are on.'
-                  : 'Notifications are off.'
-            }}
-          </p>
-
-          <p class="account-note">
-            Changes save automatically.
-            Your concern history and read status
-            are kept.
-          </p>
+          </form>
         }
 
         @if (account.preferencesFeedback()) {
-          <p
-            class="message success-message"
-            role="status"
-          >
+          <p class="message success-message" role="status">
             {{ account.preferencesFeedback() }}
           </p>
         }
 
         @if (account.preferencesSaveError()) {
-          <p
-            class="message error-message"
-            role="alert"
-          >
+          <p class="message error-message" role="alert">
             {{ account.preferencesSaveError() }}
           </p>
         }
+      </section>
+    }
+
+    @if (activeTab() === 'privacy') {
+      <section
+        class="settings-card privacy-card"
+        aria-labelledby="privacy-title"
+      >
+        <header class="card-heading">
+          <h2 id="privacy-title">
+            Privacy &amp; Account Information
+          </h2>
+          <p>How your information is used in RBCCMS.</p>
+        </header>
+
+        <div class="privacy-grid">
+          <section>
+            <h3>Information collected</h3>
+            <p>
+              RBCCMS stores account and residency information,
+              submitted concern descriptions, locations,
+              optional photos, and concern updates.
+            </p>
+          </section>
+
+          <section>
+            <h3>Why it is used</h3>
+            <p>
+              Your information supports residency verification,
+              account access, routing concerns to responsible
+              offices, monitoring progress, reporting,
+              and audit records.
+            </p>
+          </section>
+
+          <section>
+            <h3>Who can access it</h3>
+            <p>
+              You can access your own concerns. Authorized
+              office personnel access concerns assigned to
+              their office. Barangay verification personnel
+              manage resident records. Administrators oversee
+              system accounts, offices, and reporting.
+            </p>
+          </section>
+
+          <section>
+            <h3>Notification choices</h3>
+            <p>
+              Your preferences control the notifications
+              displayed in RBCCMS. Turning them off does
+              not remove your concern records or status history.
+            </p>
+          </section>
+
+          <section>
+            <h3>Corrections and account assistance</h3>
+            <p>
+              You can edit your name and login email in
+              Account settings. For residency-record
+              corrections or other requests about your
+              information, contact the authorized
+              registration office for review.
+            </p>
+          </section>
+
+          <section>
+            <h3>Protect your account</h3>
+            <p>
+              Use an email inbox you can access, choose a
+              strong password, and never share your password
+              or reset link. Log out when using a shared device.
+            </p>
+          </section>
+        </div>
+
+        <a class="privacy-help" routerLink="/contact">
+          Open Help &amp; Contact
+        </a>
       </section>
     }
   } @else {
@@ -647,4 +719,4 @@
       Please sign in to view your settings.
     </p>
   }
-</main>
+</main> 

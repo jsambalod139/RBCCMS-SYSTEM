@@ -1,13 +1,25 @@
 import { CommonModule } from '@angular/common';
+
 import {
   Component,
   OnDestroy,
   computed,
+  effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
-import { FormsModule, NgForm } from '@angular/forms';
-import { Router } from '@angular/router';
+
+import {
+  FormsModule,
+  NgForm,
+} from '@angular/forms';
+
+import {
+  Router,
+  RouterLink,
+} from '@angular/router';
+
 import {
   EmailAuthProvider,
   getAuth,
@@ -16,30 +28,47 @@ import {
   updatePassword,
   validatePassword,
 } from 'firebase/auth';
+
 import Swal from 'sweetalert2';
 
-import { firebaseApp } from '../../../core/firebase.config';
-import { SettingsService } from '../../../core/services/settings.service';
+import {
+  firebaseApp,
+} from '../../../core/firebase.config';
+
+import {
+  SettingsService,
+  ResidentNotificationPreferences,
+  defaultResidentNotifications,
+} from '../../../core/services/settings.service';
 
 @Component({
   selector: 'app-resident-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+  ],
   templateUrl: './resident-settings.html',
   styleUrl: './resident-settings.scss',
 })
 export class ResidentSettings implements OnDestroy {
   readonly account = inject(SettingsService);
+
   readonly activeTab =
-    signal<'account' | 'preferences'>('account');
+    signal<'account' | 'preferences' | 'privacy'>(
+      'account'
+    );
 
   private readonly auth = getAuth(firebaseApp);
   private readonly router = inject(Router);
   private destroyed = false;
 
   readonly photoBusy = signal(false);
+
   readonly photoAction =
     signal<'upload' | 'remove' | null>(null);
+
   readonly passwordBusy = signal(false);
   readonly accountBusy = signal(false);
 
@@ -55,11 +84,11 @@ export class ResidentSettings implements OnDestroy {
   readonly showConfirm = signal(false);
   readonly editing = signal(false);
 
-  readonly busy = computed(
-    () =>
-      this.photoBusy()
-      || this.passwordBusy()
-      || this.accountBusy()
+  readonly busy = computed(() =>
+    this.photoBusy()
+    || this.passwordBusy()
+    || this.accountBusy()
+    || this.account.preferencesSaving()
   );
 
   currentPassword = '';
@@ -78,6 +107,144 @@ export class ResidentSettings implements OnDestroy {
   private editingUid = '';
   private requestId = '';
   private lastPayload = '';
+
+  readonly preferenceDraft =
+    signal<ResidentNotificationPreferences>(
+      defaultResidentNotifications()
+    );
+
+  private readonly preferenceEdited = signal(false);
+  private preferenceDraftUid = '';
+
+  readonly preferenceOptions: {
+    key: Exclude<
+      keyof ResidentNotificationPreferences,
+      'enabled'
+    >;
+    label: string;
+    description: string;
+  }[] = [
+    {
+      key: 'statusChanges',
+      label: 'Status changes',
+      description:
+        'When your concern changes to Pending or In Progress.',
+    },
+    {
+      key: 'progressRemarks',
+      label: 'Progress remarks',
+      description:
+        'When personnel add a progress note without changing the status.',
+    },
+    {
+      key: 'resolved',
+      label: 'Resolved concerns',
+      description:
+        'When your concern is marked resolved.',
+    },
+    {
+      key: 'rejected',
+      label: 'Rejected concerns',
+      description:
+        'When your concern is marked rejected.',
+    },
+  ];
+
+  readonly preferencesDirty = computed(() => {
+    const saved =
+      this.account.residentNotificationPreferences();
+
+    const draft = this.preferenceDraft();
+
+    return (
+      Object.keys(draft) as
+        (keyof ResidentNotificationPreferences)[]
+    ).some(key => draft[key] !== saved[key]);
+  });
+
+  private readonly followSavedPreferences =
+    effect(() => {
+      const uid = this.account.profile()?.uid || '';
+
+      const saved =
+        this.account.residentNotificationPreferences();
+
+      untracked(() => {
+        if (
+          uid !== this.preferenceDraftUid
+          || !this.preferenceEdited()
+        ) {
+          this.preferenceDraftUid = uid;
+          this.preferenceDraft.set({ ...saved });
+          this.preferenceEdited.set(false);
+        }
+      });
+    });
+
+  setPreference(
+    key: keyof ResidentNotificationPreferences,
+    event: Event
+  ): void {
+    if (this.busy()) return;
+
+    const checked =
+      (event.target as HTMLInputElement).checked;
+
+    this.preferenceEdited.set(true);
+
+    this.preferenceDraft.update(value => ({
+      ...value,
+      [key]: checked,
+    }));
+
+    this.account.preferencesFeedback.set('');
+    this.account.preferencesSaveError.set('');
+  }
+
+  resetPreferences(): void {
+    if (this.busy()) return;
+
+    this.preferenceDraft.set({
+      ...this.account.residentNotificationPreferences(),
+    });
+
+    this.preferenceEdited.set(false);
+    this.account.preferencesFeedback.set('');
+    this.account.preferencesSaveError.set('');
+  }
+
+  async savePreferences(): Promise<void> {
+    if (
+      this.busy()
+      || !this.preferencesDirty()
+    ) {
+      return;
+    }
+
+    const uid = this.account.profile()?.uid;
+
+    if (
+      !uid
+      || uid !== this.preferenceDraftUid
+      || !this.sameAccount(uid)
+    ) {
+      return;
+    }
+
+    const saved =
+      await this.account.saveResidentNotificationPreferences(
+        { ...this.preferenceDraft() },
+        uid
+      );
+
+    if (saved && this.sameAccount(uid)) {
+      this.preferenceDraft.set({
+        ...this.account.residentNotificationPreferences(),
+      });
+
+      this.preferenceEdited.set(false);
+    }
+  }
 
   editAccount(): void {
     const profile = this.account.profile();
@@ -156,7 +323,9 @@ export class ResidentSettings implements OnDestroy {
       if (
         this.destroyed
         || this.auth.currentUser?.uid !== uid
-      ) return;
+      ) {
+        return;
+      }
 
       this.editing.set(false);
 
@@ -214,22 +383,6 @@ export class ResidentSettings implements OnDestroy {
       && this.account.profile()?.uid === uid;
   }
 
-  async changeNotificationPreference(
-    event: Event
-  ): Promise<void> {
-    const input =
-      event.target as HTMLInputElement;
-
-    await this.account.saveNotificationPreference(
-      input.checked
-    );
-
-    if (!this.destroyed) {
-      input.checked =
-        this.account.notificationEnabled();
-    }
-  }
-
   async changePhoto(event: Event): Promise<void> {
     const input =
       event.target as HTMLInputElement;
@@ -246,7 +399,9 @@ export class ResidentSettings implements OnDestroy {
     if (
       this.busy()
       || !this.account.profile()?.photoPath
-    ) return;
+    ) {
+      return;
+    }
 
     await this.savePhoto('remove');
   }
@@ -348,8 +503,10 @@ export class ResidentSettings implements OnDestroy {
     this.passwordBusy.set(true);
 
     try {
-      const policy =
-        await validatePassword(this.auth, password);
+      const policy = await validatePassword(
+        this.auth,
+        password
+      );
 
       if (!policy.isValid) {
         throw new Error('password/policy');
@@ -375,6 +532,7 @@ export class ResidentSettings implements OnDestroy {
 
       if (this.sameAccount(user.uid)) {
         form.resetForm();
+
         this.newPassword = '';
         this.confirmPassword = '';
 
@@ -402,12 +560,16 @@ export class ResidentSettings implements OnDestroy {
           'auth/invalid-login-credentials',
         ].includes(code)
       ) {
-        message = 'Your current password is incorrect.';
+        message =
+          'Your current password is incorrect.';
       } else if (code === 'auth/too-many-requests') {
         message =
           'Too many attempts. Please wait before retrying.';
-      } else if (code === 'auth/network-request-failed') {
-        message = 'Check your internet connection.';
+      } else if (
+        code === 'auth/network-request-failed'
+      ) {
+        message =
+          'Check your internet connection.';
       } else if (
         [
           'auth/weak-password',

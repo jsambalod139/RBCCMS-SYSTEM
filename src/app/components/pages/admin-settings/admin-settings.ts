@@ -1,13 +1,18 @@
 import { CommonModule } from '@angular/common';
+
 import {
   Component,
   OnDestroy,
   computed,
+  effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
+
 import { FormsModule, NgForm } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+
 import {
   EmailAuthProvider,
   getAuth,
@@ -16,30 +21,39 @@ import {
   updatePassword,
   validatePassword,
 } from 'firebase/auth';
+
 import Swal from 'sweetalert2';
 
 import { firebaseApp } from '../../../core/firebase.config';
-import { SettingsService } from '../../../core/services/settings.service';
+
+import {
+  AdminNotificationPreferences,
+  SettingsService,
+  defaultAdminNotifications,
+} from '../../../core/services/settings.service';
 
 @Component({
   selector: 'app-admin-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './admin-settings.html',
   styleUrl: './admin-settings.scss',
 })
 export class AdminSettings implements OnDestroy {
   readonly account = inject(SettingsService);
+
   readonly activeTab =
-    signal<'account' | 'preferences'>('account');
+    signal<'account' | 'preferences' | 'privacy'>('account');
 
   private readonly auth = getAuth(firebaseApp);
   private readonly router = inject(Router);
   private destroyed = false;
 
   readonly photoBusy = signal(false);
+
   readonly photoAction =
     signal<'upload' | 'remove' | null>(null);
+
   readonly passwordBusy = signal(false);
   readonly accountBusy = signal(false);
 
@@ -55,11 +69,11 @@ export class AdminSettings implements OnDestroy {
   readonly showConfirm = signal(false);
   readonly editing = signal(false);
 
-  readonly busy = computed(
-    () =>
-      this.photoBusy()
-      || this.passwordBusy()
-      || this.accountBusy()
+  readonly busy = computed(() =>
+    this.photoBusy()
+    || this.passwordBusy()
+    || this.accountBusy()
+    || this.account.preferencesSaving()
   );
 
   currentPassword = '';
@@ -79,9 +93,149 @@ export class AdminSettings implements OnDestroy {
   private requestId = '';
   private lastPayload = '';
 
+  readonly preferenceDraft =
+    signal<AdminNotificationPreferences>(
+      defaultAdminNotifications()
+    );
+
+  private readonly preferenceEdited = signal(false);
+  private preferenceDraftUid = '';
+
+  readonly preferenceOptions: {
+    key: Exclude<
+      keyof AdminNotificationPreferences,
+      'enabled'
+    >;
+    label: string;
+    description: string;
+  }[] = [
+    {
+      key: 'newConcerns',
+      label: 'New concerns',
+      description:
+        'Resident submissions across all participating offices.',
+    },
+    {
+      key: 'statusChanges',
+      label: 'Status changes',
+      description:
+        'Changes to Pending, In Progress, Resolved, or Rejected.',
+    },
+    {
+      key: 'progressRemarks',
+      label: 'Progress remarks',
+      description:
+        'Progress notes added without changing the concern status.',
+    },
+    {
+      key: 'residentRecords',
+      label: 'Resident records',
+      description:
+        'Resident registration and profile updates.',
+    },
+    {
+      key: 'accountManagement',
+      label: 'Account management',
+      description:
+        'Personnel creation, account suspension, restoration, and profile changes.',
+    },
+    {
+      key: 'officeManagement',
+      label: 'Office management',
+      description:
+        'Participating-office creation, editing, and deletion.',
+    },
+  ];
+
+  readonly preferencesDirty = computed(() => {
+    const saved =
+      this.account.adminNotificationPreferences();
+
+    const draft = this.preferenceDraft();
+
+    return (
+      Object.keys(draft) as
+        (keyof AdminNotificationPreferences)[]
+    ).some(key => draft[key] !== saved[key]);
+  });
+
+  private readonly followSavedPreferences = effect(() => {
+    const uid = this.account.profile()?.uid || '';
+    const saved =
+      this.account.adminNotificationPreferences();
+
+    untracked(() => {
+      if (
+        uid !== this.preferenceDraftUid
+        || !this.preferenceEdited()
+      ) {
+        this.preferenceDraftUid = uid;
+        this.preferenceDraft.set({ ...saved });
+        this.preferenceEdited.set(false);
+      }
+    });
+  });
+
+  setPreference(
+    key: keyof AdminNotificationPreferences,
+    event: Event
+  ): void {
+    if (this.busy()) return;
+
+    const checked =
+      (event.target as HTMLInputElement).checked;
+
+    this.preferenceEdited.set(true);
+
+    this.preferenceDraft.update(value => ({
+      ...value,
+      [key]: checked,
+    }));
+
+    this.account.preferencesFeedback.set('');
+    this.account.preferencesSaveError.set('');
+  }
+
+  resetPreferences(): void {
+    if (this.busy()) return;
+
+    this.preferenceDraft.set({
+      ...this.account.adminNotificationPreferences(),
+    });
+
+    this.preferenceEdited.set(false);
+    this.account.preferencesFeedback.set('');
+    this.account.preferencesSaveError.set('');
+  }
+
+  async savePreferences(): Promise<void> {
+    if (this.busy() || !this.preferencesDirty()) return;
+
+    const uid = this.account.profile()?.uid;
+
+    if (
+      !uid
+      || uid !== this.preferenceDraftUid
+      || !this.sameAccount(uid)
+    ) return;
+
+    const saved =
+      await this.account.saveAdminNotificationPreferences(
+        { ...this.preferenceDraft() },
+        uid
+      );
+
+    if (saved && this.sameAccount(uid)) {
+      this.preferenceDraft.set({
+        ...this.account.adminNotificationPreferences(),
+      });
+
+      this.preferenceEdited.set(false);
+    }
+  }
+
   editAccount(): void {
     const profile = this.account.profile();
-
     if (!profile || this.busy()) return;
 
     this.editingUid = profile.uid;
@@ -185,8 +339,7 @@ export class AdminSettings implements OnDestroy {
       }
     } catch (error: unknown) {
       if (this.sameAccount(uid)) {
-        const code =
-          (error as { code?: string })?.code;
+        const code = (error as { code?: string })?.code;
 
         this.accountError.set(
           [
@@ -214,31 +367,13 @@ export class AdminSettings implements OnDestroy {
       && this.account.profile()?.uid === uid;
   }
 
-  async changeNotificationPreference(
-    event: Event
-  ): Promise<void> {
-    const input =
-      event.target as HTMLInputElement;
-
-    await this.account.saveNotificationPreference(
-      input.checked
-    );
-
-    if (!this.destroyed) {
-      input.checked =
-        this.account.notificationEnabled();
-    }
-  }
-
   async changePhoto(event: Event): Promise<void> {
-    const input =
-      event.target as HTMLInputElement;
-
+    const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
+
     input.value = '';
 
     if (!file || this.busy()) return;
-
     await this.savePhoto('upload', file);
   }
 
@@ -336,9 +471,7 @@ export class AdminSettings implements OnDestroy {
       || profile?.uid !== user.uid
       || profile.role !== 'admin'
     ) {
-      this.passwordError.set(
-        'Please sign in again.'
-      );
+      this.passwordError.set('Please sign in again.');
       return;
     }
 
@@ -375,6 +508,7 @@ export class AdminSettings implements OnDestroy {
 
       if (this.sameAccount(user.uid)) {
         form.resetForm();
+
         this.newPassword = '';
         this.confirmPassword = '';
 
