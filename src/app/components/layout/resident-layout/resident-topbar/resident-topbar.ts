@@ -104,12 +104,21 @@ export class ResidentTopbar {
         { replaceUrl: true }
       );
 
-      await Swal.fire({
-        icon: 'success',
-        title: 'Logged out!',
-        timer: 1200,
-        showConfirmButton: false,
-      });
+      void Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: 'Logout successful',
+      text: 'You have been signed out of RBCCMS.',
+      showConfirmButton: false,
+      showCloseButton: true,
+      timer: 3000,
+      timerProgressBar: true,
+      returnFocus: false,
+      customClass: {
+        popup: 'rbccms-login-toast',
+      },
+    });
     } catch {
       await Swal.fire({
         icon: 'error',

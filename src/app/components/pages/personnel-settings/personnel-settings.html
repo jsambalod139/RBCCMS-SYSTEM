@@ -1,62 +1,38 @@
 <main class="settings-page">
   <header class="page-heading">
     <h1>Settings</h1>
-    <p>
-      Manage your profile photo, name, login email,
-      password, and notification preferences.
-    </p>
   </header>
 
-  <div
-    class="settings-tabs"
-    role="group"
-    aria-label="Settings sections"
-  >
+  <div class="settings-tabs" role="group" aria-label="Settings sections">
     <button
       type="button"
       [class.active]="activeTab() === 'account'"
       [attr.aria-pressed]="activeTab() === 'account'"
       [disabled]="busy()"
       (click)="activeTab.set('account')"
-    >
-      Account
-    </button>
-
+    >Account</button>
     <button
       type="button"
       [class.active]="activeTab() === 'preferences'"
       [attr.aria-pressed]="activeTab() === 'preferences'"
       [disabled]="busy()"
       (click)="activeTab.set('preferences')"
-    >
-      Preferences
-    </button>
-
+    >Preferences</button>
     <button
       type="button"
       [class.active]="activeTab() === 'privacy'"
       [attr.aria-pressed]="activeTab() === 'privacy'"
       [disabled]="busy()"
       (click)="activeTab.set('privacy')"
-    >
-      Privacy
-    </button>
+    >Privacy</button>
   </div>
 
   @if (account.loading()) {
-    <p class="notice" role="status">
-      Loading your account...
-    </p>
+    <p class="notice" role="status">Loading your account...</p>
   } @else if (account.error()) {
     <div class="notice error-message" role="alert">
       <p>{{ account.error() }}</p>
-      <button
-        type="button"
-        class="secondary-button"
-        (click)="account.reload()"
-      >
-        Try Again
-      </button>
+      <button type="button" class="secondary-button" (click)="account.reload()">Try Again</button>
     </div>
   } @else if (account.profile(); as profile) {
     <section
@@ -74,7 +50,6 @@
         [attr.aria-busy]="photoBusy()"
       >
         <h3 id="photo-title">Profile Photo</h3>
-
         <div class="photo-controls">
           <div class="profile-avatar">
             @if (account.photoUrl()) {
@@ -84,12 +59,9 @@
                 (error)="account.imageFailed()"
               />
             } @else {
-              <span aria-hidden="true">
-                {{ account.initials() }}
-              </span>
+              <span aria-hidden="true">{{ account.initials() }}</span>
             }
           </div>
-
           <input
             #photoInput
             type="file"
@@ -109,18 +81,10 @@
               [attr.aria-busy]="photoAction() === 'upload'"
             >
               @if (photoAction() === 'upload') {
-                <span
-                  class="photo-button-spinner"
-                  aria-hidden="true"
-                ></span>
+                <span class="photo-button-spinner" aria-hidden="true"></span>
               }
-              {{
-                photoAction() === 'upload'
-                  ? 'Saving photo...'
-                  : 'Change Photo'
-              }}
+              {{ photoAction() === 'upload' ? 'Saving photo...' : 'Change Photo' }}
             </button>
-
             <button
               type="button"
               class="secondary-button remove-photo"
@@ -128,142 +92,71 @@
               [disabled]="busy() || !profile.photoPath"
               [attr.aria-busy]="photoAction() === 'remove'"
             >
-              {{
-                photoAction() === 'remove'
-                  ? 'Removing...'
-                  : 'Remove Photo'
-              }}
+              {{ photoAction() === 'remove' ? 'Removing...' : 'Remove Photo' }}
             </button>
           </div>
 
-          <p class="photo-hint">
-            JPG, PNG, or WEBP, up to 5 MB.
-            Photos are cropped to a square and
-            compressed before upload.
-          </p>
-
           @if (account.photoLoading()) {
-            <p class="loading-text" role="status">
-              Loading your photo...
-            </p>
+            <p class="loading-text" role="status">Loading your photo...</p>
           }
-
           @if (photoFeedback()) {
-            <p
-              class="message success-message"
-              role="status"
-            >
-              {{ photoFeedback() }}
-            </p>
+            <p class="message success-message" role="status">{{ photoFeedback() }}</p>
           }
-
           @if (photoError()) {
-            <p
-              class="message error-message"
-              role="alert"
-            >
-              {{ photoError() }}
-            </p>
+            <p class="message error-message" role="alert">{{ photoError() }}</p>
           }
-
           @if (account.photoError()) {
             <div class="photo-load-error">
-              <p
-                class="message error-message"
-                role="alert"
-              >
-                {{ account.photoError() }}
-              </p>
+              <p class="message error-message" role="alert">{{ account.photoError() }}</p>
               <button
                 type="button"
                 class="secondary-button"
                 (click)="account.retryPhoto()"
                 [disabled]="busy() || account.photoLoading()"
-              >
-                Reload Photo
-              </button>
+              >Reload Photo</button>
             </div>
           }
         </div>
       </section>
 
       @if (accountFeedback()) {
-        <p
-          class="message success-message"
-          role="status"
-        >
-          {{ accountFeedback() }}
-        </p>
+        <p class="message success-message" role="status">{{ accountFeedback() }}</p>
       }
-
       @if (accountError()) {
-        <p
-          class="message error-message"
-          role="alert"
-        >
-          {{ accountError() }}
-        </p>
+        <p class="message error-message" role="alert">{{ accountError() }}</p>
       }
 
       @if (!editing()) {
         <div class="account-grid">
           <div class="form-field">
             <label for="account-name">Account Name</label>
-            <input
-              id="account-name"
-              [value]="profile.name"
-              readonly
-            />
+            <input id="account-name" [value]="profile.name" readonly />
           </div>
-
           <div class="form-field">
             <label for="account-email">Email Address</label>
-            <input
-              id="account-email"
-              [value]="profile.email"
-              readonly
-            />
+            <input id="account-email" [value]="profile.email" readonly />
           </div>
-
           <div class="form-field">
             <label for="account-role">Role</label>
-            <input
-              id="account-role"
-              [value]="profile.role | titlecase"
-              readonly
-            />
+            <input id="account-role" [value]="profile.role | titlecase" readonly />
           </div>
-
           <div class="form-field">
-            <label for="account-status">
-              Account Status
-            </label>
-            <input
-              id="account-status"
-              [value]="profile.accountStatus | titlecase"
-              readonly
-            />
+            <label for="account-status">Account Status</label>
+            <input id="account-status" [value]="profile.accountStatus | titlecase" readonly />
           </div>
         </div>
-
         <div class="form-actions">
           <button
             type="button"
             class="secondary-button"
             (click)="editAccount()"
             [disabled]="busy()"
-          >
-            Edit Name / Email
-          </button>
+          >Edit Name / Email</button>
         </div>
       } @else {
-        <form
-          #accountForm="ngForm"
-          (ngSubmit)="saveAccount(accountForm)"
-        >
+        <form #accountForm="ngForm" (ngSubmit)="saveAccount(accountForm)">
           <fieldset [disabled]="busy()">
             <legend>Update Account Information</legend>
-
             <div class="account-grid">
               <div class="form-field">
                 <label for="edit-name">Account Name *</label>
@@ -276,7 +169,6 @@
                   autocomplete="name"
                 />
               </div>
-
               <div class="form-field">
                 <label for="edit-email">Login Email *</label>
                 <input
@@ -290,11 +182,8 @@
                   autocomplete="email"
                 />
               </div>
-
               <div class="form-field">
-                <label for="edit-password">
-                  Current Password *
-                </label>
+                <label for="edit-password">Current Password *</label>
                 <input
                   id="edit-password"
                   name="accountPassword"
@@ -313,70 +202,34 @@
             </p>
 
             <div class="form-actions">
-              <button
-                type="button"
-                class="secondary-button"
-                (click)="cancelAccount()"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="submit"
-                class="primary-button"
-                [attr.aria-busy]="accountBusy()"
-              >
-                {{
-                  accountBusy()
-                    ? 'Saving...'
-                    : 'Save Changes'
-                }}
+              <button type="button" class="secondary-button" (click)="cancelAccount()">Cancel</button>
+              <button type="submit" class="primary-button" [attr.aria-busy]="accountBusy()">
+                {{ accountBusy() ? 'Saving...' : 'Save Changes' }}
               </button>
             </div>
           </fieldset>
         </form>
       }
 
-      <section
-        class="password-section"
-        aria-labelledby="password-title"
-      >
+      <section class="password-section" aria-labelledby="password-title">
         <h3 id="password-title">Change Password</h3>
-
         <p class="section-description">
           Confirm your current password.
           Use 8–128 characters for the new password.
         </p>
 
         @if (passwordFeedback()) {
-          <p
-            class="message success-message"
-            role="status"
-          >
-            {{ passwordFeedback() }}
-          </p>
+          <p class="message success-message" role="status">{{ passwordFeedback() }}</p>
         }
-
         @if (passwordError()) {
-          <p
-            class="message error-message"
-            role="alert"
-          >
-            {{ passwordError() }}
-          </p>
+          <p class="message error-message" role="alert">{{ passwordError() }}</p>
         }
 
-        <form
-          #passwordForm="ngForm"
-          (ngSubmit)="changePassword(passwordForm)"
-        >
+        <form #passwordForm="ngForm" (ngSubmit)="changePassword(passwordForm)">
           <fieldset [disabled]="busy()">
             <div class="password-grid">
               <div class="form-field">
-                <label for="current-password">
-                  Current Password
-                </label>
-
+                <label for="current-password">Current Password</label>
                 <div class="password-input">
                   <input
                     id="current-password"
@@ -386,22 +239,18 @@
                     autocomplete="current-password"
                     required
                   />
-
                   <button
                     type="button"
                     class="visibility-button"
                     (click)="showCurrent.set(!showCurrent())"
                     [attr.aria-pressed]="showCurrent()"
                     aria-label="Show or hide current password"
-                  >
-                    {{ showCurrent() ? 'Hide' : 'Show' }}
-                  </button>
+                  >{{ showCurrent() ? 'Hide' : 'Show' }}</button>
                 </div>
               </div>
 
               <div class="form-field">
                 <label for="new-password">New Password</label>
-
                 <div class="password-input">
                   <input
                     id="new-password"
@@ -413,24 +262,18 @@
                     minlength="8"
                     maxlength="128"
                   />
-
                   <button
                     type="button"
                     class="visibility-button"
                     (click)="showNew.set(!showNew())"
                     [attr.aria-pressed]="showNew()"
                     aria-label="Show or hide new password"
-                  >
-                    {{ showNew() ? 'Hide' : 'Show' }}
-                  </button>
+                  >{{ showNew() ? 'Hide' : 'Show' }}</button>
                 </div>
               </div>
 
               <div class="form-field">
-                <label for="confirm-password">
-                  Confirm New Password
-                </label>
-
+                <label for="confirm-password">Confirm New Password</label>
                 <div class="password-input">
                   <input
                     id="confirm-password"
@@ -442,16 +285,13 @@
                     minlength="8"
                     maxlength="128"
                   />
-
                   <button
                     type="button"
                     class="visibility-button"
                     (click)="showConfirm.set(!showConfirm())"
                     [attr.aria-pressed]="showConfirm()"
                     aria-label="Show or hide confirmation password"
-                  >
-                    {{ showConfirm() ? 'Hide' : 'Show' }}
-                  </button>
+                  >{{ showConfirm() ? 'Hide' : 'Show' }}</button>
                 </div>
               </div>
             </div>
@@ -462,13 +302,7 @@
                 class="primary-button"
                 [disabled]="passwordForm.invalid || busy()"
                 [attr.aria-busy]="passwordBusy()"
-              >
-                {{
-                  passwordBusy()
-                    ? 'Updating...'
-                    : 'Update Password'
-                }}
-              </button>
+              >{{ passwordBusy() ? 'Updating...' : 'Update Password' }}</button>
             </div>
           </fieldset>
         </form>
@@ -482,9 +316,7 @@
         [attr.aria-busy]="account.preferencesSaving()"
       >
         <header class="card-heading">
-          <h2 id="preferences-title">
-            Notification Preferences
-          </h2>
+          <h2 id="preferences-title">Notification Preferences</h2>
           <p>
             Choose which in-app updates about concerns
             assigned to your office appear in your account.
@@ -492,30 +324,21 @@
         </header>
 
         @if (account.preferencesLoading()) {
-          <p class="notice" role="status">
-            Loading your preferences...
-          </p>
+          <p class="notice" role="status">Loading your preferences...</p>
         } @else if (account.preferencesError()) {
           <div class="notice error-message" role="alert">
             <p>{{ account.preferencesError() }}</p>
-
             <button
               type="button"
               class="secondary-button"
               (click)="account.retryNotificationPreferences()"
               [disabled]="busy()"
-            >
-              Try Again
-            </button>
+            >Try Again</button>
           </div>
         } @else {
-          <form
-            class="notification-form"
-            (ngSubmit)="savePreferences()"
-          >
+          <form class="notification-form" (ngSubmit)="savePreferences()">
             <fieldset [disabled]="busy()">
               <legend>Notification Settings</legend>
-
               <label class="notification-option master-option">
                 <input
                   type="checkbox"
@@ -523,13 +346,9 @@
                   [checked]="preferenceDraft().enabled"
                   (change)="setPreference('enabled', $event)"
                 />
-
                 <span>
                   <strong>Enable in-app notifications</strong>
-                  <small>
-                    Receive notifications through the bell
-                    in RBCCMS.
-                  </small>
+                  <small>Receive notifications through the bell in RBCCMS.</small>
                 </span>
               </label>
             </fieldset>
@@ -539,12 +358,8 @@
               [disabled]="busy() || !preferenceDraft().enabled"
             >
               <legend>Office Concern Updates</legend>
-
               <div class="notification-grid">
-                @for (
-                  option of preferenceOptions;
-                  track option.key
-                ) {
+                @for (option of preferenceOptions; track option.key) {
                   <label class="notification-option">
                     <input
                       type="checkbox"
@@ -552,7 +367,6 @@
                       [checked]="preferenceDraft()[option.key]"
                       (change)="setPreference(option.key, $event)"
                     />
-
                     <span>
                       <strong>{{ option.label }}</strong>
                       <small>{{ option.description }}</small>
@@ -564,10 +378,7 @@
 
             <div class="preferences-footer">
               <div>
-                <p>
-                  Changes apply after saving.
-                  Concern history and read status are preserved.
-                </p>
+                <p>Changes apply after saving. Concern history and read status are preserved.</p>
                 <p class="draft-status" role="status">
                   {{
                     preferencesDirty()
@@ -576,66 +387,39 @@
                   }}
                 </p>
               </div>
-
               <div class="preference-actions">
                 <button
                   type="button"
                   class="secondary-button"
                   (click)="resetPreferences()"
                   [disabled]="busy() || !preferencesDirty()"
-                >
-                  Discard Changes
-                </button>
-
+                >Discard Changes</button>
                 <button
                   type="submit"
                   class="primary-button"
                   [disabled]="busy() || !preferencesDirty()"
                   [attr.aria-busy]="account.preferencesSaving()"
-                >
-                  {{
-                    account.preferencesSaving()
-                      ? 'Saving...'
-                      : 'Save Changes'
-                  }}
-                </button>
+                >{{ account.preferencesSaving() ? 'Saving...' : 'Save Changes' }}</button>
               </div>
             </div>
           </form>
         }
 
         @if (account.preferencesFeedback()) {
-          <p
-            class="message success-message"
-            role="status"
-          >
-            {{ account.preferencesFeedback() }}
-          </p>
+          <p class="message success-message" role="status">{{ account.preferencesFeedback() }}</p>
         }
-
         @if (account.preferencesSaveError()) {
-          <p
-            class="message error-message"
-            role="alert"
-          >
-            {{ account.preferencesSaveError() }}
-          </p>
+          <p class="message error-message" role="alert">{{ account.preferencesSaveError() }}</p>
         }
       </section>
     }
 
     @if (activeTab() === 'privacy') {
-      <section
-        class="settings-card privacy-card"
-        aria-labelledby="privacy-title"
-      >
+      <section class="settings-card privacy-card" aria-labelledby="privacy-title">
         <header class="card-heading">
-          <h2 id="privacy-title">
-            Privacy &amp; Account Information
-          </h2>
+          <h2 id="privacy-title">Privacy &amp; Account Information</h2>
           <p>How your information is used in RBCCMS.</p>
         </header>
-
         <div class="privacy-grid">
           <section>
             <h3>Information collected</h3>
@@ -645,7 +429,6 @@
               choices, and concern updates you record.
             </p>
           </section>
-
           <section>
             <h3>Why it is used</h3>
             <p>
@@ -654,7 +437,6 @@
               reporting, and audit records.
             </p>
           </section>
-
           <section>
             <h3>Who can access it</h3>
             <p>
@@ -665,7 +447,6 @@
               accounts, offices, and reporting.
             </p>
           </section>
-
           <section>
             <h3>Notification choices</h3>
             <p>
@@ -674,7 +455,6 @@
               remove concern records or status history.
             </p>
           </section>
-
           <section>
             <h3>Corrections and account assistance</h3>
             <p>
@@ -684,7 +464,6 @@
               contact the system administrator.
             </p>
           </section>
-
           <section>
             <h3>Protect your account</h3>
             <p>
@@ -694,15 +473,10 @@
             </p>
           </section>
         </div>
-
-        <a class="privacy-help" routerLink="/contact">
-          Open Help &amp; Contact
-        </a>
+        <a class="privacy-help" routerLink="/contact">Open Help &amp; Contact</a>
       </section>
     }
   } @else {
-    <p class="notice" role="status">
-      Please sign in to view your settings.
-    </p>
+    <p class="notice" role="status">Please sign in to view your settings.</p>
   }
 </main>

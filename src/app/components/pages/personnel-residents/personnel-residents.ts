@@ -1,31 +1,41 @@
 import { CommonModule } from '@angular/common';
+
 import {
   Component,
   OnDestroy,
   computed,
+  effect,
   inject,
-  signal
+  signal,
 } from '@angular/core';
+
 import {
   FormBuilder,
   ReactiveFormsModule,
-  Validators
+  Validators,
 } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+import {
+  ActivatedRoute,
+  Router,
+} from '@angular/router';
+
+import {
+  takeUntilDestroyed,
+} from '@angular/core/rxjs-interop';
 
 import {
   ResidentRecord,
-  ResidentService
+  ResidentService,
 } from '../../../core/services/resident.service';
 
 import {
   Concern,
-  ConcernStatus
+  ConcernStatus,
 } from '../../../core/models/concern.model';
 
 import {
-  ConcernService
+  ConcernService,
 } from '../../../core/services/concern.service';
 
 @Component({
@@ -33,7 +43,7 @@ import {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './personnel-residents.html',
-  styleUrl: './personnel-residents.scss'
+  styleUrl: './personnel-residents.scss',
 })
 export class PersonnelResidents implements OnDestroy {
   readonly service = inject(ResidentService);
@@ -44,10 +54,14 @@ export class PersonnelResidents implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
 
   readonly mode =
-    signal<'list' | 'view' | 'add' | 'edit' | 'resume'>('list');
+    signal<'list' | 'view' | 'add' | 'edit' | 'resume'>(
+      'list'
+    );
 
   readonly profileUid = signal('');
-  readonly profileTab = signal<'personal' | 'history'>('personal');
+
+  readonly profileTab =
+    signal<'personal' | 'history'>('personal');
 
   readonly saving = signal(false);
   readonly feedback = signal('');
@@ -67,58 +81,69 @@ export class PersonnelResidents implements OnDestroy {
       [
         Validators.required,
         Validators.maxLength(60),
-        Validators.pattern(/\S/)
-      ]
+        Validators.pattern(/\S/),
+      ],
     ],
+
     middleName: ['', Validators.maxLength(60)],
+
     lastName: [
       '',
       [
         Validators.required,
         Validators.maxLength(60),
-        Validators.pattern(/\S/)
-      ]
+        Validators.pattern(/\S/),
+      ],
     ],
+
     email: [
       '',
       [
         Validators.required,
         Validators.email,
-        Validators.maxLength(254)
-      ]
+        Validators.maxLength(254),
+      ],
     ],
+
     password: [
       '',
       [
         Validators.required,
         Validators.minLength(8),
-        Validators.maxLength(128)
-      ]
+        Validators.maxLength(128),
+      ],
     ],
+
     contactNumber: [
       '',
       [
         Validators.maxLength(30),
-        Validators.pattern(/^[+\d() .-]{7,30}$/)
-      ]
+        Validators.pattern(/^[+\d() .-]{7,30}$/),
+      ],
     ],
+
     address: [
       '',
       [
         Validators.required,
         Validators.maxLength(255),
-        Validators.pattern(/\S/)
-      ]
+        Validators.pattern(/\S/),
+      ],
     ],
+
     purok: [
       '',
       [
         Validators.required,
         Validators.maxLength(60),
-        Validators.pattern(/\S/)
-      ]
+        Validators.pattern(/\S/),
+      ],
     ],
-    residencyVerified: [false, Validators.requiredTrue]
+
+    residencyVerified: [
+      false,
+      Validators.requiredTrue,
+    ],
   });
 
   readonly filteredResidents = computed(() => {
@@ -139,12 +164,15 @@ export class PersonnelResidents implements OnDestroy {
           resident.email,
           resident.address,
           resident.purok,
-          resident.residentId
-        ].some(value => value.toLowerCase().includes(term))
+          resident.residentId,
+        ].some(value =>
+          value.toLowerCase().includes(term)
+        )
       )
       .sort(
         (a, b) =>
-          numberOf(a.residentId) - numberOf(b.residentId) ||
+          numberOf(a.residentId) -
+            numberOf(b.residentId) ||
           a.name.localeCompare(b.name)
       );
   });
@@ -164,9 +192,81 @@ export class PersonnelResidents implements OnDestroy {
       .filter(item => item.resident_id === uid)
       .sort(
         (a, b) =>
-          (a.concern_number ?? Number.MAX_SAFE_INTEGER) -
-          (b.concern_number ?? Number.MAX_SAFE_INTEGER)
+          (
+            a.concern_number ??
+            Number.MAX_SAFE_INTEGER
+          ) -
+          (
+            b.concern_number ??
+            Number.MAX_SAFE_INTEGER
+          )
       );
+  });
+
+  readonly residentPhotoUrl = signal('');
+  readonly residentPhotoLoading = signal(false);
+  readonly residentPhotoError = signal('');
+
+  private readonly photoRetry = signal(0);
+
+  private readonly followResidentPhoto = effect(onCleanup => {
+    const resident = this.selectedResident();
+    const canManage = this.service.canManageResidents();
+    const mode = this.mode();
+
+    this.photoRetry();
+
+    const controller = new AbortController();
+
+    let active = true;
+    let url = '';
+
+    this.residentPhotoUrl.set('');
+    this.residentPhotoError.set('');
+    this.residentPhotoLoading.set(false);
+
+    onCleanup(() => {
+      active = false;
+      controller.abort();
+
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+    });
+
+    if (
+      !canManage ||
+      mode !== 'view' ||
+      !resident?.profilePhotoPath
+    ) {
+      return;
+    }
+
+    this.residentPhotoLoading.set(true);
+
+    void this.service
+      .downloadResidentPhoto(
+        resident.uid,
+        controller.signal
+      )
+      .then(blob => {
+        if (!active || this.destroyed) return;
+
+        url = URL.createObjectURL(blob);
+        this.residentPhotoUrl.set(url);
+      })
+      .catch(() => {
+        if (active && !this.destroyed) {
+          this.residentPhotoError.set(
+            'Resident photo could not be loaded.'
+          );
+        }
+      })
+      .finally(() => {
+        if (active && !this.destroyed) {
+          this.residentPhotoLoading.set(false);
+        }
+      });
   });
 
   constructor() {
@@ -175,18 +275,40 @@ export class PersonnelResidents implements OnDestroy {
       .subscribe(params => {
         this.form.controls.password.setValue('');
         this.passwordVisible.set(false);
-        this.profileUid.set(params.get('resident') || '');
+
+        this.profileUid.set(
+          params.get('resident') || ''
+        );
+
         this.profileTab.set('personal');
-        this.mode.set(this.profileUid() ? 'view' : 'list');
+
+        this.mode.set(
+          this.profileUid() ? 'view' : 'list'
+        );
+
         this.saveError.set('');
       });
+  }
+
+  retryResidentPhoto(): void {
+    this.photoRetry.update(value => value + 1);
+  }
+
+  residentPhotoFailed(): void {
+    this.residentPhotoUrl.set('');
+
+    this.residentPhotoError.set(
+      'Resident photo could not be displayed.'
+    );
   }
 
   view(resident: ResidentRecord): void {
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { resident: resident.uid },
-      queryParamsHandling: 'merge'
+      queryParams: {
+        resident: resident.uid,
+      },
+      queryParamsHandling: 'merge',
     });
   }
 
@@ -218,13 +340,14 @@ export class PersonnelResidents implements OnDestroy {
       Pending: 'pending',
       'In Progress': 'progress',
       Resolved: 'resolved',
-      Rejected: 'rejected'
+      Rejected: 'rejected',
     }[status];
   }
 
   showConcern(concern: Concern): void {
     if (
-      concern.resident_id !== this.selectedResident()?.uid
+      concern.resident_id !==
+      this.selectedResident()?.uid
     ) {
       return;
     }
@@ -233,13 +356,15 @@ export class PersonnelResidents implements OnDestroy {
       ['/perso-dashboard/personnel-concern'],
       {
         queryParams: {
-          concern: concern.concern_id
-        }
+          concern: concern.concern_id,
+        },
       }
     );
   }
 
-  invalid(field: keyof typeof this.form.controls): boolean {
+  invalid(
+    field: keyof typeof this.form.controls
+  ): boolean {
     const control = this.form.controls[field];
 
     return (
@@ -251,6 +376,7 @@ export class PersonnelResidents implements OnDestroy {
   add(): void {
     this.prepare('add');
     this.form.reset();
+
     this.requestId = crypto.randomUUID();
 
     this.form.controls.email.enable();
@@ -258,27 +384,39 @@ export class PersonnelResidents implements OnDestroy {
     this.form.controls.password.setValidators([
       Validators.required,
       Validators.minLength(8),
-      Validators.maxLength(128)
+      Validators.maxLength(128),
     ]);
 
     this.form.controls.residencyVerified
       .setValidators(Validators.requiredTrue);
 
-    this.form.controls.password.updateValueAndValidity();
-    this.form.controls.residencyVerified.updateValueAndValidity();
+    this.form.controls.password
+      .updateValueAndValidity();
+
+    this.form.controls.residencyVerified
+      .updateValueAndValidity();
   }
 
   edit(resident: ResidentRecord): void {
-    if (resident.registrationState === 'incomplete') return;
+    if (
+      resident.registrationState === 'incomplete'
+    ) {
+      return;
+    }
 
     this.fill(resident, 'edit');
 
     this.form.controls.email.disable();
     this.form.controls.password.clearValidators();
-    this.form.controls.residencyVerified.clearValidators();
 
-    this.form.controls.password.updateValueAndValidity();
-    this.form.controls.residencyVerified.updateValueAndValidity();
+    this.form.controls.residencyVerified
+      .clearValidators();
+
+    this.form.controls.password
+      .updateValueAndValidity();
+
+    this.form.controls.residencyVerified
+      .updateValueAndValidity();
   }
 
   resume(resident: ResidentRecord): void {
@@ -287,7 +425,9 @@ export class PersonnelResidents implements OnDestroy {
     this.add();
     this.fill(resident, 'resume');
 
-    this.requestId = resident.registrationRequestId;
+    this.requestId =
+      resident.registrationRequestId;
+
     this.form.controls.email.disable();
   }
 
@@ -296,26 +436,36 @@ export class PersonnelResidents implements OnDestroy {
     mode: 'edit' | 'resume'
   ): void {
     this.prepare(mode);
+
     this.selectedUid = resident.uid;
 
-    const names = resident.name.trim().split(/\s+/);
+    const names =
+      resident.name.trim().split(/\s+/);
 
     this.form.reset({
-      firstName: resident.firstName || names[0] || '',
+      firstName:
+        resident.firstName || names[0] || '',
       middleName: resident.middleName,
-      lastName: resident.lastName || names.slice(1).join(' '),
+      lastName:
+        resident.lastName ||
+        names.slice(1).join(' '),
       email: resident.email,
       password: '',
       contactNumber: resident.contactNumber,
       address: resident.address,
       purok: resident.purok,
-      residencyVerified: resident.residencyVerified
+      residencyVerified:
+        resident.residencyVerified,
     });
 
-    this.verifiedAlready.set(resident.residencyVerified);
+    this.verifiedAlready.set(
+      resident.residencyVerified
+    );
   }
 
-  private prepare(mode: 'add' | 'edit' | 'resume'): void {
+  private prepare(
+    mode: 'add' | 'edit' | 'resume'
+  ): void {
     this.mode.set(mode);
     this.submitted.set(false);
     this.feedback.set('');
@@ -331,7 +481,10 @@ export class PersonnelResidents implements OnDestroy {
     this.passwordVisible.set(false);
     this.saveError.set('');
 
-    if (this.mode() === 'edit' && this.profileUid()) {
+    if (
+      this.mode() === 'edit' &&
+      this.profileUid()
+    ) {
       this.mode.set('view');
       return;
     }
@@ -340,8 +493,10 @@ export class PersonnelResidents implements OnDestroy {
 
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { resident: null },
-      queryParamsHandling: 'merge'
+      queryParams: {
+        resident: null,
+      },
+      queryParamsHandling: 'merge',
     });
   }
 
@@ -357,14 +512,21 @@ export class PersonnelResidents implements OnDestroy {
     }
 
     this.saving.set(true);
+
     const editing = this.mode() === 'edit';
 
     try {
       const details = this.form.getRawValue();
 
       const message = editing
-        ? await this.service.edit(this.selectedUid, details)
-        : await this.service.create(details, this.requestId);
+        ? await this.service.edit(
+            this.selectedUid,
+            details
+          )
+        : await this.service.create(
+            details,
+            this.requestId
+          );
 
       if (this.destroyed) return;
 
@@ -372,7 +534,9 @@ export class PersonnelResidents implements OnDestroy {
       this.passwordVisible.set(false);
 
       this.mode.set(
-        editing && this.profileUid() ? 'view' : 'list'
+        editing && this.profileUid()
+          ? 'view'
+          : 'list'
       );
 
       this.feedback.set(message);

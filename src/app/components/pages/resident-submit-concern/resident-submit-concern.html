@@ -2,7 +2,6 @@
   <div class="page-heading">
     <div>
       <h1>Submit a Concern</h1>
-
       <p>
         Provide the details of the community concern you want
         to report.
@@ -13,16 +12,13 @@
   @if (showSuccess()) {
     <div class="alert alert-success" role="status">
       <span class="alert-icon">✓</span>
-
       <div>
         <strong>Concern submitted successfully!</strong>
-
         <p>
           Thank you. Your concern has been received and will
           be reviewed.
         </p>
       </div>
-
       <button
         type="button"
         class="alert-close"
@@ -37,12 +33,10 @@
   @if (submitError()) {
     <div class="alert alert-error" role="alert">
       <span class="alert-icon">!</span>
-
       <div>
         <strong>Submission failed</strong>
         <p>{{ submitError() }}</p>
       </div>
-
       <button
         type="button"
         class="alert-close"
@@ -57,13 +51,9 @@
   <div class="submit-layout">
     <section class="form-card">
       <div class="card-heading">
-        <div class="heading-icon" aria-hidden="true">
-          ▤
-        </div>
-
+        <div class="heading-icon" aria-hidden="true">▤</div>
         <div>
           <h2>Concern Information</h2>
-          <p>Fields marked with an asterisk (*) are required.</p>
         </div>
       </div>
 
@@ -76,7 +66,6 @@
           <label for="category">
             Category <span class="required">*</span>
           </label>
-
           <select
             id="category"
             formControlName="category_id"
@@ -89,10 +78,7 @@
               (categoryControl.touched || isSubmitted())
             "
           >
-            <option value="" disabled>
-              Select a concern category
-            </option>
-
+            <option value="" disabled>Select a concern category</option>
             @for (
               category of categories();
               track category.category_id
@@ -122,10 +108,8 @@
 
         <div class="form-field">
           <label for="location">
-            Location Description
-            <span class="required">*</span>
+            Location Description <span class="required">*</span>
           </label>
-
           <input
             id="location"
             type="text"
@@ -149,9 +133,7 @@
             <small class="field-error">
               @if (locationControl.hasError('required')) {
                 Please enter the location of the concern.
-              } @else if (
-                locationControl.hasError('maxlength')
-              ) {
+              } @else if (locationControl.hasError('maxlength')) {
                 Location must not exceed 255 characters.
               }
             </small>
@@ -164,10 +146,8 @@
 
         <div class="form-field">
           <label for="description">
-            Description
-            <span class="required">*</span>
+            Description <span class="required">*</span>
           </label>
-
           <textarea
             id="description"
             formControlName="description"
@@ -189,13 +169,9 @@
             (descriptionControl.touched || isSubmitted())
           ) {
             <small class="field-error">
-              @if (
-                descriptionControl.hasError('required')
-              ) {
+              @if (descriptionControl.hasError('required')) {
                 Please provide a description of the concern.
-              } @else if (
-                descriptionControl.hasError('maxlength')
-              ) {
+              } @else if (descriptionControl.hasError('maxlength')) {
                 Description must not exceed 5,000 characters.
               }
             </small>
@@ -208,14 +184,11 @@
 
         <div class="form-field">
           <label id="photo-label">
-            Attach Photo
-            <span class="optional">(Optional)</span>
+            Attach Photo <span class="optional">(Optional)</span>
           </label>
-
           <p class="field-hint" id="photo-hint">
             Upload an image that helps explain the concern.
-            Maximum original size: 5 MB. Photos are resized
-            and compressed before upload.
+            Maximum original size: 5 MB.
           </p>
 
           <div class="upload-area">
@@ -230,11 +203,7 @@
             />
 
             @if (isProcessingPhoto()) {
-              <p
-                class="field-hint"
-                role="status"
-                aria-live="polite"
-              >
+              <p class="field-hint" role="status" aria-live="polite">
                 Compressing photo…
               </p>
             } @else if (imagePreview(); as preview) {
@@ -244,24 +213,17 @@
                   alt="Preview of compressed concern photo"
                   class="image-preview"
                 />
-
                 <div class="preview-info">
-                  <span class="file-name">
-                    {{ selectedFile()?.name }}
-                  </span>
-
+                  <span class="file-name">{{ selectedFile()?.name }}</span>
                   <small>
                     {{
                       (
-                        (selectedFile()?.size ?? 0) /
-                        1024 /
-                        1024
+                        (selectedFile()?.size ?? 0) / 1024 / 1024
                       ).toFixed(2)
                     }}
                     MB
                   </small>
                 </div>
-
                 <button
                   type="button"
                   class="remove-photo"
@@ -275,24 +237,13 @@
               <button
                 type="button"
                 class="upload-prompt"
-                style="
-                  width: 100%;
-                  border: 0;
-                  background: transparent;
-                  font: inherit;
-                "
+                style="width: 100%; border: 0; background: transparent; font: inherit;"
                 aria-label="Choose a concern photo"
                 aria-describedby="photo-hint"
                 [disabled]="isLoading()"
                 (click)="photoInput.click()"
               >
-                <span
-                  class="upload-icon"
-                  aria-hidden="true"
-                >
-                  ↑
-                </span>
-
+                <span class="upload-icon" aria-hidden="true">↑</span>
                 <strong>Choose a photo</strong>
                 <span>JPG, PNG, or WEBP</span>
                 <span class="browse-text">Browse files</span>
@@ -301,12 +252,7 @@
           </div>
 
           @if (fileError()) {
-            <small
-              class="field-error"
-              role="alert"
-            >
-              {{ fileError() }}
-            </small>
+            <small class="field-error" role="alert">{{ fileError() }}</small>
           }
         </div>
 
@@ -323,21 +269,12 @@
             [attr.aria-busy]="isLoading()"
           >
             @if (isLoading()) {
-              <span
-                class="submit-spinner"
-                aria-hidden="true"
-              ></span>
+              <span class="submit-spinner" aria-hidden="true"></span>
             }
-
             <span aria-live="polite">
-              {{
-                isLoading()
-                  ? 'Submitting...'
-                  : 'Submit Concern'
-              }}
+              {{ isLoading() ? 'Submitting...' : 'Submit Concern' }}
             </span>
           </button>
-
           <button
             type="button"
             class="btn btn-secondary"
@@ -359,29 +296,19 @@
 
     <aside class="guidelines-card">
       <div class="guidelines-heading">
-        <span
-          class="guidelines-icon"
-          aria-hidden="true"
-        >
-          ✓
-        </span>
-
+        <span class="guidelines-icon" aria-hidden="true">✓</span>
         <h2>Guidelines</h2>
       </div>
-
       <p class="guidelines-intro">
         Please follow these guidelines when reporting a concern.
       </p>
-
       <ol class="guidelines-list">
         @for (guideline of guidelines; track guideline) {
           <li>{{ guideline }}</li>
         }
       </ol>
-
       <div class="guidelines-note">
         <strong>Important reminder</strong>
-
         <p>
           This system is for non-emergency community concerns.
           For emergencies, contact the appropriate emergency

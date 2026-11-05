@@ -3,10 +3,7 @@
     <div>
       <p class="eyebrow">PERSONNEL PORTAL</p>
       <h1>Personnel Reports</h1>
-
-      <p>
-        Prepare consolidated reports for a selected period.
-      </p>
+      <p>Prepare consolidated reports for a selected period.</p>
     </div>
 
     <div class="actions">
@@ -17,7 +14,6 @@
       >
         Print / Save PDF
       </button>
-
       <button
         type="button"
         class="primary"
@@ -33,7 +29,6 @@
     <form class="filters" (ngSubmit)="generate()">
       <label>
         Date From
-
         <input
           type="date"
           name="from"
@@ -41,10 +36,8 @@
           required
         />
       </label>
-
       <label>
         Date To
-
         <input
           type="date"
           name="to"
@@ -52,19 +45,10 @@
           required
         />
       </label>
-
-      <button type="submit" class="primary">
-        Generate Report
-      </button>
-
-      <button type="button" (click)="reset()">
-        Reset
-      </button>
+      <button type="submit" class="primary">Generate Report</button>
 
       @if (validation()) {
-        <p class="error" role="alert">
-          {{ validation() }}
-        </p>
+        <p class="error" role="alert">{{ validation() }}</p>
       }
     </form>
   }
@@ -78,7 +62,6 @@
     >
       Concern Summary
     </button>
-
     <button
       type="button"
       [class.active]="tab() === 'offices'"
@@ -87,7 +70,6 @@
     >
       Responsible Offices
     </button>
-
     <button
       type="button"
       [class.active]="tab() === 'locations'"
@@ -110,56 +92,35 @@
   </nav>
 
   @if (exportError()) {
-    <p class="error" role="alert">
-      {{ exportError() }}
-    </p>
+    <p class="error" role="alert">{{ exportError() }}</p>
   }
 
-  <section
-    class="report-panel"
-    [attr.aria-busy]="loading()"
-  >
+  <section class="report-panel" [attr.aria-busy]="loading()">
     @if (loading()) {
       <p role="status">Loading report data...</p>
     } @else if (error()) {
       <div role="alert">
         <p class="error">{{ error() }}</p>
-
-        <button type="button" (click)="retry()">
-          Try Again
-        </button>
+        <button type="button" (click)="retry()">Try Again</button>
       </div>
     } @else if (tab() === 'residents' && canManageResidents()) {
       <h2>Resident Accounts</h2>
-
-      <p class="note">
-        All current registered accounts. Date filters do not
-        apply. These figures do not represent the entire
-        barangay population.
-      </p>
 
       <div class="summary-strip">
         <div>
           Accounts
           <strong>{{ residentTotals().total }}</strong>
         </div>
-
         <div>
           Verified
           <strong>{{ residentTotals().verified }}</strong>
         </div>
-
         <div>
           Not Verified
-
           <strong>
-            {{
-              residentTotals().total -
-              residentTotals().verified
-            }}
+            {{ residentTotals().total - residentTotals().verified }}
           </strong>
         </div>
-
         <div>
           Approved
           <strong>{{ residentTotals().approved }}</strong>
@@ -169,9 +130,7 @@
       <h3>Accounts by Purok</h3>
 
       @if (!puroks().length) {
-        <p class="empty">
-          No registered resident accounts found.
-        </p>
+        <p class="empty">No registered resident accounts found.</p>
       } @else {
         <div
           class="table-scroll"
@@ -201,15 +160,7 @@
                   <td>{{ row.total - row.verified }}</td>
                   <td>{{ row.approved }}</td>
                   <td>{{ row.total - row.approved }}</td>
-
-                  <td>
-                    {{
-                      share(
-                        row.total,
-                        residentTotals().total
-                      )
-                    }}
-                  </td>
+                  <td>{{ share(row.total, residentTotals().total) }}</td>
                 </tr>
               }
             </tbody>
@@ -219,30 +170,15 @@
                 <th scope="row">Total</th>
                 <td>{{ residentTotals().total }}</td>
                 <td>{{ residentTotals().verified }}</td>
-
                 <td>
-                  {{
-                    residentTotals().total -
-                    residentTotals().verified
-                  }}
+                  {{ residentTotals().total - residentTotals().verified }}
                 </td>
-
                 <td>{{ residentTotals().approved }}</td>
-
                 <td>
-                  {{
-                    residentTotals().total -
-                    residentTotals().approved
-                  }}
+                  {{ residentTotals().total - residentTotals().approved }}
                 </td>
-
                 <td>
-                  {{
-                    share(
-                      residentTotals().total,
-                      residentTotals().total
-                    )
-                  }}
+                  {{ share(residentTotals().total, residentTotals().total) }}
                 </td>
               </tr>
             </tfoot>
@@ -255,18 +191,11 @@
         <span>{{ periodLabel() }}</span>
       </div>
 
-      <p class="note">
-        Concerns submitted during this period, grouped by
-        their current status. This is not a historical
-        status snapshot.
-      </p>
-
       <div class="summary-strip">
         <div>
           Total
           <strong>{{ totals().total }}</strong>
         </div>
-
         @for (status of statuses; track status) {
           <div>
             {{ status }}
@@ -301,11 +230,9 @@
             <thead>
               <tr>
                 <th scope="col">{{ groupLabel() }}</th>
-
                 @for (status of statuses; track status) {
                   <th scope="col">{{ status }}</th>
                 }
-
                 <th scope="col">Total</th>
                 <th scope="col">Share</th>
               </tr>
@@ -315,16 +242,11 @@
               @for (row of rows(); track $index) {
                 <tr>
                   <td>{{ row.label }}</td>
-
                   @for (status of statuses; track status) {
                     <td>{{ row.counts[status] }}</td>
                   }
-
                   <td>{{ row.total }}</td>
-
-                  <td>
-                    {{ share(row.total, totals().total) }}
-                  </td>
+                  <td>{{ share(row.total, totals().total) }}</td>
                 </tr>
               }
             </tbody>
@@ -332,32 +254,16 @@
             <tfoot>
               <tr>
                 <th scope="row">Total</th>
-
                 @for (status of statuses; track status) {
                   <td>{{ totals().counts[status] }}</td>
                 }
-
                 <td>{{ totals().total }}</td>
-
-                <td>
-                  {{
-                    share(
-                      totals().total,
-                      totals().total
-                    )
-                  }}
-                </td>
+                <td>{{ share(totals().total, totals().total) }}</td>
               </tr>
             </tfoot>
           </table>
         </div>
       }
-
-      <p class="note footnote">
-        Only groups with submissions are listed.
-        Share is the percentage of concerns in the
-        selected period.
-      </p>
     }
   </section>
 </main>

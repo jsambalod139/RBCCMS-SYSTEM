@@ -1,15 +1,8 @@
-<main
-  class="reports-page"
-  [attr.aria-busy]="feed.loading()"
->
+<main class="reports-page" [attr.aria-busy]="feed.loading()">
   <header class="page-heading">
     <div>
-      <p class="eyebrow">
-        ADMINISTRATOR PORTAL
-      </p>
-
+      <p class="eyebrow">ADMINISTRATOR PORTAL</p>
       <h1>Admin Reports</h1>
-
       <p>
         View community concern summaries across
         all participating offices.
@@ -36,13 +29,9 @@
     </div>
   </header>
 
-  <form
-    class="filters"
-    (ngSubmit)="generate()"
-  >
+  <form class="filters" (ngSubmit)="generate()">
     <label>
       Date From
-
       <input
         type="date"
         name="from"
@@ -53,7 +42,6 @@
 
     <label>
       Date To
-
       <input
         type="date"
         name="to"
@@ -62,31 +50,16 @@
       />
     </label>
 
-    <button
-      type="submit"
-      class="primary"
-    >
+    <button type="submit" class="primary">
       Generate Report
     </button>
 
-    <button
-      type="button"
-      (click)="reset()"
-    >
-      Reset
-    </button>
-
     @if (validation()) {
-      <p class="error" role="alert">
-        {{ validation() }}
-      </p>
+      <p class="error" role="alert">{{ validation() }}</p>
     }
   </form>
 
-  <nav
-    class="tabs"
-    aria-label="Report sections"
-  >
+  <nav class="tabs" aria-label="Report sections">
     @for (item of tabs; track item.id) {
       <button
         type="button"
@@ -100,41 +73,23 @@
   </nav>
 
   @if (feedback()) {
-    <p class="error" role="alert">
-      {{ feedback() }}
-    </p>
+    <p class="error" role="alert">{{ feedback() }}</p>
   }
 
   <section class="report-panel">
     @if (feed.loading()) {
-      <p role="status">
-        Loading report data...
-      </p>
+      <p role="status">Loading report data...</p>
     } @else if (feed.error()) {
       <div role="alert">
-        <p class="error">
-          {{ feed.error() }}
-        </p>
-
-        <button
-          type="button"
-          (click)="feed.reload()"
-        >
+        <p class="error">{{ feed.error() }}</p>
+        <button type="button" (click)="feed.reload()">
           Try Again
         </button>
       </div>
     } @else {
       <div class="report-heading">
         <h2>{{ title() }}</h2>
-
-        <span>{{ periodLabel() }}</span>
       </div>
-
-      <p class="note">
-        All participating offices. Selected by submission
-        date and counted using the current status;
-        this is not a historical status snapshot.
-      </p>
 
       <div class="summary-strip">
         <div>
@@ -147,16 +102,10 @@
           track status;
           let index = $index
         ) {
-          @if (
-            index < 4 ||
-            totals().counts[index]
-          ) {
+          @if (index < 4 || totals().counts[index]) {
             <div>
               {{ status }}
-
-              <strong>
-                {{ totals().counts[index] }}
-              </strong>
+              <strong>{{ totals().counts[index] }}</strong>
             </div>
           }
         }
@@ -192,18 +141,11 @@
           <table>
             <thead>
               <tr>
-                <th scope="col">
-                  {{ heading() }}
-                </th>
+                <th scope="col">{{ heading() }}</th>
 
                 @if (tab() !== 'status') {
-                  @for (
-                    status of statuses;
-                    track status
-                  ) {
-                    <th scope="col">
-                      {{ status }}
-                    </th>
+                  @for (status of statuses; track status) {
+                    <th scope="col">{{ status }}</th>
                   }
                 }
 
@@ -213,29 +155,18 @@
             </thead>
 
             <tbody>
-              @for (
-                row of rows();
-                track row.key
-              ) {
+              @for (row of rows(); track row.key) {
                 <tr>
-                  <th scope="row">
-                    {{ row.label }}
-                  </th>
+                  <th scope="row">{{ row.label }}</th>
 
                   @if (tab() !== 'status') {
-                    @for (
-                      count of row.counts;
-                      track $index
-                    ) {
+                    @for (count of row.counts; track $index) {
                       <td>{{ count }}</td>
                     }
                   }
 
                   <td>{{ row.total }}</td>
-
-                  <td>
-                    {{ share(row.total) }}
-                  </td>
+                  <td>{{ share(row.total) }}</td>
                 </tr>
               }
             </tbody>
@@ -245,30 +176,18 @@
                 <th scope="row">Total</th>
 
                 @if (tab() !== 'status') {
-                  @for (
-                    count of totals().counts;
-                    track $index
-                  ) {
+                  @for (count of totals().counts; track $index) {
                     <td>{{ count }}</td>
                   }
                 }
 
                 <td>{{ totals().total }}</td>
-
-                <td>
-                  {{ share(totals().total) }}
-                </td>
+                <td>{{ share(totals().total) }}</td>
               </tr>
             </tfoot>
           </table>
         </div>
       }
-
-      <p class="footnote">
-        Share is the percentage of concerns in the
-        applied period. Dates use this browser’s time
-        zone. Administrative reporting is view-only.
-      </p>
     }
   </section>
 </main>

@@ -1,11 +1,8 @@
 <main class="dashboard-content">
-  <!-- Welcome -->
   <section class="welcome-section">
     <div class="welcome-text">
       <p class="welcome-label">RESIDENT DASHBOARD</p>
-
       <h1>Good day, {{ residentName() }}!</h1>
-
       <p class="welcome-description">
         Here is the summary of your community concerns.
       </p>
@@ -28,17 +25,11 @@
   } @else if (loadError()) {
     <div class="dashboard-notice error-notice" role="alert">
       <p>{{ loadError() }}</p>
-
-      <button
-        type="button"
-        class="btn-primary"
-        (click)="retryLoad()"
-      >
+      <button type="button" class="btn-primary" (click)="retryLoad()">
         Try Again
       </button>
     </div>
   } @else {
-    <!-- Summary cards -->
     <section class="summary-grid" aria-label="Concern summary">
       <article class="summary-card total-card">
         <div class="summary-icon" aria-hidden="true">
@@ -47,7 +38,6 @@
             <path d="M14 3v5h5M10 13h6M10 17h6" />
           </svg>
         </div>
-
         <div class="summary-info">
           <p>Total Concerns</p>
           <h2>{{ totalConcerns() }}</h2>
@@ -61,7 +51,6 @@
             <path d="M12 7v5l3 2" />
           </svg>
         </div>
-
         <div class="summary-info">
           <p>Pending</p>
           <h2>{{ pendingCount() }}</h2>
@@ -76,7 +65,6 @@
             <path d="m5 5 2 2m10 10 2 2M5 19l2-2M17 7l2-2" />
           </svg>
         </div>
-
         <div class="summary-info">
           <p>In Progress</p>
           <h2>{{ inProgressCount() }}</h2>
@@ -86,13 +74,10 @@
       <article class="summary-card resolved-card">
         <div class="summary-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24">
-            <path
-              d="m12 3 8 3v5c0 5-3.4 8-8 10-4.6-2-8-5-8-10V6z"
-            />
+            <path d="m12 3 8 3v5c0 5-3.4 8-8 10-4.6-2-8-5-8-10V6z" />
             <path d="m8.5 12 2.3 2.3 4.8-5" />
           </svg>
         </div>
-
         <div class="summary-info">
           <p>Resolved</p>
           <h2>{{ resolvedCount() }}</h2>
@@ -100,12 +85,7 @@
       </article>
     </section>
 
-    <!-- Analytics -->
-    <section
-      class="analytics-grid"
-      aria-label="Your concern analytics"
-    >
-      <!-- Monthly submissions -->
+    <section class="analytics-grid" aria-label="Your concern analytics">
       <article class="chart-card">
         <header class="chart-heading">
           <div>
@@ -115,7 +95,6 @@
 
           <div class="period-filter">
             <label for="month-range">Period</label>
-
             <select
               id="month-range"
               [value]="monthRange()"
@@ -147,20 +126,13 @@
                 'repeat(' + monthRange() + ', minmax(0, 1fr))'
               "
             >
-              @for (
-                month of monthlyConcerns();
-                track month.key
-              ) {
+              @for (month of monthlyConcerns(); track month.key) {
                 <div class="bar-column">
                   <div
                     class="month-bar"
-                    [style.height.%]="
-                      month.count / chartMaximum() * 100
-                    "
+                    [style.height.%]="month.count / chartMaximum() * 100"
                   >
-                    <span class="bar-value">
-                      {{ month.count }}
-                    </span>
+                    <span class="bar-value">{{ month.count }}</span>
                   </div>
                 </div>
               }
@@ -173,22 +145,14 @@
                 'repeat(' + monthRange() + ', minmax(0, 1fr))'
               "
             >
-              @for (
-                month of monthlyConcerns();
-                track month.key
-              ) {
+              @for (month of monthlyConcerns(); track month.key) {
                 <span>{{ month.label }}</span>
               }
             </div>
           </div>
         </div>
-
-        <p class="chart-footnote">
-          Your concerns only. Months without submissions show 0.
-        </p>
       </article>
 
-      <!-- Category breakdown -->
       <article class="chart-card">
         <header class="chart-heading">
           <div>
@@ -204,14 +168,8 @@
               track category.category_id
             ) {
               <li class="category-row">
-                <span class="category-label">
-                  {{ category.label }}
-                </span>
-
-                <span
-                  class="category-track"
-                  aria-hidden="true"
-                >
+                <span class="category-label">{{ category.label }}</span>
+                <span class="category-track" aria-hidden="true">
                   <span
                     class="category-fill"
                     [style.width.%]="
@@ -219,10 +177,7 @@
                     "
                   ></span>
                 </span>
-
-                <strong class="category-count">
-                  {{ category.count }}
-                </strong>
+                <strong class="category-count">{{ category.count }}</strong>
               </li>
             }
           </ul>
@@ -232,15 +187,9 @@
             submit a concern.
           </p>
         }
-
-        <p class="chart-footnote">
-          Each number represents submitted concerns,
-          regardless of status.
-        </p>
       </article>
     </section>
 
-    <!-- My concerns -->
     <section class="recent-section">
       <div class="section-heading">
         <h2>My Concerns</h2>
@@ -249,11 +198,7 @@
       @if (totalConcerns() === 0) {
         <div class="empty-state">
           <h3>No Concerns Yet</h3>
-
-          <p>
-            You haven't submitted any community concerns yet.
-          </p>
-
+          <p>You haven't submitted any community concerns yet.</p>
           <button
             type="button"
             class="btn-primary empty-action"
@@ -273,7 +218,6 @@
                 <h3 class="concern-row-title">
                   {{ categoryName(concern) }}
                 </h3>
-
                 <div class="concern-row-meta">
                   <span
                     class="status-badge"
@@ -281,7 +225,6 @@
                   >
                     {{ concern.current_status }}
                   </span>
-
                   <time [attr.datetime]="concern.reported_at">
                     {{ concern.reported_at | date:'MMM d, y' }}
                   </time>

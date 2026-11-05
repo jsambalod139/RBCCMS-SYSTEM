@@ -8,7 +8,6 @@
   <section class="filters" aria-label="Filter accounts">
     <label class="search-field">
       Search
-
       <input
         type="search"
         placeholder="Search name or email..."
@@ -20,75 +19,50 @@
 
     <label>
       Role
-
       <select
         [ngModel]="selectedRole()"
         (ngModelChange)="selectedRole.set($event); page.set(1)"
       >
         @for (role of roleOptions; track role) {
-          <option [value]="role">
-            {{ roleLabel(role) }}
-          </option>
+          <option [value]="role">{{ roleLabel(role) }}</option>
         }
       </select>
     </label>
 
     <label>
       Status
-
       <select
         [ngModel]="selectedStatus()"
         (ngModelChange)="selectedStatus.set($event); page.set(1)"
       >
         @for (status of statusOptions; track status) {
-          <option [value]="status">
-            {{ status | titlecase }}
-          </option>
+          <option [value]="status">{{ status | titlecase }}</option>
         }
       </select>
     </label>
-
-    <button type="button" (click)="resetFilters()">
-      Reset
-    </button>
   </section>
 
   @if (feedback()) {
-    <p class="feedback" role="status">
-      {{ feedback() }}
-    </p>
+    <p class="feedback" role="status">{{ feedback() }}</p>
   }
 
-  <section
-    class="records-card"
-    aria-labelledby="accounts-title"
-  >
+  <section class="records-card" aria-labelledby="accounts-title">
     <div class="section-heading">
       <h2 id="accounts-title">Account Records</h2>
-
       @if (!loading() && !error()) {
-        <span>
-          {{ filteredAccounts().length }} account(s)
-        </span>
+        <span>{{ filteredAccounts().length }} account(s)</span>
       }
     </div>
 
     @if (loading()) {
-      <p class="notice" role="status">
-        Loading accounts...
-      </p>
+      <p class="notice" role="status">Loading accounts...</p>
     } @else if (error()) {
       <div class="notice" role="alert">
         <p>{{ error() }}</p>
-
-        <button type="button" (click)="reload()">
-          Try Again
-        </button>
+        <button type="button" (click)="reload()">Try Again</button>
       </div>
     } @else if (filteredAccounts().length === 0) {
-      <p class="notice">
-        No accounts match your filters.
-      </p>
+      <p class="notice">No accounts match your filters.</p>
     } @else {
       <div
         class="table-wrapper"
@@ -109,17 +83,10 @@
           </thead>
 
           <tbody>
-            @for (
-              account of visibleAccounts();
-              track account.uid
-            ) {
+            @for (account of visibleAccounts(); track account.uid) {
               <tr>
                 <td>{{ account.name }}</td>
-
-                <td>
-                  {{ account.email || 'Not recorded' }}
-                </td>
-
+                <td>{{ account.email || 'Not recorded' }}</td>
                 <td>{{ roleLabel(account.role) }}</td>
 
                 <td>
@@ -128,20 +95,14 @@
                     [class.approved]="account.status === 'approved'"
                     [class.suspended]="account.status === 'suspended'"
                   >
-                    {{
-                      (account.status || 'Not recorded')
-                        | titlecase
-                    }}
+                    {{ (account.status || 'Not recorded') | titlecase }}
                   </span>
                 </td>
 
                 <td>
                   {{
                     account.createdAt
-                      ? (
-                          account.createdAt
-                            | date:'MMM d, y':'GMT+08:00'
-                        )
+                      ? (account.createdAt | date:'MMM d, y':'GMT+08:00')
                       : 'Not recorded'
                   }}
                 </td>
@@ -149,13 +110,9 @@
                 <td>
                   <div class="row-actions">
                     @if (account.uid === currentUid()) {
-                      <span class="muted">
-                        Current account
-                      </span>
+                      <span class="muted">Current account</span>
                     } @else if (account.role === 'admin') {
-                      <span class="muted">
-                        Protected
-                      </span>
+                      <span class="muted">Protected</span>
                     } @else if (canChange(account)) {
                       <button
                         type="button"
@@ -191,10 +148,6 @@
       </div>
 
       <div class="pagination">
-        <p>
-          Account access changes are recorded in Audit Logs.
-        </p>
-
         <div>
           <button
             type="button"
@@ -205,8 +158,7 @@
           </button>
 
           <span>
-            Page {{ displayedPage() }}
-            of {{ totalPages() }}
+            Page {{ displayedPage() }} of {{ totalPages() }}
           </span>
 
           <button

@@ -2,7 +2,6 @@
   <header class="page-heading">
     <div>
       <p class="eyebrow">PERSONNEL PORTAL</p>
-
       <h1>
         {{
           mode() === 'list'
@@ -17,15 +16,15 @@
         }}
       </h1>
 
-      <p>
-        {{
-          mode() === 'list'
-            ? 'Manage registered residents and residency verification.'
-            : mode() === 'view'
-              ? 'View resident information and submitted concerns.'
+      @if (mode() !== 'view') {
+        <p>
+          {{
+            mode() === 'list'
+              ? 'Manage registered residents and residency verification.'
               : 'Confirm the resident’s information during their visit to the barangay.'
-        }}
-      </p>
+          }}
+        </p>
+      }
     </div>
 
     @if (mode() === 'list') {
@@ -54,9 +53,7 @@
   </header>
 
   @if (feedback()) {
-    <p class="notice success" role="status">
-      {{ feedback() }}
-    </p>
+    <p class="notice success" role="status">{{ feedback() }}</p>
   }
 
   @if (mode() === 'list') {
@@ -67,12 +64,8 @@
     >
       <div class="list-heading">
         <h2>Resident Records</h2>
-
         <label class="search-label">
-          <span class="visually-hidden">
-            Search residents
-          </span>
-
+          <span class="visually-hidden">Search residents</span>
           <input
             type="search"
             placeholder="Search resident ID, name, email, address, or purok…"
@@ -83,13 +76,10 @@
       </div>
 
       @if (service.loading()) {
-        <p class="empty-state" role="status">
-          Loading residents…
-        </p>
+        <p class="empty-state" role="status">Loading residents…</p>
       } @else if (service.error()) {
         <div class="notice error" role="alert">
           <p>{{ service.error() }}</p>
-
           <button
             type="button"
             class="btn-secondary"
@@ -101,13 +91,8 @@
       } @else if (!filteredResidents().length) {
         <div class="empty-state">
           <h3>
-            {{
-              search()
-                ? 'No matching residents'
-                : 'No resident records yet'
-            }}
+            {{ search() ? 'No matching residents' : 'No resident records yet' }}
           </h3>
-
           <p>
             {{
               search()
@@ -134,41 +119,27 @@
             </thead>
 
             <tbody>
-              @for (
-                resident of filteredResidents();
-                track resident.uid
-              ) {
+              @for (resident of filteredResidents(); track resident.uid) {
                 <tr>
                   <td>{{ residentNumber(resident) }}</td>
-
                   <td>
                     <strong>
                       {{ resident.name || 'Name not recorded' }}
                     </strong>
                   </td>
-
                   <td>
                     <span
                       class="badge"
                       [class.verified]="resident.residencyVerified"
                     >
-                      {{
-                        resident.residencyVerified
-                          ? 'Verified'
-                          : 'Not verified'
-                      }}
+                      {{ resident.residencyVerified ? 'Verified' : 'Not verified' }}
                     </span>
-
                     @if (resident.verifiedAt) {
                       <span class="verification-date">
-                        {{
-                          resident.verifiedAt
-                            | date:'MMM d, y'
-                        }}
+                        {{ resident.verifiedAt | date:'MMM d, y' }}
                       </span>
                     }
                   </td>
-
                   <td>
                     {{
                       resident.registrationState === 'incomplete'
@@ -176,7 +147,6 @@
                         : (resident.accountStatus | titlecase)
                     }}
                   </td>
-
                   <td>
                     @if (service.canResume(resident)) {
                       <button
@@ -186,16 +156,12 @@
                       >
                         Finish Setup
                       </button>
-                    } @else if (
-                      resident.registrationState !== 'incomplete'
-                    ) {
+                    } @else if (resident.registrationState !== 'incomplete') {
                       <button
                         type="button"
                         class="btn-secondary small"
                         (click)="view(resident)"
-                        [attr.aria-label]="
-                          'View resident ' + resident.name
-                        "
+                        [attr.aria-label]="'View resident ' + resident.name"
                       >
                         View
                       </button>
@@ -210,13 +176,10 @@
     </section>
   } @else if (mode() === 'view') {
     @if (service.loading()) {
-      <p class="empty-state" role="status">
-        Loading resident profile...
-      </p>
+      <p class="empty-state" role="status">Loading resident profile...</p>
     } @else if (service.error()) {
       <div class="notice error" role="alert">
         <p>{{ service.error() }}</p>
-
         <button
           type="button"
           class="btn-secondary"
@@ -226,10 +189,7 @@
         </button>
       </div>
     } @else if (selectedResident(); as resident) {
-      <nav
-        class="profile-tabs"
-        aria-label="Resident profile sections"
-      >
+      <nav class="profile-tabs" aria-label="Resident profile sections">
         <button
           type="button"
           [class.active]="profileTab() === 'personal'"
@@ -238,7 +198,6 @@
         >
           Personal Information
         </button>
-
         <button
           type="button"
           [class.active]="profileTab() === 'history'"
@@ -255,23 +214,45 @@
           aria-label="Resident information"
         >
           <header class="resident-profile-header">
-            <div class="resident-avatar" aria-hidden="true">
-              {{ initials(resident) }}
+            <div
+              class="resident-avatar"
+              aria-hidden="true"
+              style="overflow: hidden;"
+            >
+              @if (residentPhotoUrl()) {
+                <img
+                  [src]="residentPhotoUrl()"
+                  alt=""
+                  style="display: block; width: 100%; height: 100%; object-fit: cover;"
+                  (error)="residentPhotoFailed()"
+                />
+              } @else {
+                {{ initials(resident) }}
+              }
             </div>
 
             <div class="resident-heading">
               <p>
                 Resident ID:
-                <strong>
-                  {{ residentNumber(resident) }}
-                </strong>
+                <strong>{{ residentNumber(resident) }}</strong>
               </p>
-
-              <h2>
-                {{ resident.name || 'Name not recorded' }}
-              </h2>
-
+              <h2>{{ resident.name || 'Name not recorded' }}</h2>
               <p>Barangay Resident</p>
+
+              @if (residentPhotoLoading()) {
+                <p role="status">Loading profile photo...</p>
+              }
+
+              @if (residentPhotoError()) {
+                <p role="status">{{ residentPhotoError() }}</p>
+                <button
+                  type="button"
+                  class="btn-secondary small"
+                  (click)="retryResidentPhoto()"
+                >
+                  Retry Photo
+                </button>
+              }
             </div>
 
             @if (service.canResume(resident)) {
@@ -282,9 +263,7 @@
               >
                 Finish Setup
               </button>
-            } @else if (
-              resident.registrationState !== 'incomplete'
-            ) {
+            } @else if (resident.registrationState !== 'incomplete') {
               <button
                 type="button"
                 class="btn-primary"
@@ -296,43 +275,32 @@
           </header>
 
           <h3>Resident Information</h3>
-
           <dl class="resident-info-grid">
             <div>
               <dt>Full Name</dt>
               <dd>{{ resident.name || 'Not recorded' }}</dd>
             </div>
-
             <div>
               <dt>Address</dt>
               <dd>{{ resident.address || 'Not recorded' }}</dd>
             </div>
-
             <div>
               <dt>Purok</dt>
               <dd>{{ resident.purok || 'Not recorded' }}</dd>
             </div>
-
             <div>
               <dt>Residency Verification</dt>
-
               <dd>
                 <span
                   class="badge"
                   [class.verified]="resident.residencyVerified"
                 >
-                  {{
-                    resident.residencyVerified
-                      ? 'Verified'
-                      : 'Not verified'
-                  }}
+                  {{ resident.residencyVerified ? 'Verified' : 'Not verified' }}
                 </span>
               </dd>
             </div>
-
             <div>
               <dt>Verification Date</dt>
-
               <dd>
                 {{
                   resident.verifiedAt
@@ -341,36 +309,27 @@
                 }}
               </dd>
             </div>
-
             <div>
               <dt>Account Status</dt>
-
               <dd>
                 {{
                   resident.registrationState === 'incomplete'
                     ? 'Setup incomplete'
-                    : (
-                        (resident.accountStatus | titlecase)
-                        || 'Not recorded'
-                      )
+                    : ((resident.accountStatus | titlecase) || 'Not recorded')
                 }}
               </dd>
             </div>
           </dl>
 
           <h3>Contact Information</h3>
-
           <dl class="resident-info-grid">
             <div>
               <dt>Email Address</dt>
               <dd>{{ resident.email || 'Not recorded' }}</dd>
             </div>
-
             <div>
               <dt>Contact Number</dt>
-              <dd>
-                {{ resident.contactNumber || 'Not recorded' }}
-              </dd>
+              <dd>{{ resident.contactNumber || 'Not recorded' }}</dd>
             </div>
           </dl>
         </section>
@@ -383,26 +342,19 @@
           <div class="history-heading">
             <div>
               <h2>Concern History</h2>
-
               <p>
                 {{ resident.name }}
                 · Resident ID: {{ residentNumber(resident) }}
               </p>
             </div>
-
-            <span>
-              {{ residentConcerns().length }} concern(s)
-            </span>
+            <span>{{ residentConcerns().length }} concern(s)</span>
           </div>
 
           @if (concernService.loading()) {
-            <p class="empty-state" role="status">
-              Loading concerns...
-            </p>
+            <p class="empty-state" role="status">Loading concerns...</p>
           } @else if (concernService.error()) {
             <div class="notice error" role="alert">
               <p>{{ concernService.error() }}</p>
-
               <button
                 type="button"
                 class="btn-secondary"
@@ -426,7 +378,6 @@
                     <th scope="col">Action</th>
                   </tr>
                 </thead>
-
                 <tbody>
                   @for (
                     concern of residentConcerns();
@@ -434,25 +385,15 @@
                   ) {
                     <tr>
                       <td>{{ categoryName(concern) }}</td>
-
                       <td>
                         <span
                           class="concern-status"
-                          [ngClass]="
-                            statusClass(concern.current_status)
-                          "
+                          [ngClass]="statusClass(concern.current_status)"
                         >
                           {{ concern.current_status }}
                         </span>
                       </td>
-
-                      <td>
-                        {{
-                          concern.reported_at
-                            | date:'MMM d, y'
-                        }}
-                      </td>
-
+                      <td>{{ concern.reported_at | date:'MMM d, y' }}</td>
                       <td>
                         <button
                           type="button"
@@ -484,21 +425,15 @@
       novalidate
     >
       @if (saveError()) {
-        <p class="notice error" role="alert">
-          {{ saveError() }}
-        </p>
+        <p class="notice error" role="alert">{{ saveError() }}</p>
       }
 
       <fieldset [disabled]="saving()">
         <section class="form-section">
           <h2>Personal Information</h2>
-
           <div class="form-grid">
             <div class="field">
-              <label for="first-name">
-                First Name <span>*</span>
-              </label>
-
+              <label for="first-name">First Name <span>*</span></label>
               <input
                 id="first-name"
                 formControlName="firstName"
@@ -506,7 +441,6 @@
                 autocomplete="given-name"
                 [attr.aria-invalid]="invalid('firstName')"
               />
-
               @if (invalid('firstName')) {
                 <small class="field-error">
                   Enter a first name, up to 60 characters.
@@ -518,7 +452,6 @@
               <label for="middle-name">
                 Middle Name <small>(Optional)</small>
               </label>
-
               <input
                 id="middle-name"
                 formControlName="middleName"
@@ -528,10 +461,7 @@
             </div>
 
             <div class="field">
-              <label for="last-name">
-                Last Name <span>*</span>
-              </label>
-
+              <label for="last-name">Last Name <span>*</span></label>
               <input
                 id="last-name"
                 formControlName="lastName"
@@ -539,7 +469,6 @@
                 autocomplete="family-name"
                 [attr.aria-invalid]="invalid('lastName')"
               />
-
               @if (invalid('lastName')) {
                 <small class="field-error">
                   Enter a last name, up to 60 characters.
@@ -551,7 +480,6 @@
 
         <section class="form-section">
           <h2>Login Credentials</h2>
-
           <p class="section-hint">
             {{
               mode() === 'edit'
@@ -562,10 +490,7 @@
 
           <div class="form-grid">
             <div class="field">
-              <label for="resident-email">
-                Email <span>*</span>
-              </label>
-
+              <label for="resident-email">Email <span>*</span></label>
               <input
                 id="resident-email"
                 type="email"
@@ -576,7 +501,6 @@
                 spellcheck="false"
                 [attr.aria-invalid]="invalid('email')"
               />
-
               @if (invalid('email')) {
                 <small class="field-error">
                   Enter a valid email address.
@@ -589,36 +513,26 @@
                 <label for="resident-password">
                   Password <span>*</span>
                 </label>
-
                 <div class="password-field">
                   <input
                     id="resident-password"
-                    [type]="
-                      passwordVisible() ? 'text' : 'password'
-                    "
+                    [type]="passwordVisible() ? 'text' : 'password'"
                     formControlName="password"
                     autocomplete="new-password"
                     minlength="8"
                     maxlength="128"
                     [attr.aria-invalid]="invalid('password')"
                   />
-
                   <button
                     type="button"
                     class="password-toggle"
                     [attr.aria-pressed]="passwordVisible()"
-                    (click)="
-                      passwordVisible.set(!passwordVisible())
-                    "
+                    (click)="passwordVisible.set(!passwordVisible())"
                   >
                     {{ passwordVisible() ? 'Hide' : 'Show' }}
                   </button>
                 </div>
-
-                <small>
-                  8–128 characters. Never saved in Firestore.
-                </small>
-
+                <small>8–128 characters. Never saved in Firestore.</small>
                 @if (invalid('password')) {
                   <small class="field-error">
                     Enter a password with 8–128 characters.
@@ -631,13 +545,11 @@
 
         <section class="form-section">
           <h2>Contact and Address Information</h2>
-
           <div class="form-grid">
             <div class="field">
               <label for="resident-contact">
                 Contact Number <small>(Optional)</small>
               </label>
-
               <input
                 id="resident-contact"
                 type="tel"
@@ -646,7 +558,6 @@
                 autocomplete="tel"
                 placeholder="e.g., 0917 123 4567"
               />
-
               @if (invalid('contactNumber')) {
                 <small class="field-error">
                   Enter a valid contact number.
@@ -655,10 +566,7 @@
             </div>
 
             <div class="field">
-              <label for="resident-purok">
-                Purok <span>*</span>
-              </label>
-
+              <label for="resident-purok">Purok <span>*</span></label>
               <input
                 id="resident-purok"
                 formControlName="purok"
@@ -666,7 +574,6 @@
                 placeholder="Enter the verified purok"
                 [attr.aria-invalid]="invalid('purok')"
               />
-
               @if (invalid('purok')) {
                 <small class="field-error">
                   Enter the resident’s purok.
@@ -678,7 +585,6 @@
               <label for="resident-address">
                 Complete Address <span>*</span>
               </label>
-
               <textarea
                 id="resident-address"
                 formControlName="address"
@@ -687,7 +593,6 @@
                 autocomplete="street-address"
                 [attr.aria-invalid]="invalid('address')"
               ></textarea>
-
               @if (invalid('address')) {
                 <small class="field-error">
                   Enter an address, up to 255 characters.
@@ -699,7 +604,6 @@
 
         <section class="form-section verification-section">
           <h2>Residency Verification</h2>
-
           @if (mode() === 'edit' && verifiedAlready()) {
             <p class="notice success">
               This resident’s residency is already verified.
@@ -710,18 +614,15 @@
                 type="checkbox"
                 formControlName="residencyVerified"
               />
-
               <span>
                 I have verified this resident’s identity
                 and residency in person.
               </span>
             </label>
-
             <p class="section-hint">
               The system records your personnel account
               and the verification date.
             </p>
-
             @if (invalid('residencyVerified')) {
               <small class="field-error">
                 Confirm in-person verification before
@@ -739,19 +640,14 @@
           >
             Cancel
           </button>
-
           <button
             type="submit"
             class="btn-primary"
             [attr.aria-busy]="saving()"
           >
             @if (saving()) {
-              <span
-                class="spinner"
-                aria-hidden="true"
-              ></span>
+              <span class="spinner" aria-hidden="true"></span>
             }
-
             {{
               saving()
                 ? 'Saving…'

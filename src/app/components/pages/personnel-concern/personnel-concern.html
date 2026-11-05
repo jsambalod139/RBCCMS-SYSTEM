@@ -275,7 +275,9 @@
                   }}
                 </p>
 
-                <p>{{ update.remarks || 'No remarks provided.' }}</p>
+                <p>
+                  {{ update.remarks || 'No remarks provided.' }}
+                </p>
               </div>
 
               <time [attr.datetime]="update.created_at">
@@ -343,14 +345,6 @@
           }
         </select>
       </div>
-
-      <button
-        type="button"
-        class="reset-button"
-        (click)="clearFilters()"
-      >
-        Reset
-      </button>
     </section>
 
     <div class="results-heading">

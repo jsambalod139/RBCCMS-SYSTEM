@@ -1,16 +1,8 @@
 <main class="offices-page">
-  @if (
-    !creatingOffice() &&
-    !selectedId() &&
-    !personnelOfficeId()
-  ) {
+  @if (!creatingOffice() && !selectedId() && !personnelOfficeId()) {
     <header class="page-heading">
       <p class="eyebrow">ADMINISTRATOR PORTAL</p>
-
-      <h1 #viewHeading tabindex="-1">
-        Participating Offices
-      </h1>
-
+      <h1 #viewHeading tabindex="-1">Participating Offices</h1>
       <p>
         Maintain office information and view assigned
         categories and authorized personnel.
@@ -19,43 +11,24 @@
   }
 
   @if (success()) {
-    <p class="feedback success" role="status">
-      {{ success() }}
-    </p>
+    <p class="feedback success" role="status">{{ success() }}</p>
   }
-
   @if (error()) {
-    <p class="feedback error" role="alert">
-      {{ error() }}
-    </p>
+    <p class="feedback error" role="alert">{{ error() }}</p>
   }
 
-  @if (
-    !creatingOffice() &&
-    !selectedId() &&
-    !personnelOfficeId()
-  ) {
+  @if (!creatingOffice() && !selectedId() && !personnelOfficeId()) {
     <div class="directory-view">
       @if (offices.loading()) {
         <section class="notice" role="status">
-          <span
-            class="spinner"
-            aria-hidden="true"
-          ></span>
-
+          <span class="spinner" aria-hidden="true"></span>
           <p>Loading offices and assignments...</p>
         </section>
       } @else if (offices.error()) {
         <section class="notice" role="alert">
           <h2>Office information unavailable</h2>
           <p>{{ offices.error() }}</p>
-
-          <button
-            type="button"
-            (click)="offices.reload()"
-          >
-            Try Again
-          </button>
+          <button type="button" (click)="offices.reload()">Try Again</button>
         </section>
       } @else {
         <div class="directory-actions">
@@ -70,18 +43,10 @@
           </button>
         </div>
 
-        <section
-          class="records-card"
-          aria-labelledby="directory-title"
-        >
+        <section class="records-card" aria-labelledby="directory-title">
           <div class="section-heading">
-            <h2 id="directory-title">
-              Office Directory
-            </h2>
-
-            <span>
-              {{ offices.records().length }} office(s)
-            </span>
+            <h2 id="directory-title">Office Directory</h2>
+            <span>{{ offices.records().length }} office(s)</span>
           </div>
 
           <div
@@ -100,40 +65,24 @@
                   <th scope="col">Actions</th>
                 </tr>
               </thead>
-
               <tbody>
-                @for (
-                  office of offices.records();
-                  track office.office_id
-                ) {
+                @for (office of offices.records(); track office.office_id) {
                   <tr>
                     <td class="office-name">
-                      <strong>
-                        {{ office.office_name }}
-                      </strong>
-
+                      <strong>{{ office.office_name }}</strong>
                       <p class="muted">
-                        {{
-                          office.description ||
-                          'No description provided.'
-                        }}
+                        {{ office.description || 'No description provided.' }}
                       </p>
                     </td>
-
                     <td>
                       <span
                         class="badge"
                         [class.active]="office.is_active"
                         [class.inactive]="!office.is_active"
                       >
-                        {{
-                          office.is_active
-                            ? 'Active'
-                            : 'Inactive'
-                        }}
+                        {{ office.is_active ? 'Active' : 'Inactive' }}
                       </span>
                     </td>
-
                     <td>
                       <ul class="assignment-list">
                         @for (
@@ -142,50 +91,33 @@
                         ) {
                           <li>
                             {{ category.name }}
-
                             @if (!category.active) {
-                              <span class="muted">
-                                (inactive)
-                              </span>
+                              <span class="muted">(inactive)</span>
                             }
                           </li>
                         } @empty {
-                          <li class="muted">
-                            No categories assigned.
-                          </li>
+                          <li class="muted">No categories assigned.</li>
                         }
                       </ul>
                     </td>
-
                     <td>
-                      <ul
-                        class="assignment-list personnel-list"
-                      >
+                      <ul class="assignment-list personnel-list">
                         @for (
                           person of offices.personnelFor(office.office_id);
                           track person.uid
                         ) {
                           <li>
-                            <strong>
-                              {{ person.name }}
-                            </strong>
-
-                            <span class="muted">
-                              {{ person.email }}
-                            </span>
-
+                            <strong>{{ person.name }}</strong>
+                            <span class="muted">{{ person.email }}</span>
                             <span class="muted">
                               {{ person.status | titlecase }}
                             </span>
                           </li>
                         } @empty {
-                          <li class="muted">
-                            No personnel assigned.
-                          </li>
+                          <li class="muted">No personnel assigned.</li>
                         }
                       </ul>
                     </td>
-
                     <td>
                       <div class="row-actions">
                         <button
@@ -196,7 +128,6 @@
                         >
                           Edit Office
                         </button>
-
                         <button
                           type="button"
                           class="primary"
@@ -205,20 +136,18 @@
                         >
                           Add Personnel
                         </button>
-
                         <button
                           type="button"
                           class="danger delete-office"
                           (click)="deleteOffice(office)"
                           [disabled]="saving() || !!deleteHint(office)"
                           [attr.aria-describedby]="
-                            deleteHint(office)
+                            deleteHint(office) &&
+                            office.office_id !== 'barangay-office'
                               ? 'delete-hint-' + office.office_id
                               : null
                           "
-                          [attr.aria-busy]="
-                            deletingId() === office.office_id
-                          "
+                          [attr.aria-busy]="deletingId() === office.office_id"
                         >
                           {{
                             deletingId() === office.office_id
@@ -227,7 +156,10 @@
                           }}
                         </button>
 
-                        @if (deleteHint(office)) {
+                        @if (
+                          deleteHint(office) &&
+                          office.office_id !== 'barangay-office'
+                        ) {
                           <small
                             class="delete-hint"
                             [id]="'delete-hint-' + office.office_id"
@@ -248,38 +180,19 @@
               </tbody>
             </table>
           </div>
-
-          <p class="section-note">
-            Personnel accounts belong to individual staff
-            members. Multiple personnel members may be
-            assigned to the same office.
-          </p>
         </section>
       }
     </div>
   }
 
   @if (creatingOffice() || selectedId()) {
-    <section
-      class="editor-card detail-view"
-      aria-labelledby="edit-title"
-    >
+    <section class="editor-card detail-view" aria-labelledby="edit-title">
       <header class="editor-heading">
         <div>
           <p class="eyebrow">ADMINISTRATOR PORTAL</p>
-
-          <h1
-            id="edit-title"
-            #viewHeading
-            tabindex="-1"
-          >
-            {{
-              creatingOffice()
-                ? 'Add Office'
-                : 'Edit Office Information'
-            }}
+          <h1 id="edit-title" #viewHeading tabindex="-1">
+            {{ creatingOffice() ? 'Add Office' : 'Edit Office Information' }}
           </h1>
-
           <p class="view-description">
             {{
               creatingOffice()
@@ -288,7 +201,6 @@
             }}
           </p>
         </div>
-
         <button
           type="button"
           class="secondary back-button"
@@ -300,17 +212,10 @@
         </button>
       </header>
 
-      <form
-        #officeForm="ngForm"
-        (ngSubmit)="save(officeForm)"
-        novalidate
-      >
+      <form #officeForm="ngForm" (ngSubmit)="save(officeForm)" novalidate>
         <fieldset [disabled]="saving()">
           <div class="form-field">
-            <label for="office-name">
-              Office Name *
-            </label>
-
+            <label for="office-name">Office Name *</label>
             <input
               id="office-name"
               name="officeName"
@@ -321,10 +226,7 @@
           </div>
 
           <div class="form-field">
-            <label for="office-description">
-              Description
-            </label>
-
+            <label for="office-description">Description</label>
             <textarea
               id="office-description"
               name="description"
@@ -332,18 +234,12 @@
               maxlength="1000"
               rows="4"
             ></textarea>
-
-            <small class="character-count">
-              {{ description.length }}/1000
-            </small>
+            <small class="character-count">{{ description.length }}/1000</small>
           </div>
 
           @if (creatingOffice()) {
             <div class="form-field">
-              <label for="new-category-name">
-                New Category Name *
-              </label>
-
+              <label for="new-category-name">New Category Name *</label>
               <input
                 id="new-category-name"
                 name="categoryName"
@@ -352,25 +248,14 @@
                 required
                 maxlength="150"
               />
-
               @if (
-                (
-                  categoryControl.touched ||
-                  officeForm.submitted
-                ) &&
+                (categoryControl.touched || officeForm.submitted) &&
                 !categoryName.trim()
               ) {
                 <small class="field-error">
                   Enter a new concern category name.
                 </small>
               }
-
-              <small class="muted">
-                This category will become available to
-                residents after an approved personnel
-                account is created for this office.
-                Existing categories stay unchanged.
-              </small>
             </div>
           }
 
@@ -380,16 +265,8 @@
               name="officeActive"
               [(ngModel)]="officeActive"
             />
-
             Office is active
           </label>
-
-          <p class="section-note">
-            Office status controls whether new personnel
-            can be registered here. Existing personnel
-            access and concern routing are handled
-            separately.
-          </p>
 
           <div class="form-actions">
             <button
@@ -399,7 +276,6 @@
             >
               Cancel
             </button>
-
             <button
               type="submit"
               class="primary"
@@ -407,20 +283,13 @@
                 saving() ||
                 officeForm.invalid ||
                 !officeName.trim() ||
-                (
-                  creatingOffice() &&
-                  !categoryName.trim()
-                )
+                (creatingOffice() && !categoryName.trim())
               "
               [attr.aria-busy]="saving()"
             >
               @if (saving()) {
-                <span
-                  class="button-spinner"
-                  aria-hidden="true"
-                ></span>
+                <span class="button-spinner" aria-hidden="true"></span>
               }
-
               {{
                 saving()
                   ? 'Saving...'
@@ -445,21 +314,13 @@
       <header class="editor-heading">
         <div>
           <p class="eyebrow">ADMINISTRATOR PORTAL</p>
-
-          <h1
-            id="personnel-title"
-            #viewHeading
-            tabindex="-1"
-          >
+          <h1 id="personnel-title" #viewHeading tabindex="-1">
             Add Personnel
           </h1>
-
           <p class="view-description">
-            Create an authorized personnel account for
-            the selected office.
+            Create an authorized personnel account for the selected office.
           </p>
         </div>
-
         <button
           type="button"
           class="secondary back-button"
@@ -473,10 +334,7 @@
 
       <p class="selected-office">
         Assigned office:
-
-        <strong>
-          {{ officeLabel(personnelOfficeId()) }}
-        </strong>
+        <strong>{{ officeLabel(personnelOfficeId()) }}</strong>
       </p>
 
       <form
@@ -487,10 +345,7 @@
         <fieldset [disabled]="saving()">
           <div class="form-grid">
             <div class="form-field">
-              <label for="personnel-name">
-                Full Name *
-              </label>
-
+              <label for="personnel-name">Full Name *</label>
               <input
                 id="personnel-name"
                 name="personnelName"
@@ -500,16 +355,9 @@
                 maxlength="150"
                 autocomplete="name"
               />
-
               @if (
-                (
-                  nameControl.invalid ||
-                  !personnelName.trim()
-                ) &&
-                (
-                  nameControl.touched ||
-                  personnelForm.submitted
-                )
+                (nameControl.invalid || !personnelName.trim()) &&
+                (nameControl.touched || personnelForm.submitted)
               ) {
                 <small class="field-error">
                   Enter the personnel member's full name.
@@ -518,10 +366,7 @@
             </div>
 
             <div class="form-field">
-              <label for="personnel-email">
-                Email Address *
-              </label>
-
+              <label for="personnel-email">Email Address *</label>
               <input
                 id="personnel-email"
                 name="personnelEmail"
@@ -535,25 +380,16 @@
                 autocapitalize="none"
                 spellcheck="false"
               />
-
               @if (
                 emailControl.invalid &&
-                (
-                  emailControl.touched ||
-                  personnelForm.submitted
-                )
+                (emailControl.touched || personnelForm.submitted)
               ) {
-                <small class="field-error">
-                  Enter a valid email address.
-                </small>
+                <small class="field-error">Enter a valid email address.</small>
               }
             </div>
 
             <div class="form-field">
-              <label for="personnel-password">
-                Password *
-              </label>
-
+              <label for="personnel-password">Password *</label>
               <input
                 id="personnel-password"
                 name="personnelPassword"
@@ -566,21 +402,13 @@
                 autocomplete="new-password"
                 aria-describedby="password-help"
               />
-
-              <small
-                id="password-help"
-                class="muted"
-              >
+              <small id="password-help" class="muted">
                 Use 8–128 characters. Firebase
                 password-policy requirements also apply.
               </small>
-
               @if (
                 passwordControl.invalid &&
-                (
-                  passwordControl.touched ||
-                  personnelForm.submitted
-                )
+                (passwordControl.touched || personnelForm.submitted)
               ) {
                 <small class="field-error">
                   Enter a password of 8–128 characters.
@@ -589,10 +417,7 @@
             </div>
 
             <div class="form-field">
-              <label for="confirm-password">
-                Confirm Password *
-              </label>
-
+              <label for="confirm-password">Confirm Password *</label>
               <input
                 id="confirm-password"
                 name="confirmPassword"
@@ -604,17 +429,11 @@
                 maxlength="128"
                 autocomplete="new-password"
               />
-
               @if (
-                (
-                  confirmControl.touched ||
-                  personnelForm.submitted
-                ) &&
+                (confirmControl.touched || personnelForm.submitted) &&
                 personnelPassword !== confirmPassword
               ) {
-                <small class="field-error">
-                  The passwords do not match.
-                </small>
+                <small class="field-error">The passwords do not match.</small>
               }
             </div>
           </div>
@@ -625,16 +444,14 @@
               name="showPasswords"
               [(ngModel)]="showPasswords"
             />
-
             Show passwords
           </label>
 
           <p class="section-note">
             Create accounts only for authorized personnel.
-            After successful registration, give the
-            personnel member their login email and
-            password privately. No password setup email
-            is required.
+            After successful registration, give the personnel
+            member their login email and password privately.
+            No password setup email is required.
           </p>
 
           <div class="form-actions">
@@ -645,7 +462,6 @@
             >
               Cancel
             </button>
-
             <button
               type="submit"
               class="primary"
@@ -658,17 +474,9 @@
               [attr.aria-busy]="saving()"
             >
               @if (saving()) {
-                <span
-                  class="button-spinner"
-                  aria-hidden="true"
-                ></span>
+                <span class="button-spinner" aria-hidden="true"></span>
               }
-
-              {{
-                saving()
-                  ? 'Creating...'
-                  : 'Create Personnel Account'
-              }}
+              {{ saving() ? 'Creating...' : 'Create Personnel Account' }}
             </button>
           </div>
         </fieldset>

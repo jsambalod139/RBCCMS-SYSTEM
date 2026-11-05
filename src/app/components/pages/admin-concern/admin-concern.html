@@ -1,7 +1,4 @@
-<main
-  class="admin-concerns-page"
-  [attr.aria-busy]="loading()"
->
+<main class="admin-concerns-page" [attr.aria-busy]="loading()">
   @if (loading()) {
     <p class="page-notice" role="status">
       Loading community concerns...
@@ -266,14 +263,6 @@
           }
         </select>
       </div>
-
-      <button
-        type="button"
-        class="secondary-button"
-        (click)="clearFilters()"
-      >
-        Reset
-      </button>
     </section>
 
     <div class="results-heading">

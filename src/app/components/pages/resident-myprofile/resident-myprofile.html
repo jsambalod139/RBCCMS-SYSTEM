@@ -2,7 +2,6 @@
   <div class="page-heading">
     <div>
       <h1>My Profile</h1>
-      <p>View your resident account and contact information.</p>
     </div>
   </div>
 
@@ -15,7 +14,6 @@
   @if (errorMessage()) {
     <div class="profile-note" role="alert">
       <p>{{ errorMessage() }}</p>
-
       <button
         type="button"
         class="edit-button"
@@ -44,11 +42,8 @@
         <div class="profile-heading-details">
           <span class="resident-id">
             Resident ID:
-            <strong>
-              {{ resident.residentId || 'Not assigned' }}
-            </strong>
+            <strong>{{ resident.residentId || 'Not assigned' }}</strong>
           </span>
-
           <h2>{{ resident.name || 'Name not provided' }}</h2>
           <p>Barangay Resident</p>
         </div>
@@ -56,36 +51,23 @@
 
       <section class="information-section">
         <h3>Resident Information</h3>
-
         <div class="information-grid">
           <div class="information-item">
             <span class="label">Full Name</span>
-            <span class="value">
-              {{ resident.name || 'Not provided' }}
-            </span>
+            <span class="value">{{ resident.name || 'Not provided' }}</span>
           </div>
-
           <div class="information-item">
             <span class="label">Address</span>
-            <span class="value">
-              {{ resident.address || 'Not provided' }}
-            </span>
+            <span class="value">{{ resident.address || 'Not provided' }}</span>
           </div>
-
           <div class="information-item">
             <span class="label">Purok</span>
-            <span class="value">
-              {{ resident.purok || 'Not provided' }}
-            </span>
+            <span class="value">{{ resident.purok || 'Not provided' }}</span>
           </div>
-
           <div class="information-item">
             <span class="label">Residency Verification</span>
-            <span class="value">
-              {{ resident.verificationStatus }}
-            </span>
+            <span class="value">{{ resident.verificationStatus }}</span>
           </div>
-
           <div class="information-item">
             <span class="label">Verification Date</span>
             <span class="value">
@@ -96,27 +78,20 @@
               }}
             </span>
           </div>
-
           <div class="information-item">
             <span class="label">Account Status</span>
-            <span class="value">
-              {{ resident.accountStatus | titlecase }}
-            </span>
+            <span class="value">{{ resident.accountStatus | titlecase }}</span>
           </div>
         </div>
       </section>
 
       <section class="information-section contact-section">
         <h3>Contact Information</h3>
-
         <div class="information-grid">
           <div class="information-item">
             <span class="label">Email Address</span>
-            <span class="value">
-              {{ resident.email || 'Not provided' }}
-            </span>
+            <span class="value">{{ resident.email || 'Not provided' }}</span>
           </div>
-
           <div class="information-item">
             <span class="label">Contact Number</span>
             <span class="value">
@@ -125,12 +100,6 @@
           </div>
         </div>
       </section>
-
-      <div class="profile-note">
-        For corrections to your personal information or a change
-        of address, please contact the barangay.
-        Profile details are read-only.
-      </div>
     </section>
   }
 </main>

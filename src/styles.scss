@@ -371,3 +371,184 @@ app-notifications {
     min-height: 0;
   }
 }
+
+/* Dashboard entrances and chart animations for all three roles. */
+@media screen {
+  :is(
+    app-admin-dashboard,
+    app-personnel-dashboard,
+    app-resident-dashboard
+  ) {
+    > :is(
+      .admin-dashboard,
+      .personnel-dashboard,
+      .dashboard-content
+    ) {
+      animation: rbccms-page-enter 200ms ease-out;
+    }
+
+    :is(
+      .summary-card,
+      .chart-card,
+      .analytics-card
+    ) {
+      animation: rbccms-panel-enter 220ms ease-out;
+    }
+
+    :is(
+      .monthly-bar,
+      .month-bar
+    ) {
+      transform-origin: center bottom;
+      animation: rbccms-bar-enter 240ms ease-out;
+      transition: height 220ms ease;
+    }
+
+    :is(
+      .bar-track > span,
+      .office-fill,
+      .category-fill
+    ) {
+      transform-origin: left center;
+      animation: rbccms-horizontal-enter 240ms ease-out;
+      transition: width 220ms ease;
+    }
+
+    .donut {
+      animation: rbccms-panel-enter 240ms ease-out;
+    }
+  }
+
+  .rbccms-login-toast {
+    font-family: 'Inter', Arial, sans-serif;
+    border: 1px solid #d6e7dc;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgb(33 55 42 / 14%);
+  }
+}
+
+@keyframes rbccms-page-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes rbccms-panel-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes rbccms-bar-enter {
+  from {
+    opacity: 0;
+    transform: scaleY(0.15);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes rbccms-horizontal-enter {
+  from {
+    opacity: 0;
+    transform: scaleX(0.15);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(
+    app-admin-dashboard,
+    app-personnel-dashboard,
+    app-resident-dashboard
+  ) {
+    > :is(
+      .admin-dashboard,
+      .personnel-dashboard,
+      .dashboard-content
+    ),
+    :is(
+      .summary-card,
+      .chart-card,
+      .analytics-card,
+      .monthly-bar,
+      .month-bar,
+      .bar-track > span,
+      .office-fill,
+      .category-fill,
+      .donut
+    ) {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+
+  .rbccms-login-toast,
+  .rbccms-login-toast * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media screen and (prefers-reduced-motion: no-preference) {
+  :is(
+    app-admin-dashboard,
+    app-personnel-dashboard,
+    app-resident-dashboard
+  ) {
+    > :is(
+      .admin-dashboard,
+      .personnel-dashboard,
+      .dashboard-content
+    ) {
+      animation-duration: 400ms;
+    }
+
+    :is(
+      .summary-card,
+      .chart-card,
+      .analytics-card
+    ) {
+      animation-duration: 450ms;
+    }
+
+    :is(
+      .monthly-bar,
+      .month-bar,
+      .bar-track > span,
+      .office-fill,
+      .category-fill,
+      .donut
+    ) {
+      animation-duration: 600ms;
+      animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    :is(.monthly-bar, .month-bar) {
+      transition-duration: 450ms;
+    }
+
+    :is(
+      .bar-track > span,
+      .office-fill,
+      .category-fill
+    ) {
+      transition-duration: 450ms;
+    }
+  }
+}

@@ -2,19 +2,14 @@
   <section class="page-heading">
     <div>
       <p class="eyebrow">PERSONNEL PORTAL</p>
-
       <h1>Personnel Dashboard</h1>
-
       <p class="page-description">
         Monitor community concerns and their latest updates.
       </p>
     </div>
   </section>
 
-  <section
-    class="summary-grid"
-    aria-label="Concern statistics"
-  >
+  <section class="summary-grid" aria-label="Concern statistics">
     <article class="summary-card total-card">
       <div class="summary-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24">
@@ -22,7 +17,6 @@
           <path d="M14 3v5h5M10 13h6M10 17h6" />
         </svg>
       </div>
-
       <div class="summary-info">
         <p>Total Concerns</p>
         <h2>{{ totalConcerns() }}</h2>
@@ -36,7 +30,6 @@
           <path d="M12 7v5l3 2" />
         </svg>
       </div>
-
       <div class="summary-info">
         <p>Pending</p>
         <h2>{{ pendingCount() }}</h2>
@@ -51,7 +44,6 @@
           <path d="M5.6 5.6 7 7" />
         </svg>
       </div>
-
       <div class="summary-info">
         <p>In Progress</p>
         <h2>{{ inProgressCount() }}</h2>
@@ -61,13 +53,10 @@
     <article class="summary-card resolved-card">
       <div class="summary-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24">
-          <path
-            d="m12 3 8 3v5c0 5-3.4 8-8 10-4.6-2-8-5-8-10V6z"
-          />
+          <path d="m12 3 8 3v5c0 5-3.4 8-8 10-4.6-2-8-5-8-10V6z" />
           <path d="m8.5 12 2.3 2.3 4.8-5" />
         </svg>
       </div>
-
       <div class="summary-info">
         <p>Resolved</p>
         <h2>{{ resolvedCount() }}</h2>
@@ -80,7 +69,6 @@
       class="analytics-grid"
       aria-label="Community concern analytics"
     >
-      <!-- Monthly submissions -->
       <article class="analytics-card">
         <header class="analytics-heading">
           <div>
@@ -89,22 +77,14 @@
           </div>
 
           <div class="period-control">
-            <label for="analytics-period">
-              Period
-            </label>
-
+            <label for="analytics-period">Period</label>
             <select
               id="analytics-period"
               [value]="period()"
               (change)="changePeriod($event)"
             >
-              <option value="6">
-                Last 6 months
-              </option>
-
-              <option value="12">
-                Last 12 months
-              </option>
+              <option value="6">Last 6 months</option>
+              <option value="12">Last 12 months</option>
             </select>
           </div>
         </header>
@@ -121,10 +101,7 @@
             aria-hidden="true"
           >
             <div class="chart-plot">
-              @for (
-                tick of chartTicks();
-                track tick.value
-              ) {
+              @for (tick of chartTicks(); track tick.value) {
                 <div
                   class="chart-gridline"
                   [style.bottom.%]="tick.position"
@@ -136,32 +113,18 @@
               <div
                 class="chart-columns"
                 [style.grid-template-columns]="
-                  'repeat(' +
-                  period() +
-                  ', minmax(0, 1fr))'
+                  'repeat(' + period() + ', minmax(0, 1fr))'
                 "
               >
-                @for (
-                  month of monthlySubmissions();
-                  track month.key
-                ) {
+                @for (month of monthlySubmissions(); track month.key) {
                   <div class="chart-column">
                     <div
                       class="month-bar"
-                      [style.height.%]="
-                        month.count /
-                        chartMaximum() *
-                        100
-                      "
+                      [style.height.%]="month.count / chartMaximum() * 100"
                     >
-                      <span class="bar-value">
-                        {{ month.count }}
-                      </span>
+                      <span class="bar-value">{{ month.count }}</span>
                     </div>
-
-                    <span class="month-label">
-                      {{ month.label }}
-                    </span>
+                    <span class="month-label">{{ month.label }}</span>
                   </div>
                 }
               </div>
@@ -169,90 +132,49 @@
           </div>
         </div>
 
-        <!-- Accessible text version of the chart -->
         <table class="visually-hidden">
-          <caption>
-            Monthly concern submissions
-          </caption>
-
+          <caption>Monthly concern submissions</caption>
           <thead>
             <tr>
               <th scope="col">Month</th>
               <th scope="col">Concerns</th>
             </tr>
           </thead>
-
           <tbody>
-            @for (
-              month of monthlySubmissions();
-              track month.key
-            ) {
+            @for (month of monthlySubmissions(); track month.key) {
               <tr>
-                <th scope="row">
-                  {{ month.label }}
-                </th>
-
+                <th scope="row">{{ month.label }}</th>
                 <td>{{ month.count }}</td>
               </tr>
             }
           </tbody>
         </table>
-
-        <p class="analytics-note">
-          {{ periodTotal() }} submissions in this period.
-          Months without submissions show 0.
-          Dates use Philippine time.
-        </p>
       </article>
 
-      <!-- Responsible offices -->
       <article class="analytics-card">
         <header class="analytics-heading">
           <div>
             <h2>Concerns by Responsible Office</h2>
-
             <p>
-              All submitted concerns, regardless of status ·
-              All time
+              All submitted concerns, regardless of status · All time
             </p>
           </div>
         </header>
 
         <ul class="office-list">
-          @for (
-            office of officeBreakdown();
-            track office.id
-          ) {
+          @for (office of officeBreakdown(); track office.id) {
             <li class="office-row">
-              <span class="office-name">
-                {{ office.name }}
-              </span>
-
-              <div
-                class="office-track"
-                aria-hidden="true"
-              >
+              <span class="office-name">{{ office.name }}</span>
+              <div class="office-track" aria-hidden="true">
                 <span
                   class="office-fill"
-                  [style.width.%]="
-                    office.count /
-                    officeMaximum() *
-                    100
-                  "
+                  [style.width.%]="office.count / officeMaximum() * 100"
                 ></span>
               </div>
-
-              <strong class="office-count">
-                {{ office.count }}
-              </strong>
+              <strong class="office-count">{{ office.count }}</strong>
             </li>
           }
         </ul>
-
-        <p class="analytics-note">
-          Each number represents submitted concerns routed
-          to an office, including resolved and rejected reports.
-        </p>
       </article>
     </section>
   }
@@ -263,19 +185,14 @@
     [attr.aria-busy]="loading()"
   >
     <div class="section-heading">
-      <h2 id="recent-concerns-title">
-        Recent Assigned Concerns
-      </h2>
+      <h2 id="recent-concerns-title">Recent Assigned Concerns</h2>
     </div>
 
     @if (loading()) {
-      <div class="page-notice" role="status">
-        Loading concerns…
-      </div>
+      <div class="page-notice" role="status">Loading concerns…</div>
     } @else if (loadError()) {
       <div class="error-state" role="alert">
         <p>{{ loadError() }}</p>
-
         <button
           type="button"
           class="btn-retry"
@@ -287,10 +204,7 @@
     } @else if (recentConcerns().length === 0) {
       <div class="empty-state">
         <h3>No concerns yet</h3>
-
-        <p>
-          Submitted community concerns will appear here.
-        </p>
+        <p>Submitted community concerns will appear here.</p>
       </div>
     } @else {
       <ul class="concern-list">
@@ -300,20 +214,14 @@
         ) {
           <li class="concern-row">
             <div class="concern-information">
-              <h3>
-                {{ categoryName(concern) }}
-              </h3>
-
+              <h3>{{ categoryName(concern) }}</h3>
               <div class="concern-meta">
                 <span
                   class="status-badge"
-                  [ngClass]="
-                    statusClass(concern.current_status)
-                  "
+                  [ngClass]="statusClass(concern.current_status)"
                 >
                   {{ concern.current_status }}
                 </span>
-
                 <span class="concern-date">
                   {{
                     concern.reported_at
@@ -329,8 +237,7 @@
               class="btn-view"
               (click)="viewConcerns()"
               [attr.aria-label]="
-                'Open Concerns page for ' +
-                categoryName(concern)
+                'Open Concerns page for ' + categoryName(concern)
               "
             >
               See Status

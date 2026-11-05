@@ -1,12 +1,12 @@
 import {
   Injectable,
   OnDestroy,
-  signal
+  signal,
 } from '@angular/core';
 
 import {
   getAuth,
-  onAuthStateChanged
+  onAuthStateChanged,
 } from 'firebase/auth';
 
 import {
@@ -17,7 +17,7 @@ import {
   getDoc,
   onSnapshot,
   query,
-  where
+  where,
 } from 'firebase/firestore';
 
 import { firebaseApp } from '../firebase.config';
@@ -39,6 +39,7 @@ export interface ResidentRecord {
   createdBy: string;
   registrationRequestId: string;
   registrationState: string;
+  profilePhotoPath?: string;
 }
 
 export interface ResidentInput {
@@ -106,7 +107,6 @@ export class ResidentService implements OnDestroy {
 
         const profileGeneration =
           ++this.profileGeneration;
-        this.canManageResidents.set(false);
 
         this.stopResidents?.();
         this.canManageResidents.set(false);
@@ -119,9 +119,7 @@ export class ResidentService implements OnDestroy {
           profile?.['accountStatus'] !== 'approved' ||
           profile?.['officeId'] !== 'barangay-office'
         ) {
-          // Other offices may use concerns without loading the resident registry.
           this.error.set('');
-
           this.loading.set(false);
           return;
         }
@@ -162,6 +160,7 @@ export class ResidentService implements OnDestroy {
                 middleName: text('middleName'),
                 lastName: text('lastName'),
                 name: text('name'),
+                profilePhotoPath: text('profilePhotoPath'),
                 email: text('email'),
                 contactNumber: text('contactNumber'),
                 address: text('address'),
@@ -182,7 +181,7 @@ export class ResidentService implements OnDestroy {
                   text('registrationRequestId'),
 
                 registrationState:
-                  text('registrationState')
+                  text('registrationState'),
               };
             });
 
@@ -230,6 +229,90 @@ export class ResidentService implements OnDestroy {
     );
   }
 
+  async downloadResidentPhoto(
+    residentUid: string,
+    signal?: AbortSignal
+  ): Promise<Blob> {
+    await this.auth.authStateReady();
+
+    const user = this.auth.currentUser;
+    const generation = this.generation;
+
+    if (!user || !this.canManageResidents()) {
+      throw new Error(
+        'Resident photo access is unavailable.'
+      );
+    }
+
+    const token = await user.getIdToken();
+
+    if (
+      this.auth.currentUser?.uid !== user.uid ||
+      generation !== this.generation ||
+      !this.canManageResidents()
+    ) {
+      throw new Error('Your account changed.');
+    }
+
+    const response = await fetch(
+      'https://nlwjwvhjojnjrmlaykym.supabase.co/functions/v1/profile-photos',
+      {
+        method: 'POST',
+        credentials: 'omit',
+        cache: 'no-store',
+
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+
+        body: JSON.stringify({
+          action: 'resident-download',
+          resident_uid: residentUid,
+        }),
+
+        signal: signal
+          ? AbortSignal.any([
+              signal,
+              AbortSignal.timeout(30000),
+            ])
+          : AbortSignal.timeout(30000),
+      }
+    );
+
+    if (!response.ok) {
+      const result = await response
+        .json()
+        .catch(() => null);
+
+      throw new Error(
+        typeof result?.error === 'string'
+          ? result.error
+          : 'The resident photo could not be loaded.'
+      );
+    }
+
+    const blob = await response.blob();
+
+    if (
+      !blob.size ||
+      blob.size > 250 * 1024 ||
+      blob.type !== 'image/jpeg'
+    ) {
+      throw new Error('Invalid resident photo response.');
+    }
+
+    if (
+      this.auth.currentUser?.uid !== user.uid ||
+      generation !== this.generation ||
+      !this.canManageResidents()
+    ) {
+      throw new Error('Your account changed.');
+    }
+
+    return blob;
+  }
+
   canResume(resident: ResidentRecord): boolean {
     return (
       resident.registrationState === 'incomplete' &&
@@ -244,7 +327,7 @@ export class ResidentService implements OnDestroy {
     return this.request({
       ...input,
       action: 'create',
-      requestId
+      requestId,
     });
   }
 
@@ -262,7 +345,7 @@ export class ResidentService implements OnDestroy {
     return this.request({
       ...details,
       action: 'edit',
-      uid
+      uid,
     });
   }
 
@@ -277,12 +360,20 @@ export class ResidentService implements OnDestroy {
       throw new Error('Please sign in.');
     }
 
-    const profile = (await getDoc(doc(this.db, 'users', user.uid))).data();
-    if (profile?.['role'] !== 'personnel' ||
-        profile?.['accountStatus'] !== 'approved' ||
-        profile?.['officeId'] !== 'barangay-office') {
-      throw new Error('Only approved Barangay Office personnel can manage residents.');
+    const profile = (
+      await getDoc(doc(this.db, 'users', user.uid))
+    ).data();
+
+    if (
+      profile?.['role'] !== 'personnel' ||
+      profile?.['accountStatus'] !== 'approved' ||
+      profile?.['officeId'] !== 'barangay-office'
+    ) {
+      throw new Error(
+        'Only approved Barangay Office personnel can manage residents.'
+      );
     }
+
     const token = await user.getIdToken();
 
     if (this.auth.currentUser?.uid !== user.uid) {
@@ -301,11 +392,11 @@ export class ResidentService implements OnDestroy {
 
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
 
         body: JSON.stringify(body),
-        signal: AbortSignal.timeout(60000)
+        signal: AbortSignal.timeout(60000),
       });
     } catch {
       throw new Error(

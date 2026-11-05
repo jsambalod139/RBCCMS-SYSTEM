@@ -1,21 +1,13 @@
-<main
-  class="audit-page"
-  [attr.aria-busy]="loading()"
->
+<main class="audit-page" [attr.aria-busy]="loading()">
   <header class="page-heading">
     <p class="eyebrow">ADMINISTRATOR PORTAL</p>
-
     <h1>Audit Logs</h1>
-
     <p class="page-description">
       Review recorded user actions and affected records.
     </p>
   </header>
 
-  <section
-    class="filter-panel"
-    aria-label="Audit log filters"
-  >
+  <section class="filter-panel" aria-label="Audit log filters">
     <div class="filter-field category-field">
       <label for="audit-category">Category</label>
 
@@ -58,20 +50,9 @@
         />
       </div>
     </div>
-
-    <button
-      type="button"
-      class="button button-outline reset-button"
-      (click)="resetFilters()"
-    >
-      Reset
-    </button>
   </section>
 
-  <section
-    class="records-panel"
-    aria-labelledby="activity-title"
-  >
+  <section class="records-panel" aria-labelledby="activity-title">
     <header class="records-heading">
       <h2 id="activity-title">Activity Records</h2>
 
@@ -85,18 +66,11 @@
 
     @if (loading()) {
       <div class="state-message" role="status">
-        <span
-          class="spinner"
-          aria-hidden="true"
-        ></span>
-
+        <span class="spinner" aria-hidden="true"></span>
         <p>Loading audit logs...</p>
       </div>
     } @else if (errorMessage()) {
-      <div
-        class="state-message error-state"
-        role="alert"
-      >
+      <div class="state-message error-state" role="alert">
         <p>{{ errorMessage() }}</p>
 
         <button
@@ -114,21 +88,11 @@
           selectedCategory() !== 'All categories'
         ) {
           <h3>No matching audit logs</h3>
-
           <p>
-            Try another search or reset the filters.
+            Try another search or select a different category.
           </p>
-
-          <button
-            type="button"
-            class="button button-outline"
-            (click)="resetFilters()"
-          >
-            Reset Filters
-          </button>
         } @else {
           <h3>No audit logs yet</h3>
-
           <p>
             Recorded activity will appear here after logging
             is connected and a new action occurs.
@@ -198,10 +162,7 @@
       </div>
 
       <footer class="pagination">
-        <p
-          class="pagination-summary"
-          aria-live="polite"
-        >
+        <p class="pagination-summary" aria-live="polite">
           Showing {{ firstRecord() }}–{{ lastRecord() }}
           of {{ totalRecords() }}
         </p>
@@ -219,10 +180,7 @@
             Previous
           </button>
 
-          <span
-            class="page-number"
-            aria-live="polite"
-          >
+          <span class="page-number" aria-live="polite">
             Page {{ displayedPage() }} of {{ totalPages() }}
           </span>
 

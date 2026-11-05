@@ -145,15 +145,39 @@ export class LoginComponents implements OnDestroy {
         this.password
       );
 
+      if (this.destroyed) return;
+
+      this.password = '';
+
       const destinations: Record<UserRole, string> = {
         resident: '/res-dashboard',
         personnel: '/perso-dashboard',
         admin: '/ad-dashboard',
       };
 
-      await this.router.navigateByUrl(
+      const navigated = await this.router.navigateByUrl(
         destinations[profile.role]
       );
+
+      if (navigated) {
+        void Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Login successful',
+          text: profile.name
+            ? `Welcome, ${profile.name}!`
+            : 'Welcome to RBCCMS!',
+          showConfirmButton: false,
+          showCloseButton: true,
+          timer: 2200,
+          timerProgressBar: true,
+          returnFocus: false,
+          customClass: {
+            popup: 'rbccms-login-toast',
+          },
+        });
+      }
     } catch (error: unknown) {
       const code =
         typeof error === 'object' &&
