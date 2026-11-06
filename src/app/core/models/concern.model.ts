@@ -64,6 +64,12 @@ export interface ConcernWithRelations {
   reported_at: string;
   updated_at: string | null;
 
+  is_archived?: boolean;
+  archive_revision?: number;
+  archive_changed_at?: string | null;
+  archive_changed_by?: string | null;
+  archive_audit_id?: string | null;
+
   updates: ConcernUpdate[];
 }
 

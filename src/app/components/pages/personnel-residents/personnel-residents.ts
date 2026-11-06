@@ -54,14 +54,10 @@ export class PersonnelResidents implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
 
   readonly mode =
-    signal<'list' | 'view' | 'add' | 'edit' | 'resume'>(
-      'list'
-    );
+    signal<'list' | 'view' | 'add' | 'edit' | 'resume'>('list');
 
   readonly profileUid = signal('');
-
-  readonly profileTab =
-    signal<'personal' | 'history'>('personal');
+  readonly profileTab = signal<'personal' | 'history'>('personal');
 
   readonly saving = signal(false);
   readonly feedback = signal('');
@@ -84,9 +80,7 @@ export class PersonnelResidents implements OnDestroy {
         Validators.pattern(/\S/),
       ],
     ],
-
     middleName: ['', Validators.maxLength(60)],
-
     lastName: [
       '',
       [
@@ -95,7 +89,6 @@ export class PersonnelResidents implements OnDestroy {
         Validators.pattern(/\S/),
       ],
     ],
-
     email: [
       '',
       [
@@ -104,7 +97,6 @@ export class PersonnelResidents implements OnDestroy {
         Validators.maxLength(254),
       ],
     ],
-
     password: [
       '',
       [
@@ -113,7 +105,6 @@ export class PersonnelResidents implements OnDestroy {
         Validators.maxLength(128),
       ],
     ],
-
     contactNumber: [
       '',
       [
@@ -121,7 +112,6 @@ export class PersonnelResidents implements OnDestroy {
         Validators.pattern(/^[+\d() .-]{7,30}$/),
       ],
     ],
-
     address: [
       '',
       [
@@ -130,7 +120,6 @@ export class PersonnelResidents implements OnDestroy {
         Validators.pattern(/\S/),
       ],
     ],
-
     purok: [
       '',
       [
@@ -139,7 +128,6 @@ export class PersonnelResidents implements OnDestroy {
         Validators.pattern(/\S/),
       ],
     ],
-
     residencyVerified: [
       false,
       Validators.requiredTrue,
@@ -169,11 +157,9 @@ export class PersonnelResidents implements OnDestroy {
           value.toLowerCase().includes(term)
         )
       )
-      .sort(
-        (a, b) =>
-          numberOf(a.residentId) -
-            numberOf(b.residentId) ||
-          a.name.localeCompare(b.name)
+      .sort((a, b) =>
+        numberOf(a.residentId) - numberOf(b.residentId) ||
+        a.name.localeCompare(b.name)
       );
   });
 
@@ -183,24 +169,71 @@ export class PersonnelResidents implements OnDestroy {
     ) ?? null
   );
 
-  readonly residentConcerns = computed(() => {
-    const uid = this.selectedResident()?.uid;
+  readonly residentConcerns = signal<Concern[]>([]);
+  readonly historyLoading = signal(false);
+  readonly historyError = signal('');
 
-    if (!uid) return [];
+  private readonly historyRetry = signal(0);
 
-    return this.concernService.concerns()
-      .filter(item => item.resident_id === uid)
-      .sort(
-        (a, b) =>
-          (
-            a.concern_number ??
-            Number.MAX_SAFE_INTEGER
-          ) -
-          (
-            b.concern_number ??
-            Number.MAX_SAFE_INTEGER
-          )
-      );
+  private readonly followHistory = effect(onCleanup => {
+    const resident = this.selectedResident();
+    const canManage = this.service.canManageResidents();
+    const mode = this.mode();
+    const tab = this.profileTab();
+    const accessUid = this.concernService.accessUid();
+    const office = this.concernService.officeId();
+
+    this.historyRetry();
+
+    const controller = new AbortController();
+    let active = true;
+
+    onCleanup(() => {
+      active = false;
+      controller.abort();
+    });
+
+    this.residentConcerns.set([]);
+    this.historyError.set('');
+    this.historyLoading.set(false);
+
+    if (
+      !resident ||
+      !canManage ||
+      !accessUid ||
+      office !== 'barangay-office' ||
+      mode !== 'view' ||
+      tab !== 'history'
+    ) {
+      return;
+    }
+
+    this.historyLoading.set(true);
+
+    void this.concernService
+      .getResidentHistory(
+        resident.uid,
+        controller.signal
+      )
+      .then(records => {
+        if (active && !this.destroyed) {
+          this.residentConcerns.set(records);
+        }
+      })
+      .catch(error => {
+        if (active && !this.destroyed) {
+          this.historyError.set(
+            error instanceof Error
+              ? error.message
+              : 'Unable to load resident history. Please retry.'
+          );
+        }
+      })
+      .finally(() => {
+        if (active && !this.destroyed) {
+          this.historyLoading.set(false);
+        }
+      });
   });
 
   readonly residentPhotoUrl = signal('');
@@ -280,7 +313,11 @@ export class PersonnelResidents implements OnDestroy {
           params.get('resident') || ''
         );
 
-        this.profileTab.set('personal');
+        this.profileTab.set(
+          params.get('tab') === 'history'
+            ? 'history'
+            : 'personal'
+        );
 
         this.mode.set(
           this.profileUid() ? 'view' : 'list'
@@ -290,13 +327,16 @@ export class PersonnelResidents implements OnDestroy {
       });
   }
 
+  refreshHistory(): void {
+    this.historyRetry.update(value => value + 1);
+  }
+
   retryResidentPhoto(): void {
     this.photoRetry.update(value => value + 1);
   }
 
   residentPhotoFailed(): void {
     this.residentPhotoUrl.set('');
-
     this.residentPhotoError.set(
       'Resident photo could not be displayed.'
     );
@@ -329,10 +369,8 @@ export class PersonnelResidents implements OnDestroy {
   }
 
   categoryName(concern: Concern): string {
-    return (
-      concern.category?.category_name ||
-      `Category ${concern.category_id}`
-    );
+    return concern.category?.category_name ||
+      `Category ${concern.category_id}`;
   }
 
   statusClass(status: ConcernStatus): string {
@@ -346,8 +384,11 @@ export class PersonnelResidents implements OnDestroy {
 
   showConcern(concern: Concern): void {
     if (
-      concern.resident_id !==
-      this.selectedResident()?.uid
+      !this.service.canManageResidents() ||
+      concern.resident_id !== this.selectedResident()?.uid ||
+      !this.residentConcerns().some(
+        item => item.concern_id === concern.concern_id
+      )
     ) {
       return;
     }
@@ -357,6 +398,7 @@ export class PersonnelResidents implements OnDestroy {
       {
         queryParams: {
           concern: concern.concern_id,
+          historyResident: concern.resident_id,
         },
       }
     );
@@ -367,10 +409,8 @@ export class PersonnelResidents implements OnDestroy {
   ): boolean {
     const control = this.form.controls[field];
 
-    return (
-      control.invalid &&
-      (control.touched || this.submitted())
-    );
+    return control.invalid &&
+      (control.touched || this.submitted());
   }
 
   add(): void {
@@ -398,9 +438,7 @@ export class PersonnelResidents implements OnDestroy {
   }
 
   edit(resident: ResidentRecord): void {
-    if (
-      resident.registrationState === 'incomplete'
-    ) {
+    if (resident.registrationState === 'incomplete') {
       return;
     }
 
@@ -425,8 +463,7 @@ export class PersonnelResidents implements OnDestroy {
     this.add();
     this.fill(resident, 'resume');
 
-    this.requestId =
-      resident.registrationRequestId;
+    this.requestId = resident.registrationRequestId;
 
     this.form.controls.email.disable();
   }
@@ -439,23 +476,18 @@ export class PersonnelResidents implements OnDestroy {
 
     this.selectedUid = resident.uid;
 
-    const names =
-      resident.name.trim().split(/\s+/);
+    const names = resident.name.trim().split(/\s+/);
 
     this.form.reset({
-      firstName:
-        resident.firstName || names[0] || '',
+      firstName: resident.firstName || names[0] || '',
       middleName: resident.middleName,
-      lastName:
-        resident.lastName ||
-        names.slice(1).join(' '),
+      lastName: resident.lastName || names.slice(1).join(' '),
       email: resident.email,
       password: '',
       contactNumber: resident.contactNumber,
       address: resident.address,
       purok: resident.purok,
-      residencyVerified:
-        resident.residencyVerified,
+      residencyVerified: resident.residencyVerified,
     });
 
     this.verifiedAlready.set(

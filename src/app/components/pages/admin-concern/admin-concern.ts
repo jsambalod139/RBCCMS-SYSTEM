@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import Swal from 'sweetalert2';
 
 import {
   Component,
@@ -50,6 +51,11 @@ export class AdminConcern implements OnDestroy {
     }
   );
 
+  readonly archiveMode = computed(() => false);
+  readonly archiving = signal('');
+  readonly archiveFeedback = signal('');
+  readonly archiveError = signal('');
+
   readonly concerns = this.service.concerns;
 
   readonly loading = computed(
@@ -89,6 +95,7 @@ export class AdminConcern implements OnDestroy {
     () =>
       this.concerns().find(
         item => item.concern_id === this.requestedId()
+          && (item.is_archived === true) === this.archiveMode()
       ) ?? null
   );
 
@@ -112,7 +119,8 @@ export class AdminConcern implements OnDestroy {
           value.toLowerCase().includes(search)
         );
 
-        return matchesStatus && matchesSearch;
+        return (concern.is_archived === true) === this.archiveMode()
+          && matchesStatus && matchesSearch;
       })
       .sort(
         (a, b) =>
@@ -189,6 +197,59 @@ export class AdminConcern implements OnDestroy {
       },
       queryParamsHandling: 'merge',
     });
+  }
+
+  canArchive(concern: Concern): boolean {
+    return concern.is_archived !== true && [
+      'Pending', 'In Progress', 'Resolved', 'Rejected'
+    ].includes(concern.current_status);
+  }
+
+  async changeArchive(concern: Concern): Promise<void> {
+    if (this.archiving() || !this.canArchive(concern)) return;
+    this.archiving.set(concern.concern_id);
+    this.archiveFeedback.set('');
+    this.archiveError.set('');
+    try {
+      const result = await Swal.fire({
+        title: 'Archive Concern',
+        text: 'Please confirm that you wish to archive this concern.',
+        icon: 'warning',
+        iconColor: '#b7791f',
+        showCancelButton: true,
+        reverseButtons: true,
+        confirmButtonText: 'Yes, archive',
+        cancelButtonText: 'Cancel',
+        buttonsStyling: false,
+        focusCancel: true,
+        showCloseButton: false,
+        width: 440,
+        padding: '28px 24px 24px',
+        background: '#ffffff',
+        color: '#21372a',
+        backdrop: 'rgba(16, 34, 24, 0.45)',
+        customClass: {
+          popup: 'rbccms-confirm-popup',
+          icon: 'rbccms-confirm-icon',
+          title: 'rbccms-confirm-title',
+          htmlContainer: 'rbccms-confirm-message',
+          actions: 'rbccms-confirm-actions',
+          confirmButton: 'rbccms-confirm-primary',
+          cancelButton: 'rbccms-confirm-cancel',
+        },
+      });
+      if (!result.isConfirmed) return;
+      await this.service.setArchived(
+        concern.concern_id, true, concern.archive_revision ?? 0
+      );
+      this.archiveFeedback.set('The concern has been archived successfully.');
+      if (this.requestedId() === concern.concern_id) this.closeDetails();
+    } catch (error: unknown) {
+      this.archiveError.set(error instanceof Error
+        ? error.message : 'The request could not be completed. Please try again.');
+    } finally {
+      this.archiving.set('');
+    }
   }
 
   clearFilters(): void {

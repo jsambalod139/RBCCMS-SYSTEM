@@ -1,7 +1,11 @@
 <main class="personnel-concerns-page">
   @if (loading()) {
     <p class="page-notice" role="status">
-      Loading concerns assigned to your office...
+      {{
+        historyMode()
+          ? 'Loading concern details...'
+          : 'Loading concerns assigned to your office...'
+      }}
     </p>
   }
 
@@ -26,7 +30,10 @@
   }
 
   @if (selectedConcern; as concern) {
-    <article class="details-page" aria-labelledby="details-title">
+    <article
+      class="details-page"
+      aria-labelledby="details-title"
+    >
       <header class="details-header">
         <div>
           <p class="eyebrow">PERSONNEL PORTAL</p>
@@ -39,7 +46,11 @@
           (click)="closeDetails()"
         >
           <span aria-hidden="true">←</span>
-          Back to Concerns
+          {{
+            historyMode()
+              ? 'Back to Concern History'
+              : 'Back to Concerns'
+          }}
         </button>
       </header>
 
@@ -64,7 +75,10 @@
       }
 
       <section aria-labelledby="information-title">
-        <h2 id="information-title" class="information-heading">
+        <h2
+          id="information-title"
+          class="information-heading"
+        >
           Concern Information
         </h2>
 
@@ -94,7 +108,10 @@
           <div class="detail-item">
             <dt>Date Reported</dt>
             <dd>
-              {{ concern.reported_at | date:'MMMM d, y, h:mm a' }}
+              {{
+                concern.reported_at |
+                date:'MMMM d, y, h:mm a'
+              }}
             </dd>
           </div>
 
@@ -174,81 +191,94 @@
         <p role="status">Loading attached photo...</p>
       }
 
-      <section
-        class="update-section"
-        aria-labelledby="update-title"
-      >
-        <h2 id="update-title">Update Concern</h2>
-        <p>Change the status or add a progress note.</p>
+      @if (!historyMode()) {
+        <section
+          class="update-section"
+          aria-labelledby="update-title"
+        >
+          <h2 id="update-title">Update Concern</h2>
+          <p>Change the status or add a progress note.</p>
 
-        <div class="update-grid">
-          <div class="update-field">
-            <label for="statusDraft">Status</label>
+          <div class="update-grid">
+            <div class="update-field">
+              <label for="statusDraft">Status</label>
 
-            <select
-              id="statusDraft"
-              name="statusDraft"
-              [(ngModel)]="statusDraft"
-              [disabled]="saving()"
+              <select
+                id="statusDraft"
+                name="statusDraft"
+                [(ngModel)]="statusDraft"
+                [disabled]="saving()"
+              >
+                @for (
+                  status of availableStatuses;
+                  track status
+                ) {
+                  <option [ngValue]="status">
+                    {{ status }}
+                  </option>
+                }
+              </select>
+
+              <small>
+                Keep the current status to add a progress note.
+              </small>
+            </div>
+
+            <div class="update-field">
+              <label for="remarks">Remarks</label>
+
+              <textarea
+                id="remarks"
+                name="remarks"
+                [(ngModel)]="remarks"
+                [disabled]="saving()"
+                rows="4"
+                maxlength="2000"
+                placeholder="Enter progress notes or the reason for the status change..."
+              ></textarea>
+
+              <small>
+                {{ remarks.length }}/2000 characters
+              </small>
+            </div>
+          </div>
+
+          <div class="details-actions">
+            <button
+              type="button"
+              class="secondary-button"
+              (click)="closeDetails()"
             >
-              @for (status of availableStatuses; track status) {
-                <option [ngValue]="status">
-                  {{ status }}
-                </option>
-              }
-            </select>
+              Back to Concerns
+            </button>
 
-            <small>
-              Keep the current status to add a progress note.
-            </small>
+            <button
+              type="button"
+              class="primary-button"
+              [disabled]="
+                saving() ||
+                remarks.length > 2000 ||
+                (
+                  statusDraft === concern.current_status &&
+                  !remarks.trim()
+                )
+              "
+              (click)="saveStatus()"
+            >
+              {{ saving() ? 'Saving...' : 'Save Update' }}
+            </button>
           </div>
-
-          <div class="update-field">
-            <label for="remarks">Remarks</label>
-
-            <textarea
-              id="remarks"
-              name="remarks"
-              [(ngModel)]="remarks"
-              [disabled]="saving()"
-              rows="4"
-              maxlength="2000"
-              placeholder="Enter progress notes or the reason for the status change..."
-            ></textarea>
-
-            <small>{{ remarks.length }}/2000 characters</small>
-          </div>
-        </div>
-
-        <div class="details-actions">
-          <button
-            type="button"
-            class="secondary-button"
-            (click)="closeDetails()"
-          >
-            Back to Concerns
-          </button>
-
-          <button
-            type="button"
-            class="primary-button"
-            [disabled]="
-              saving() ||
-              remarks.length > 2000 ||
-              (statusDraft === concern.current_status && !remarks.trim())
-            "
-            (click)="saveStatus()"
-          >
-            {{ saving() ? 'Saving...' : 'Save Update' }}
-          </button>
-        </div>
-      </section>
+        </section>
+      }
 
       <section class="history-section">
         <h2>Status History &amp; Remarks</h2>
 
         @if (concern.updates.length > 0) {
-          @for (update of concern.updates; track update.update_id) {
+          @for (
+            update of concern.updates;
+            track update.update_id
+          ) {
             <article class="history-item">
               <div>
                 <span
@@ -259,8 +289,11 @@
                 </span>
 
                 <p class="status-transition">
-                  @if (update.previous_status === update.new_status) {
-                    <strong>Progress update</strong> — Status unchanged
+                  @if (
+                    update.previous_status === update.new_status
+                  ) {
+                    <strong>Progress update</strong>
+                    — Status unchanged
                   } @else {
                     {{ update.previous_status || 'Created' }}
                     → {{ update.new_status }}
@@ -281,7 +314,10 @@
               </div>
 
               <time [attr.datetime]="update.created_at">
-                {{ update.created_at | date:'MMM d, y, h:mm a' }}
+                {{
+                  update.created_at |
+                  date:'MMM d, y, h:mm a'
+                }}
               </time>
             </article>
           }
@@ -292,6 +328,14 @@
         }
       </section>
     </article>
+  } @else if (historyMode()) {
+    <button
+      type="button"
+      class="secondary-button back-button"
+      (click)="closeDetails()"
+    >
+      ← Back to Concern History
+    </button>
   } @else {
     <header class="page-header">
       <div>
@@ -299,7 +343,8 @@
         <h1>Concerns</h1>
 
         <p class="page-description">
-          Review concerns assigned to your office and manage their status.
+          Review concerns assigned to your office
+          and manage their status.
         </p>
       </div>
     </header>
@@ -338,7 +383,10 @@
           [ngModel]="selectedStatus()"
           (ngModelChange)="selectedStatus.set($event)"
         >
-          @for (status of statusOptions; track status) {
+          @for (
+            status of statusOptions;
+            track status
+          ) {
             <option [ngValue]="status">
               {{ status }}
             </option>
@@ -373,7 +421,10 @@
             }}
           </p>
 
-          @if (searchTerm() || selectedStatus() !== 'All Status') {
+          @if (
+            searchTerm() ||
+            selectedStatus() !== 'All Status'
+          ) {
             <button
               type="button"
               class="primary-button"

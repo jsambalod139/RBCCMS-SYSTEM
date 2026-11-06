@@ -61,9 +61,7 @@ export class AdminUserManagement implements OnDestroy {
   private listGeneration = 0;
   private destroyed = false;
 
-  private readonly records =
-    signal<AccountRecord[]>([]);
-
+  private readonly records = signal<AccountRecord[]>([]);
   private readonly authorized = signal(false);
 
   readonly currentUid = signal('');
@@ -95,31 +93,29 @@ export class AdminUserManagement implements OnDestroy {
     'rejected',
   ];
 
-  readonly selectedAccount = computed(() =>
-    this.records().find(
-      account => account.uid === this.selectedUid()
-    ) ?? null
+  readonly selectedAccount = computed(
+    () =>
+      this.records().find(
+        account => account.uid === this.selectedUid()
+      ) ?? null
   );
 
   readonly filteredAccounts = computed(() => {
-    const search =
-      this.searchTerm().trim().toLowerCase();
+    const search = this.searchTerm().trim().toLowerCase();
 
-    return this.records().filter(account =>
-      (
-        this.selectedRole() === 'All Roles'
-        || account.role === this.selectedRole()
-      )
-      && (
-        this.selectedStatus() === 'All Status'
-        || account.status === this.selectedStatus()
-      )
-      && [
-        account.name,
-        account.email,
-      ].some(value =>
-        value.toLowerCase().includes(search)
-      )
+    return this.records().filter(
+      account =>
+        (
+          this.selectedRole() === 'All Roles' ||
+          account.role === this.selectedRole()
+        ) &&
+        (
+          this.selectedStatus() === 'All Status' ||
+          account.status === this.selectedStatus()
+        ) &&
+        [account.name, account.email].some(
+          value => value.toLowerCase().includes(search)
+        )
     );
   });
 
@@ -127,8 +123,7 @@ export class AdminUserManagement implements OnDestroy {
     Math.max(
       1,
       Math.ceil(
-        this.filteredAccounts().length
-        / this.pageSize
+        this.filteredAccounts().length / this.pageSize
       )
     )
   );
@@ -139,8 +134,7 @@ export class AdminUserManagement implements OnDestroy {
 
   readonly visibleAccounts = computed(() => {
     const start =
-      (this.displayedPage() - 1)
-      * this.pageSize;
+      (this.displayedPage() - 1) * this.pageSize;
 
     return this.filteredAccounts().slice(
       start,
@@ -169,7 +163,6 @@ export class AdminUserManagement implements OnDestroy {
     this.page.set(1);
 
     const user = this.auth.currentUser;
-
     this.currentUid.set(user?.uid || '');
 
     if (!user) {
@@ -189,8 +182,8 @@ export class AdminUserManagement implements OnDestroy {
         const data = snapshot.data();
 
         if (
-          data?.['role'] !== 'admin'
-          || data['accountStatus'] !== 'approved'
+          data?.['role'] !== 'admin' ||
+          data['accountStatus'] !== 'approved'
         ) {
           this.authorized.set(false);
           this.clearAccounts();
@@ -205,8 +198,7 @@ export class AdminUserManagement implements OnDestroy {
 
         if (this.stopAccounts) return;
 
-        const listGeneration =
-          ++this.listGeneration;
+        const listGeneration = ++this.listGeneration;
 
         this.stopAccounts = onSnapshot(
           query(
@@ -220,8 +212,8 @@ export class AdminUserManagement implements OnDestroy {
 
           records => {
             if (
-              generation !== this.generation
-              || listGeneration !== this.listGeneration
+              generation !== this.generation ||
+              listGeneration !== this.listGeneration
             ) {
               return;
             }
@@ -231,41 +223,34 @@ export class AdminUserManagement implements OnDestroy {
                 .map(record => {
                   const data = record.data();
 
-                  const text = (
-                    key: string
-                  ): string =>
+                  const text = (key: string): string =>
                     typeof data[key] === 'string'
                       ? data[key].trim()
                       : '';
 
                   return {
                     uid: record.id,
-                    name:
-                      text('name')
-                      || 'Name not recorded',
+                    name: text('name') || 'Name not recorded',
                     email: text('email'),
                     role: text('role'),
                     status: text('accountStatus'),
                     residentId: text('residentId'),
                     address: text('address'),
-                    contactNumber:
-                      text('contactNumber'),
+                    contactNumber: text('contactNumber'),
                     verified:
                       data['residencyVerified'] === true,
                     incomplete:
-                      data['registrationState']
-                      === 'incomplete',
+                      data['registrationState'] === 'incomplete',
                     createdAt:
                       data['createdAt'] instanceof Timestamp
-                        ? data['createdAt']
-                            .toDate()
-                            .toISOString()
+                        ? data['createdAt'].toDate().toISOString()
                         : null,
                   };
                 })
-                .sort((a, b) =>
-                  a.name.localeCompare(b.name)
-                  || a.uid.localeCompare(b.uid)
+                .sort(
+                  (a, b) =>
+                    a.name.localeCompare(b.name) ||
+                    a.uid.localeCompare(b.uid)
                 )
             );
 
@@ -275,8 +260,8 @@ export class AdminUserManagement implements OnDestroy {
 
           () => {
             if (
-              generation !== this.generation
-              || listGeneration !== this.listGeneration
+              generation !== this.generation ||
+              listGeneration !== this.listGeneration
             ) {
               return;
             }
@@ -314,20 +299,22 @@ export class AdminUserManagement implements OnDestroy {
   }
 
   canChange(account: AccountRecord): boolean {
-    return this.authorized()
-      && account.uid !== this.currentUid()
-      && ['resident', 'personnel'].includes(account.role)
-      && !account.incomplete
-      && (
-        account.status === 'approved'
-        || (
-          account.status === 'suspended'
-          && (
-            account.role !== 'resident'
-            || account.verified
+    return (
+      this.authorized() &&
+      account.uid !== this.currentUid() &&
+      ['resident', 'personnel'].includes(account.role) &&
+      !account.incomplete &&
+      (
+        account.status === 'approved' ||
+        (
+          account.status === 'suspended' &&
+          (
+            account.role !== 'resident' ||
+            account.verified
           )
         )
-      );
+      )
+    );
   }
 
   resetFilters(): void {
@@ -337,13 +324,8 @@ export class AdminUserManagement implements OnDestroy {
     this.page.set(1);
   }
 
-  async changeAccess(
-    account: AccountRecord
-  ): Promise<void> {
-    if (
-      this.savingUid()
-      || !this.canChange(account)
-    ) {
+  async changeAccess(account: AccountRecord): Promise<void> {
+    if (this.savingUid() || !this.canChange(account)) {
       return;
     }
 
@@ -362,47 +344,69 @@ export class AdminUserManagement implements OnDestroy {
       const result = await Swal.fire({
         title:
           action === 'suspend'
-            ? 'Suspend account?'
-            : 'Restore account?',
+            ? 'Confirm Account Suspension'
+            : 'Confirm Account Restoration',
 
         text:
-          `${account.name}: `
-          + `${
-            action === 'suspend'
-              ? 'block'
-              : 'allow'
-          } access to RBCCMS.`,
+          action === 'suspend'
+            ? `Please confirm the suspension of ${account.name}'s account. This will prevent access to RBCCMS.`
+            : `Please confirm the restoration of ${account.name}'s account. This will allow access to RBCCMS.`,
 
         icon: 'warning',
-        input: 'textarea',
-        inputLabel: 'Reason for this change',
+        iconColor: '#b7791f',
 
-        inputPlaceholder:
-          'Enter a reason (3–500 characters)',
+        input: 'textarea',
+        inputLabel:
+          action === 'suspend'
+            ? 'Reason for suspension'
+            : 'Reason for restoration',
+
+        inputPlaceholder: 'Enter a reason (3–500 characters)',
 
         inputAttributes: {
           maxlength: '500',
         },
 
+        inputValidator: value => {
+          const length = (value || '').trim().length;
+
+          return length < 3 || length > 500
+            ? 'Please enter a reason containing 3–500 characters.'
+            : undefined;
+        },
+
         showCancelButton: true,
+        reverseButtons: true,
 
         confirmButtonText:
           action === 'suspend'
-            ? 'Suspend'
-            : 'Restore',
+            ? 'Yes, suspend'
+            : 'Yes, restore',
 
-        confirmButtonColor:
-          action === 'suspend'
-            ? '#bd3a3a'
-            : '#087b49',
+        cancelButtonText: 'Cancel',
+        buttonsStyling: false,
+        focusCancel: true,
 
-        inputValidator: value => {
-          const length =
-            (value || '').trim().length;
+        width: 460,
+        padding: '28px 24px 24px',
+        background: '#ffffff',
+        color: '#21372a',
+        backdrop: 'rgba(16, 34, 24, 0.45)',
 
-          return length < 3 || length > 500
-            ? 'Enter a reason with 3–500 characters.'
-            : undefined;
+        customClass: {
+          popup: 'rbccms-confirm-popup',
+          icon: 'rbccms-confirm-icon',
+          title: 'rbccms-confirm-title',
+          htmlContainer: 'rbccms-confirm-message',
+          actions: 'rbccms-confirm-actions',
+          confirmButton:
+            action === 'suspend'
+              ? 'rbccms-confirm-danger'
+              : 'rbccms-confirm-primary',
+          cancelButton: 'rbccms-confirm-cancel',
+          input: 'rbccms-confirm-input',
+          inputLabel: 'rbccms-confirm-input-label',
+          validationMessage: 'rbccms-confirm-validation',
         },
       });
 
@@ -411,10 +415,10 @@ export class AdminUserManagement implements OnDestroy {
       const user = this.auth.currentUser;
 
       if (
-        this.destroyed
-        || generation !== this.generation
-        || user?.uid !== uid
-        || !this.authorized()
+        this.destroyed ||
+        generation !== this.generation ||
+        user?.uid !== uid ||
+        !this.authorized()
       ) {
         return;
       }
@@ -422,9 +426,9 @@ export class AdminUserManagement implements OnDestroy {
       const token = await user.getIdToken();
 
       if (
-        this.destroyed
-        || generation !== this.generation
-        || this.auth.currentUser?.uid !== uid
+        this.destroyed ||
+        generation !== this.generation ||
+        this.auth.currentUser?.uid !== uid
       ) {
         return;
       }
@@ -452,47 +456,56 @@ export class AdminUserManagement implements OnDestroy {
         }
       );
 
-      const body = await response.json()
-        .catch(() => null);
+      const body = await response.json().catch(() => null);
 
-      if (
-        !response.ok
-        || body?.saved !== true
-      ) {
+      if (!response.ok || body?.saved !== true) {
         throw new Error(
-          body?.error
-          || 'Unable to confirm the change. Refresh before retrying.'
+          body?.error ||
+          'Unable to confirm the change. Refresh before retrying.'
         );
       }
 
       if (
-        !this.destroyed
-        && generation === this.generation
-        && this.auth.currentUser?.uid === uid
+        !this.destroyed &&
+        generation === this.generation &&
+        this.auth.currentUser?.uid === uid
       ) {
         this.feedback.set(
-          `Account ${
-            action === 'suspend'
-              ? 'suspended'
-              : 'restored'
-          }. The action was saved in Audit Logs.`
+          action === 'suspend'
+            ? 'The account has been suspended successfully. The action was recorded in Audit Logs.'
+            : 'The account has been restored successfully. The action was recorded in Audit Logs.'
         );
       }
     } catch (error: unknown) {
       if (
-        !this.destroyed
-        && generation === this.generation
-        && this.auth.currentUser?.uid === uid
+        !this.destroyed &&
+        generation === this.generation &&
+        this.auth.currentUser?.uid === uid
       ) {
         await Swal.fire({
           icon: 'error',
-          title: 'Account change not confirmed',
+          title: 'Account Change Not Confirmed',
 
           text:
-            error instanceof Error
-            && error.name !== 'TimeoutError'
+            error instanceof Error &&
+            error.name !== 'TimeoutError'
               ? error.message
               : 'The request could not be confirmed. Refresh the list before retrying.',
+
+          confirmButtonText: 'OK',
+          buttonsStyling: false,
+          width: 440,
+          padding: '28px 24px 24px',
+          background: '#ffffff',
+          color: '#21372a',
+
+          customClass: {
+            popup: 'rbccms-confirm-popup',
+            title: 'rbccms-confirm-title',
+            htmlContainer: 'rbccms-confirm-message',
+            actions: 'rbccms-confirm-actions',
+            confirmButton: 'rbccms-confirm-primary',
+          },
         });
       }
     } finally {

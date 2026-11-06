@@ -1,4 +1,16 @@
 <main class="admin-concerns-page" [attr.aria-busy]="loading()">
+  @if (archiveFeedback()) {
+    <p class="page-notice archive-success" role="status">
+      {{ archiveFeedback() }}
+    </p>
+  }
+
+  @if (archiveError()) {
+    <p class="page-notice error-notice" role="alert">
+      {{ archiveError() }}
+    </p>
+  }
+
   @if (loading()) {
     <p class="page-notice" role="status">
       Loading community concerns...
@@ -31,10 +43,6 @@
           ← Back to Concerns
         </button>
       </header>
-
-      <p class="read-only-note">
-        View-only access. Concern status updates are managed by personnel.
-      </p>
 
       <section aria-labelledby="information-title">
         <h2 id="information-title" class="information-heading">
@@ -179,7 +187,8 @@
 
               <p class="status-transition">
                 @if (update.previous_status === update.new_status) {
-                  <strong>Progress update</strong> — Status unchanged
+                  <strong>Progress update</strong>
+                  — Status unchanged
                 } @else {
                   {{ update.previous_status || 'Created' }}
                   → {{ update.new_status }}
@@ -216,7 +225,7 @@
     </article>
   } @else if (requestedId()) {
     <div class="page-notice" role="status">
-      <p>This concern was not found or is no longer available.</p>
+      <p>This concern was not found or has been archived.</p>
 
       <button
         type="button"
@@ -230,9 +239,6 @@
     <header class="page-header">
       <p class="eyebrow">ADMINISTRATOR PORTAL</p>
       <h1>Community Concerns</h1>
-      <p class="page-description">
-        View submitted community concerns and their latest updates.
-      </p>
     </header>
 
     <section class="toolbar" aria-label="Concern filters">
@@ -301,8 +307,12 @@
                 track concern.concern_id
               ) {
                 <tr>
-                  <td>{{ concern.concern_number ?? 'Not numbered' }}</td>
+                  <td>
+                    {{ concern.concern_number ?? 'Not numbered' }}
+                  </td>
+
                   <td>{{ categoryName(concern) }}</td>
+
                   <td class="location-cell">
                     {{ concern.location_description }}
                   </td>
@@ -336,6 +346,21 @@
                     >
                       View Details
                     </button>
+
+                    @if (canArchive(concern)) {
+                      <button
+                        type="button"
+                        class="secondary-button archive-button"
+                        [disabled]="!!archiving()"
+                        (click)="changeArchive(concern)"
+                      >
+                        {{
+                          archiving() === concern.concern_id
+                            ? 'Please wait...'
+                            : 'Archive'
+                        }}
+                      </button>
+                    }
                   </td>
                 </tr>
               }

@@ -36,6 +36,7 @@ import { AdminUserManagement } from './components/pages/admin-user-management/ad
 import { AdminConcern } from './components/pages/admin-concern/admin-concern';
 import { AdminParticipatingOffice } from './components/pages/admin-participating-office/admin-participating-office';
 import { AdminReports } from './components/pages/admin-reports/admin-reports';
+import { AdminArchive } from './components/pages/admin-archive/admin-archive';
 
 export const routes: Routes = [
   {
@@ -174,6 +175,10 @@ export const routes: Routes = [
       {
         path: 'admin-user-management',
         component: AdminUserManagement,
+      },
+      {
+        path: 'admin-archive',
+        component: AdminArchive,
       },
       {
         path: 'admin-settings',

@@ -552,3 +552,204 @@ app-notifications {
     }
   }
 }
+
+/* RBCCMS archive and restore confirmations */
+.swal2-popup.rbccms-confirm-popup {
+  max-width: calc(100vw - 32px);
+  border: 1px solid #dfe8e2;
+  border-radius: 16px;
+  font-family: var(--font-ui, 'Inter', Arial, sans-serif);
+  box-shadow: 0 20px 60px rgb(16 34 24 / 20%);
+}
+
+.rbccms-confirm-popup .swal2-icon.rbccms-confirm-icon {
+  width: 66px;
+  height: 66px;
+  margin: 4px auto 20px;
+  border-width: 2px;
+  border-color: #d4ad70;
+  background: #fff8ec;
+  color: #b7791f;
+}
+
+.rbccms-confirm-popup .swal2-icon .swal2-icon-content {
+  font-size: 45px;
+}
+
+.rbccms-confirm-popup .swal2-title.rbccms-confirm-title {
+  padding: 0;
+  color: #21372a;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.rbccms-confirm-popup
+  .swal2-html-container.rbccms-confirm-message {
+  margin: 14px 0 0;
+  padding: 0;
+  color: #64756a;
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.rbccms-confirm-popup .swal2-actions.rbccms-confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  margin: 26px 0 0;
+}
+
+.rbccms-confirm-primary,
+.rbccms-confirm-cancel {
+  min-width: 125px;
+  min-height: 42px;
+  margin: 0;
+  padding: 10px 18px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.rbccms-confirm-primary {
+  border-color: #087b49;
+  background: #087b49;
+  color: #fff;
+}
+
+.rbccms-confirm-primary:hover {
+  border-color: #06663c;
+  background: #06663c;
+}
+
+.rbccms-confirm-cancel {
+  border-color: #cfdbd3;
+  background: #fff;
+  color: #53675a;
+}
+
+.rbccms-confirm-cancel:hover {
+  border-color: #aabfaf;
+  background: #f1f6f3;
+}
+
+.rbccms-confirm-primary:focus-visible,
+.rbccms-confirm-cancel:focus-visible {
+  outline: 3px solid rgb(8 123 73 / 25%);
+  outline-offset: 3px;
+}
+
+@media (max-width: 420px) {
+  .rbccms-confirm-popup .swal2-actions.rbccms-confirm-actions {
+    gap: 10px;
+  }
+
+  .rbccms-confirm-primary,
+  .rbccms-confirm-cancel {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rbccms-confirm-primary,
+  .rbccms-confirm-cancel {
+    transition: none;
+  }
+}
+
+/* Delete and suspend buttons */
+.rbccms-confirm-danger {
+  min-width: 125px;
+  min-height: 42px;
+  margin: 0;
+  padding: 10px 18px;
+  border: 1px solid #b93636;
+  border-radius: 8px;
+  background: #b93636;
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.rbccms-confirm-danger:hover {
+  border-color: #9d2929;
+  background: #9d2929;
+}
+
+.rbccms-confirm-danger:focus-visible {
+  outline: 3px solid rgb(185 54 54 / 25%);
+  outline-offset: 3px;
+}
+
+/* Account action reason */
+.rbccms-confirm-popup
+  .swal2-input-label.rbccms-confirm-input-label {
+  justify-content: flex-start;
+  margin: 20px 0 8px;
+  color: #21372a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.rbccms-confirm-popup
+  .swal2-textarea.rbccms-confirm-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 110px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid #cfdbd3;
+  border-radius: 8px;
+  background: #fff;
+  color: #21372a;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+  resize: vertical;
+  box-shadow: none;
+}
+
+.rbccms-confirm-popup
+  .swal2-textarea.rbccms-confirm-input:focus {
+  border-color: #087b49;
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(8 123 73 / 12%);
+}
+
+.rbccms-confirm-popup
+  .swal2-validation-message.rbccms-confirm-validation {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fff2f2;
+  color: #a52c2c;
+  font-size: 12px;
+  text-align: left;
+}
+
+@media (max-width: 420px) {
+  .rbccms-confirm-danger {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rbccms-confirm-danger {
+    transition: none;
+  }
+}

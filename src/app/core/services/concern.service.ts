@@ -121,11 +121,239 @@ export class ConcernService implements OnDestroy {
   readonly submitterLoading = signal(false);
   readonly submitterError = signal('');
 
+  private readonly historyCache = new Map<
+    string,
+    {
+      expires: number;
+      records: ConcernWithRelations[];
+    }
+  >();
+
   constructor() {
     this.stopAuth = onAuthStateChanged(
       this.auth,
       () => this.reload()
     );
+  }
+
+  private historyAccessKey(residentId: string): string {
+    const user = this.auth.currentUser;
+
+    if (
+      !user ||
+      this.accessUid() !== user.uid ||
+      this.activeRole !== 'personnel' ||
+      this.officeId() !== 'barangay-office'
+    ) {
+      throw new Error(
+        'Resident-management access is required.'
+      );
+    }
+
+    return JSON.stringify([
+      user.uid,
+      this.profileGeneration,
+      residentId,
+    ]);
+  }
+
+  async getResidentHistory(
+    residentId: string,
+    signal: AbortSignal
+  ): Promise<ConcernWithRelations[]> {
+    await this.auth.authStateReady();
+
+    signal.throwIfAborted();
+
+    const key = this.historyAccessKey(residentId);
+    const cached = this.historyCache.get(key);
+
+    if (cached && cached.expires > Date.now()) {
+      return structuredClone(cached.records);
+    }
+
+    const records: ConcernWithRelations[] = [];
+    const seen = new Set<string>();
+
+    let cursor: string | null = null;
+
+    do {
+      const response = await this.historyRequest(
+        {
+          action: 'resident-history',
+          resident_id: residentId,
+          cursor,
+        },
+        signal
+      );
+
+      const result = await response.json();
+
+      if (
+        result?.resident_id !== residentId ||
+        !Array.isArray(result.concerns) ||
+        !result.concerns.every(
+          (item: ConcernWithRelations) =>
+            item &&
+            item.resident_id === residentId &&
+            /^[A-Za-z0-9]{20}$/.test(item.concern_id) &&
+            Array.isArray(item.updates)
+        ) ||
+        (
+          result.next_cursor !== null &&
+          (
+            typeof result.next_cursor !== 'string' ||
+            !/^[A-Za-z0-9]{20}$/.test(result.next_cursor)
+          )
+        )
+      ) {
+        throw new Error(
+          'The resident history response was invalid.'
+        );
+      }
+
+      records.push(...result.concerns);
+      cursor = result.next_cursor;
+
+      if (cursor) {
+        if (seen.has(cursor)) {
+          throw new Error(
+            'Unable to finish loading history.'
+          );
+        }
+
+        seen.add(cursor);
+      }
+    } while (cursor && !signal.aborted);
+
+    signal.throwIfAborted();
+
+    records.sort((a, b) =>
+      (a.concern_number ?? Number.MAX_SAFE_INTEGER) -
+      (b.concern_number ?? Number.MAX_SAFE_INTEGER)
+    );
+
+    if (this.historyAccessKey(residentId) !== key) {
+      throw new Error(
+        'Your account access changed.'
+      );
+    }
+
+    for (const [cacheKey, item] of this.historyCache) {
+      if (item.expires <= Date.now()) {
+        this.historyCache.delete(cacheKey);
+      }
+    }
+
+    if (this.historyCache.size >= 10) {
+      const oldestKey =
+        this.historyCache.keys().next().value;
+
+      if (oldestKey !== undefined) {
+        this.historyCache.delete(oldestKey);
+      }
+    }
+
+    this.historyCache.set(key, {
+      expires: Date.now() + 30000,
+      records: structuredClone(records),
+    });
+
+    return records;
+  }
+
+  async downloadResidentHistoryPhoto(
+    residentId: string,
+    concernId: string,
+    signal: AbortSignal
+  ): Promise<Blob> {
+    const response = await this.historyRequest(
+      {
+        action: 'history-photo',
+        resident_id: residentId,
+        concern_id: concernId,
+      },
+      signal
+    );
+
+    const blob = await response.blob();
+
+    if (
+      !blob.size ||
+      blob.size > 5 * 1024 * 1024 ||
+      ![
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+      ].includes(blob.type)
+    ) {
+      throw new Error('The history photo is invalid.');
+    }
+
+    return blob;
+  }
+
+  private async historyRequest(
+    body: Record<string, unknown>,
+    signal: AbortSignal
+  ): Promise<Response> {
+    await this.auth.authStateReady();
+
+    const user = this.auth.currentUser;
+    const generation = this.profileGeneration;
+
+    const allowed = () =>
+      !!user &&
+      this.auth.currentUser?.uid === user.uid &&
+      this.accessUid() === user.uid &&
+      this.officeId() === 'barangay-office' &&
+      this.activeRole === 'personnel' &&
+      generation === this.profileGeneration;
+
+    if (!user || !allowed()) {
+      throw new Error(
+        'Resident-management access is required.'
+      );
+    }
+
+    const token = await user.getIdToken();
+
+    signal.throwIfAborted();
+
+    if (!allowed()) {
+      throw new Error('Your account access changed.');
+    }
+
+    const response = await fetch(SUBMITTER_ENDPOINT, {
+      method: 'POST',
+      credentials: 'omit',
+      cache: 'no-store',
+      headers: {
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.any([
+        signal,
+        AbortSignal.timeout(30000),
+      ]),
+    });
+
+    if (!allowed()) {
+      throw new Error('Your account access changed.');
+    }
+
+    if (!response.ok) {
+      const result = await response.json().catch(() => null);
+
+      throw new Error(
+        typeof result?.error === 'string'
+          ? result.error
+          : 'Unable to load resident history. Please retry.'
+      );
+    }
+
+    return response;
   }
 
   private submitterKey(
@@ -156,10 +384,7 @@ export class ConcernService implements OnDestroy {
   ): string {
     const key = this.submitterKey(concern);
 
-    if (
-      !key ||
-      key !== this.submitterRequestKey
-    ) {
+    if (!key || key !== this.submitterRequestKey) {
       return 'Resident information unavailable';
     }
 
@@ -189,13 +414,11 @@ export class ConcernService implements OnDestroy {
       return;
     }
 
-    if (
-      !force &&
-      this.submitterRequestKey === key
-    ) return;
+    if (!force && this.submitterRequestKey === key) {
+      return;
+    }
 
-    const generation =
-      ++this.submitterGeneration;
+    const generation = ++this.submitterGeneration;
 
     this.submitterRequestKey = key;
     this.submitterLoadedKey = '';
@@ -209,10 +432,7 @@ export class ConcernService implements OnDestroy {
 
       const user = this.auth.currentUser;
 
-      if (
-        !user ||
-        key !== this.submitterKey(concern)
-      ) {
+      if (!user || key !== this.submitterKey(concern)) {
         throw new Error(
           'Your account or office changed. Refresh the page.'
         );
@@ -223,37 +443,33 @@ export class ConcernService implements OnDestroy {
       if (
         generation !== this.submitterGeneration ||
         key !== this.submitterKey(concern)
-      ) return;
+      ) {
+        return;
+      }
 
-      const response = await fetch(
-        SUBMITTER_ENDPOINT,
-        {
-          method: 'POST',
-          credentials: 'omit',
-          cache: 'no-store',
+      const response = await fetch(SUBMITTER_ENDPOINT, {
+        method: 'POST',
+        credentials: 'omit',
+        cache: 'no-store',
+        headers: {
+          Authorization: 'Bearer ' + token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'submitter',
+          concern_id: concern.concern_id,
+        }),
+        signal: AbortSignal.timeout(30000),
+      });
 
-          headers: {
-            Authorization: 'Bearer ' + token,
-            'Content-Type': 'application/json',
-          },
-
-          body: JSON.stringify({
-            action: 'submitter',
-            concern_id: concern.concern_id,
-          }),
-
-          signal: AbortSignal.timeout(30000),
-        }
-      );
-
-      const data = await response
-        .json()
-        .catch(() => null);
+      const data = await response.json().catch(() => null);
 
       if (
         generation !== this.submitterGeneration ||
         key !== this.submitterKey(concern)
-      ) return;
+      ) {
+        return;
+      }
 
       if (!response.ok) {
         throw new Error(
@@ -273,12 +489,8 @@ export class ConcernService implements OnDestroy {
         );
       }
 
-      const name =
-        data.name.trim() ||
-        'Name not recorded';
-
-      const residentId =
-        data.resident_id.trim();
+      const name = data.name.trim() || 'Name not recorded';
+      const residentId = data.resident_id.trim();
 
       this.submitterValue =
         /^[1-9]\d*$/.test(residentId)
@@ -299,9 +511,7 @@ export class ConcernService implements OnDestroy {
         );
       }
     } finally {
-      if (
-        generation === this.submitterGeneration
-      ) {
+      if (generation === this.submitterGeneration) {
         this.submitterLoading.set(false);
       }
     }
@@ -389,14 +599,9 @@ export class ConcernService implements OnDestroy {
         this.busy.set(true);
         this.activeRole = profile['role'];
 
-        const resident =
-          this.activeRole === 'resident';
-
-        const personnel =
-          this.activeRole === 'personnel';
-
-        const assignedOffice =
-          profile['officeId'];
+        const resident = this.activeRole === 'resident';
+        const personnel = this.activeRole === 'personnel';
+        const assignedOffice = profile['officeId'];
 
         if (
           personnel &&
@@ -431,7 +636,9 @@ export class ConcernService implements OnDestroy {
               if (
                 generation !== this.generation ||
                 profileGeneration !== this.profileGeneration
-              ) return;
+              ) {
+                return;
+              }
 
               this.residentProfiles.set(
                 new Map(
@@ -462,7 +669,9 @@ export class ConcernService implements OnDestroy {
               if (
                 generation !== this.generation ||
                 profileGeneration !== this.profileGeneration
-              ) return;
+              ) {
+                return;
+              }
 
               this.residentProfiles.set(new Map());
               this.adminResidentLoading.set(false);
@@ -479,17 +688,17 @@ export class ConcernService implements OnDestroy {
             if (
               generation !== this.generation ||
               profileGeneration !== this.profileGeneration
-            ) return;
+            ) {
+              return;
+            }
 
             this.offices = new Map(
               result.docs.map(item => [
                 item.id,
                 {
                   office_id: item.id,
-                  office_name:
-                    item.data()['office_name'],
-                  description:
-                    item.data()['description'],
+                  office_name: item.data()['office_name'],
+                  description: item.data()['description'],
                 },
               ])
             );
@@ -507,7 +716,9 @@ export class ConcernService implements OnDestroy {
             if (
               generation !== this.generation ||
               profileGeneration !== this.profileGeneration
-            ) return;
+            ) {
+              return;
+            }
 
             this.offices.clear();
 
@@ -530,9 +741,7 @@ export class ConcernService implements OnDestroy {
                 collection(this.db, 'concerns'),
                 where('office_id', '==', assignedOffice)
               )
-            : query(
-                collection(this.db, 'concerns')
-              );
+            : query(collection(this.db, 'concerns'));
 
         this.stopRecords = onSnapshot(
           scopedQuery,
@@ -540,19 +749,16 @@ export class ConcernService implements OnDestroy {
             if (
               generation !== this.generation ||
               profileGeneration !== this.profileGeneration
-            ) return;
+            ) {
+              return;
+            }
 
             const concerns = result.docs
               .map(item =>
-                this.toConcern(
-                  item.id,
-                  item.data()
-                )
+                this.toConcern(item.id, item.data())
               )
               .sort((a, b) =>
-                b.reported_at.localeCompare(
-                  a.reported_at
-                )
+                b.reported_at.localeCompare(a.reported_at)
               );
 
             this.records.set(concerns);
@@ -567,7 +773,9 @@ export class ConcernService implements OnDestroy {
             if (
               generation !== this.generation ||
               profileGeneration !== this.profileGeneration
-            ) return;
+            ) {
+              return;
+            }
 
             this.clearRecords();
             this.busy.set(false);
@@ -605,21 +813,15 @@ export class ConcernService implements OnDestroy {
     );
   }
 
-  submittedBy(
-    concern: ConcernWithRelations
-  ): string {
+  submittedBy(concern: ConcernWithRelations): string {
     const resident =
-      this.residentProfiles().get(
-        concern.resident_id
-      );
+      this.residentProfiles().get(concern.resident_id);
 
     if (!resident) {
       return 'Resident record unavailable';
     }
 
-    const name =
-      resident.name ||
-      'Name not recorded';
+    const name = resident.name || 'Name not recorded';
 
     return /^[1-9]\d*$/.test(resident.id)
       ? `${name} (Resident ID: ${resident.id})`
@@ -636,10 +838,9 @@ export class ConcernService implements OnDestroy {
       ? `${concern?.concern_id}:${path}`
       : '';
 
-    if (
-      !force &&
-      key === this.selectedPhotoKey
-    ) return;
+    if (!force && key === this.selectedPhotoKey) {
+      return;
+    }
 
     this.clearSelectedPhoto();
     this.selectedPhotoKey = key;
@@ -650,7 +851,9 @@ export class ConcernService implements OnDestroy {
       !path ||
       !uid ||
       this.activeRole !== 'admin'
-    ) return;
+    ) {
+      return;
+    }
 
     const generation = this.generation;
     const photoGeneration =
@@ -659,19 +862,18 @@ export class ConcernService implements OnDestroy {
     this.photoLoading.set(true);
 
     try {
-      const blob =
-        await this.photoService.download(path);
+      const blob = await this.photoService.download(path);
 
       if (
         generation !== this.generation ||
         photoGeneration !== this.selectedPhotoGeneration ||
         this.auth.currentUser?.uid !== uid ||
         this.activeRole !== 'admin'
-      ) return;
+      ) {
+        return;
+      }
 
-      this.photoUrl.set(
-        URL.createObjectURL(blob)
-      );
+      this.photoUrl.set(URL.createObjectURL(blob));
     } catch (error: unknown) {
       if (
         generation === this.generation &&
@@ -729,19 +931,13 @@ export class ConcernService implements OnDestroy {
     payload: ConcernPayload,
     photo: File | null
   ): Promise<ConcernResponse> {
-    const user =
-      await this.requireRole('resident');
+    const user = await this.requireRole('resident');
 
     const category =
-      this.categoryService.getById(
-        payload.category_id
-      );
+      this.categoryService.getById(payload.category_id);
 
-    const location =
-      payload.location_description.trim();
-
-    const description =
-      payload.description.trim();
+    const location = payload.location_description.trim();
+    const description = payload.description.trim();
 
     if (
       !category ||
@@ -799,9 +995,7 @@ export class ConcernService implements OnDestroy {
         uploaded = true;
       }
 
-      if (
-        this.auth.currentUser?.uid !== user.uid
-      ) {
+      if (this.auth.currentUser?.uid !== user.uid) {
         throw new Error(
           'Your login changed. Sign in again.'
         );
@@ -844,8 +1038,7 @@ export class ConcernService implements OnDestroy {
             transaction.get(residentRef),
           ]);
 
-          const resident =
-            residentSnapshot.data();
+          const resident = residentSnapshot.data();
 
           if (
             resident?.['role'] !== 'resident' ||
@@ -892,13 +1085,9 @@ export class ConcernService implements OnDestroy {
           }
 
           const nextNumber = lastNumber + 1;
+          const residentNumber = residentLastNumber + 1;
 
-          const residentNumber =
-            residentLastNumber + 1;
-
-          if (
-            this.auth.currentUser?.uid !== user.uid
-          ) {
+          if (this.auth.currentUser?.uid !== user.uid) {
             throw new Error(
               'Your login changed. Sign in again.'
             );
@@ -941,8 +1130,7 @@ export class ConcernService implements OnDestroy {
             entity_id: concernRef.id,
             concern_number: nextNumber,
             resident_concern_number: residentNumber,
-            details:
-              `Concern #${nextNumber} submitted.`,
+            details: `Concern #${nextNumber} submitted.`,
             created_at: serverTimestamp(),
           });
 
@@ -963,16 +1151,11 @@ export class ConcernService implements OnDestroy {
     } catch (error) {
       if (uploaded && photoPath) {
         await this.photoService
-          .cleanup(
-            concernRef.id,
-            user.uid
-          )
+          .cleanup(concernRef.id, user.uid)
           .catch(() => undefined);
       }
 
-      throw new Error(
-        this.errorMessage(error)
-      );
+      throw new Error(this.errorMessage(error));
     }
   }
 
@@ -982,8 +1165,7 @@ export class ConcernService implements OnDestroy {
     remarks: string,
     expectedStatus?: ConcernStatus
   ): Promise<ConcernWithRelations> {
-    const user =
-      await this.requireRole('personnel');
+    const user = await this.requireRole('personnel');
 
     if (
       !STATUSES.includes(newStatus) ||
@@ -1000,224 +1182,245 @@ export class ConcernService implements OnDestroy {
       concernId
     );
 
-    await runTransaction(
-      this.db,
-      async transaction => {
-        const personnelSnapshot =
-          await transaction.get(
-            doc(
-              this.db,
-              'users',
-              user.uid
-            )
-          );
+    await runTransaction(this.db, async transaction => {
+      const personnelSnapshot = await transaction.get(
+        doc(this.db, 'users', user.uid)
+      );
 
-        const snapshot =
-          await transaction.get(concernRef);
+      const snapshot = await transaction.get(concernRef);
 
-        if (!snapshot.exists()) {
-          throw new Error(
-            'Concern not found.'
-          );
-        }
-
-        const personnel =
-          personnelSnapshot.data();
-
-        const data = snapshot.data();
-
-        if (
-          personnel?.['role'] !== 'personnel' ||
-          personnel?.['accountStatus'] !== 'approved'
-        ) {
-          throw new Error(
-            'An approved personnel account is required.'
-          );
-        }
-
-        if (
-          this.auth.currentUser?.uid !== user.uid
-        ) {
-          throw new Error(
-            'Your login changed. Sign in again.'
-          );
-        }
-
-        const officeId =
-          personnel['officeId'];
-
-        if (
-          typeof officeId !== 'string' ||
-          !officeId.trim() ||
-          officeId !== officeId.trim() ||
-          officeId.includes('/') ||
-          data['office_id'] !== officeId
-        ) {
-          throw new Error(
-            'You can update only concerns assigned to your office.'
-          );
-        }
-
-        const personnelName =
-          typeof personnel['name'] === 'string' &&
-          personnel['name'].length > 0
-            ? personnel['name']
-            : 'Personnel';
-
-        const previousStatus =
-          data['current_status'];
-
-        if (
-          !STATUSES.includes(previousStatus)
-        ) {
-          throw new Error(
-            'The existing concern status is invalid.'
-          );
-        }
-
-        if (
-          expectedStatus !== undefined &&
-          previousStatus !== expectedStatus
-        ) {
-          throw new Error(
-            'This concern status changed. Review the latest status and try again.'
-          );
-        }
-
-        const progressOnly =
-          previousStatus === newStatus;
-
-        if (
-          progressOnly &&
-          !remarks.trim()
-        ) {
-          throw new Error(
-            'Enter a progress note or select a different status.'
-          );
-        }
-
-        const previousRevision =
-          data['revision'];
-
-        const concernNumber =
-          data['concern_number'];
-
-        if (
-          !Number.isSafeInteger(previousRevision) ||
-          previousRevision < 0 ||
-          previousRevision >= Number.MAX_SAFE_INTEGER
-        ) {
-          throw new Error(
-            'The concern revision is invalid. Contact the administrator.'
-          );
-        }
-
-        if (
-          !Number.isSafeInteger(concernNumber) ||
-          concernNumber <= 0
-        ) {
-          throw new Error(
-            'The concern number is invalid. Contact the administrator.'
-          );
-        }
-
-        const revision =
-          previousRevision + 1;
-
-        const auditRef = doc(
-          this.db,
-          'audit_logs',
-          `concern_${concernId}_${revision}`
-        );
-
-        transaction.update(concernRef, {
-          current_status: newStatus,
-          updated_at: serverTimestamp(),
-          revision,
-
-          updates: {
-            ...data['updates'],
-
-            [String(revision)]: {
-              update_id: revision,
-              previous_status: previousStatus,
-              new_status: newStatus,
-              remarks: remarks.trim() || null,
-              created_at: serverTimestamp(),
-              updated_by: user.uid,
-              updated_by_name: personnelName,
-            },
-          },
-        });
-
-        transaction.set(auditRef, {
-          user_id: user.uid,
-          user_name: personnelName,
-          user_role: 'personnel',
-          category: 'Concern',
-
-          action: progressOnly
-            ? 'Progress update added'
-            : 'Status changed',
-
-          entity_type: 'concern',
-          entity_id: concernId,
-          concern_number: concernNumber,
-          revision,
-          previous_status: previousStatus,
-          new_status: newStatus,
-
-          details: progressOnly
-            ? `Concern #${concernNumber}: Progress update added; status remains ${newStatus}.`
-            : `Concern #${concernNumber}: ${previousStatus} → ${newStatus}`,
-
-          created_at: serverTimestamp(),
-        });
+      if (!snapshot.exists()) {
+        throw new Error('Concern not found.');
       }
-    );
 
-    const saved =
-      await getDoc(concernRef);
+      const personnel = personnelSnapshot.data();
+      const data = snapshot.data();
+
+      if (
+        personnel?.['role'] !== 'personnel' ||
+        personnel?.['accountStatus'] !== 'approved'
+      ) {
+        throw new Error(
+          'An approved personnel account is required.'
+        );
+      }
+
+      if (this.auth.currentUser?.uid !== user.uid) {
+        throw new Error(
+          'Your login changed. Sign in again.'
+        );
+      }
+
+      const officeId = personnel['officeId'];
+
+      if (
+        typeof officeId !== 'string' ||
+        !officeId.trim() ||
+        officeId !== officeId.trim() ||
+        officeId.includes('/') ||
+        data['office_id'] !== officeId
+      ) {
+        throw new Error(
+          'You can update only concerns assigned to your office.'
+        );
+      }
+
+      const personnelName =
+        typeof personnel['name'] === 'string' &&
+        personnel['name'].length > 0
+          ? personnel['name']
+          : 'Personnel';
+
+      if (data['is_archived'] === true) {
+        throw new Error('This concern is archived. An administrator must restore it before further updates.');
+      }
+
+      const previousStatus = data['current_status'];
+
+      if (!STATUSES.includes(previousStatus)) {
+        throw new Error(
+          'The existing concern status is invalid.'
+        );
+      }
+
+      if (
+        expectedStatus !== undefined &&
+        previousStatus !== expectedStatus
+      ) {
+        throw new Error(
+          'This concern status changed. Review the latest status and try again.'
+        );
+      }
+
+      const progressOnly = previousStatus === newStatus;
+
+      if (progressOnly && !remarks.trim()) {
+        throw new Error(
+          'Enter a progress note or select a different status.'
+        );
+      }
+
+      const previousRevision = data['revision'];
+      const concernNumber = data['concern_number'];
+
+      if (
+        !Number.isSafeInteger(previousRevision) ||
+        previousRevision < 0 ||
+        previousRevision >= Number.MAX_SAFE_INTEGER
+      ) {
+        throw new Error(
+          'The concern revision is invalid. Contact the administrator.'
+        );
+      }
+
+      if (
+        !Number.isSafeInteger(concernNumber) ||
+        concernNumber <= 0
+      ) {
+        throw new Error(
+          'The concern number is invalid. Contact the administrator.'
+        );
+      }
+
+      const revision = previousRevision + 1;
+
+      const auditRef = doc(
+        this.db,
+        'audit_logs',
+        `concern_${concernId}_${revision}`
+      );
+
+      transaction.update(concernRef, {
+        current_status: newStatus,
+        updated_at: serverTimestamp(),
+        revision,
+        updates: {
+          ...data['updates'],
+          [String(revision)]: {
+            update_id: revision,
+            previous_status: previousStatus,
+            new_status: newStatus,
+            remarks: remarks.trim() || null,
+            created_at: serverTimestamp(),
+            updated_by: user.uid,
+            updated_by_name: personnelName,
+          },
+        },
+      });
+
+      transaction.set(auditRef, {
+        user_id: user.uid,
+        user_name: personnelName,
+        user_role: 'personnel',
+        category: 'Concern',
+        action: progressOnly
+          ? 'Progress update added'
+          : 'Status changed',
+        entity_type: 'concern',
+        entity_id: concernId,
+        concern_number: concernNumber,
+        revision,
+        previous_status: previousStatus,
+        new_status: newStatus,
+        details: progressOnly
+          ? `Concern #${concernNumber}: Progress update added; status remains ${newStatus}.`
+          : `Concern #${concernNumber}: ${previousStatus} → ${newStatus}`,
+        created_at: serverTimestamp(),
+      });
+    });
+
+    const saved = await getDoc(concernRef);
 
     if (!saved.exists()) {
-      throw new Error(
-        'Saved concern is unavailable.'
-      );
+      throw new Error('Saved concern is unavailable.');
     }
 
-    return this.toConcern(
-      saved.id,
-      saved.data()
-    );
+    return this.toConcern(saved.id, saved.data());
+  }
+
+  async setArchived(
+    concernId: string,
+    archived: boolean,
+    expectedRevision: number
+  ): Promise<void> {
+    const user = await this.requireRole('admin');
+    if (!/^[A-Za-z0-9]{20}$/.test(concernId) || typeof archived !== 'boolean') {
+      throw new Error('Invalid archive request.');
+    }
+    const concernRef = doc(this.db, 'concerns', concernId);
+    await runTransaction(this.db, async transaction => {
+      const [actorSnapshot, snapshot] = await Promise.all([
+        transaction.get(doc(this.db, 'users', user.uid)),
+        transaction.get(concernRef),
+      ]);
+      const actor = actorSnapshot.data();
+      if (this.auth.currentUser?.uid !== user.uid ||
+          actor?.['role'] !== 'admin' || actor?.['accountStatus'] !== 'approved') {
+        throw new Error('An approved administrator account is required.');
+      }
+      if (!snapshot.exists()) throw new Error('Concern not found.');
+      const previous = snapshot.data();
+      const oldArchived = previous['is_archived'] ?? false;
+      const oldRevision = previous['archive_revision'] ?? 0;
+      if (typeof oldArchived !== 'boolean' || !Number.isSafeInteger(oldRevision) ||
+          oldRevision < 0 || oldRevision >= Number.MAX_SAFE_INTEGER) {
+        throw new Error('The archive record is invalid. Review this concern first.');
+      }
+      if (oldRevision !== expectedRevision || oldArchived === archived) {
+        throw new Error('The archive state changed. Review the latest record and try again.');
+      }
+      if (!['Pending', 'In Progress', 'Resolved', 'Rejected'].includes(previous['current_status'])) {
+        throw new Error('This concern has an invalid status.');
+      }
+      const number = previous['concern_number'];
+      if (!Number.isSafeInteger(number) || number <= 0) {
+        throw new Error('The concern reference is invalid.');
+      }
+      const revision = oldRevision + 1;
+      const auditId = `concern_archive_${concernId}_${revision}`;
+      transaction.update(concernRef, {
+        is_archived: archived,
+        archive_revision: revision,
+        archive_changed_at: serverTimestamp(),
+        archive_changed_by: user.uid,
+        archive_audit_id: auditId,
+      });
+      transaction.set(doc(this.db, 'audit_logs', auditId), {
+        user_id: user.uid,
+        user_name: typeof actor['name'] === 'string' && actor['name'].length > 0
+          ? actor['name'] : 'Administrator',
+        user_role: 'admin',
+        category: 'Concern',
+        action: archived ? 'Concern archived' : 'Concern restored',
+        entity_type: 'concern',
+        entity_id: concernId,
+        concern_number: number,
+        archive_revision: revision,
+        previous_archived: oldArchived,
+        new_archived: archived,
+        details: `Concern #${number} ${archived ? 'archived' : 'restored'}.`,
+        created_at: serverTimestamp(),
+      });
+    });
+    this.historyCache.clear();
   }
 
   private async requireRole(
-    role: 'resident' | 'personnel'
+    role: 'resident' | 'personnel' | 'admin'
   ) {
     await this.auth.authStateReady();
 
-    const user =
-      this.auth.currentUser;
+    const user = this.auth.currentUser;
 
     if (!user) {
-      throw new Error(
-        'Please sign in first.'
-      );
+      throw new Error('Please sign in first.');
     }
 
     const profile = (
-      await getDoc(
-        doc(
-          this.db,
-          'users',
-          user.uid
-        )
-      )
+      await getDoc(doc(this.db, 'users', user.uid))
     ).data();
 
-    if (
-      this.auth.currentUser?.uid !== user.uid
-    ) {
+    if (this.auth.currentUser?.uid !== user.uid) {
       throw new Error(
         'Your login changed. Sign in again.'
       );
@@ -1252,111 +1455,69 @@ export class ConcernService implements OnDestroy {
     const updates: ConcernUpdate[] = entries
       .map(update => ({
         update_id: update['update_id'],
-        previous_status:
-          update['previous_status'],
-        new_status:
-          update['new_status'],
-        remarks:
-          update['remarks'],
-        created_at:
-          this.iso(update['created_at']),
-        updated_by:
-          update['updated_by'],
-
+        previous_status: update['previous_status'],
+        new_status: update['new_status'],
+        remarks: update['remarks'],
+        created_at: this.iso(update['created_at']),
+        updated_by: update['updated_by'],
         updated_by_name:
           typeof update['updated_by_name'] === 'string'
             ? update['updated_by_name']
             : undefined,
-
-        updated_by_label:
-          this.personnelLabel(
-            update['updated_by_name'],
-            update['updated_by']
-          ),
+        updated_by_label: this.personnelLabel(
+          update['updated_by_name'],
+          update['updated_by']
+        ),
       }))
-      .sort(
-        (a, b) =>
-          a.update_id - b.update_id
-      );
+      .sort((a, b) => a.update_id - b.update_id);
 
-    const latestUpdate =
-      updates[updates.length - 1];
+    const latestUpdate = updates[updates.length - 1];
 
     return {
       concern_id: id,
-
+      is_archived: data['is_archived'] === true,
+      archive_revision: Number.isSafeInteger(data['archive_revision'])
+        ? data['archive_revision'] : 0,
+      archive_changed_at: this.iso(data['archive_changed_at']) || null,
+      archive_changed_by: data['archive_changed_by'] ?? null,
+      archive_audit_id: data['archive_audit_id'] ?? null,
       concern_number:
         Number.isSafeInteger(data['concern_number']) &&
         data['concern_number'] > 0
           ? data['concern_number']
           : null,
-
       resident_concern_number:
         Number.isSafeInteger(data['resident_concern_number']) &&
         data['resident_concern_number'] > 0
           ? data['resident_concern_number']
           : null,
-
-      resident_id:
-        data['resident_id'],
-
+      resident_id: data['resident_id'],
       assigned_personnel_id:
         data['assigned_personnel_id'] ?? null,
-
-      office_id:
-        data['office_id'] ?? null,
-
-      office:
-        this.offices.get(
-          data['office_id']
-        ),
-
+      office_id: data['office_id'] ?? null,
+      office: this.offices.get(data['office_id']),
       last_updated_by:
         latestUpdate?.updated_by ?? null,
-
       last_updated_by_name:
         latestUpdate?.updated_by_name ?? null,
-
       last_updated_by_label:
         latestUpdate
           ? latestUpdate.updated_by_label
           : 'No personnel update yet',
-
-      category_id:
-        data['category_id'],
-
+      category_id: data['category_id'],
       category:
-        this.categoryService.getById(
-          data['category_id']
-        ),
-
-      location_description:
-        data['location_description'],
-
-      description:
-        data['description'],
-
-      photo_path:
-        data['photo_path'],
-
+        this.categoryService.getById(data['category_id']),
+      location_description: data['location_description'],
+      description: data['description'],
+      photo_path: data['photo_path'],
       photo_url:
-        this.objectUrls.get(
-          data['photo_path']
-        ) ?? null,
-
-      current_status:
-        data['current_status'],
-
-      reported_at:
-        this.iso(
-          data['reported_at']
-        ),
-
+        this.objectUrls.get(data['photo_path']) ?? null,
+      current_status: data['current_status'],
+      reported_at: this.iso(data['reported_at']),
       updated_at:
         data['updated_at']
           ? this.iso(data['updated_at'])
           : null,
-
       updates,
     };
   }
@@ -1381,11 +1542,8 @@ export class ConcernService implements OnDestroy {
       : 'Updater not recorded';
   }
 
-  private loadPhotos(
-    generation: number
-  ): void {
-    const photoGeneration =
-      ++this.photoGeneration;
+  private loadPhotos(generation: number): void {
+    const photoGeneration = ++this.photoGeneration;
 
     this.photoFailure.set('');
 
@@ -1395,47 +1553,37 @@ export class ConcernService implements OnDestroy {
         .filter(Boolean)
     );
 
-    for (
-      const [path, url]
-      of this.objectUrls
-    ) {
+    for (const [path, url] of this.objectUrls) {
       if (!visiblePaths.has(path)) {
         URL.revokeObjectURL(url);
         this.objectUrls.delete(path);
       }
     }
 
-    for (
-      const concern
-      of this.records()
-    ) {
-      const path =
-        concern.photo_path;
+    for (const concern of this.records()) {
+      const path = concern.photo_path;
 
-      if (
-        !path ||
-        this.objectUrls.has(path)
-      ) continue;
+      if (!path || this.objectUrls.has(path)) {
+        continue;
+      }
 
       void this.photoService.download(path)
         .then(blob => {
           if (
             generation !== this.generation ||
             photoGeneration !== this.photoGeneration
-          ) return;
+          ) {
+            return;
+          }
 
-          const url =
-            URL.createObjectURL(blob);
+          const url = URL.createObjectURL(blob);
 
           this.objectUrls.set(path, url);
 
           this.records.update(items =>
             items.map(item =>
               item.photo_path === path
-                ? {
-                    ...item,
-                    photo_url: url,
-                  }
+                ? { ...item, photo_url: url }
                 : item
             )
           );
@@ -1454,6 +1602,8 @@ export class ConcernService implements OnDestroy {
   }
 
   private clearRecords(): void {
+    this.historyCache.clear();
+
     this.clearSubmitter();
     this.clearSelectedPhoto();
 
@@ -1462,19 +1612,14 @@ export class ConcernService implements OnDestroy {
     this.records.set([]);
     this.photoFailure.set('');
 
-    for (
-      const url
-      of this.objectUrls.values()
-    ) {
+    for (const url of this.objectUrls.values()) {
       URL.revokeObjectURL(url);
     }
 
     this.objectUrls.clear();
   }
 
-  private errorMessage(
-    error: unknown
-  ): string {
+  private errorMessage(error: unknown): string {
     const code =
       typeof error === 'object' &&
       error !== null &&
@@ -1482,15 +1627,11 @@ export class ConcernService implements OnDestroy {
         ? String(error.code)
         : '';
 
-    if (
-      code.includes('permission-denied')
-    ) {
+    if (code.includes('permission-denied')) {
       return 'Access denied. Check account approval, office assignment, and Firestore rules.';
     }
 
-    if (
-      code.includes('unavailable')
-    ) {
+    if (code.includes('unavailable')) {
       return 'Firebase is unavailable. Check your connection and retry.';
     }
 

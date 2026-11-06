@@ -535,3 +535,9 @@ a:focus-visible,
 .photo-section > a:visited {
   color: #fff;
 }
+.archive-button { margin: 4px 0 4px 8px; min-height: 36px; }
+.archive-details-actions { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+.archive-success { color: #176239; background: #edf8f0; border: 1px solid #c5e5ce; }
+@media (max-width: 600px) {
+  .archive-button { margin-left: 0; margin-right: 6px; min-height: 44px; }
+}

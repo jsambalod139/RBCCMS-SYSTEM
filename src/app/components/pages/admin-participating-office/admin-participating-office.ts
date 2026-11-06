@@ -11,17 +11,11 @@ import {
   signal,
 } from '@angular/core';
 
-import {
-  FormsModule,
-  NgForm,
-} from '@angular/forms';
-
+import { FormsModule, NgForm } from '@angular/forms';
 import { getAuth } from 'firebase/auth';
 import Swal from 'sweetalert2';
 
-import {
-  firebaseApp,
-} from '../../../core/firebase.config';
+import { firebaseApp } from '../../../core/firebase.config';
 
 import {
   ParticipatingOffice,
@@ -35,23 +29,15 @@ import {
   templateUrl: './admin-participating-office.html',
   styleUrl: './admin-participating-office.scss',
 })
-export class AdminParticipatingOffice
-  implements OnDestroy {
-  readonly offices =
-    inject(ParticipatingOfficeService);
+export class AdminParticipatingOffice implements OnDestroy {
+  readonly offices = inject(ParticipatingOfficeService);
 
-  private readonly element =
-    inject(ElementRef<HTMLElement>);
-
-  private readonly injector =
-    inject(Injector);
-
-  private readonly auth =
-    getAuth(firebaseApp);
+  private readonly element = inject(ElementRef<HTMLElement>);
+  private readonly injector = inject(Injector);
+  private readonly auth = getAuth(firebaseApp);
 
   @ViewChild('viewHeading')
-  private viewHeading?:
-    ElementRef<HTMLElement>;
+  private viewHeading?: ElementRef<HTMLElement>;
 
   readonly creatingOffice = signal(false);
   readonly selectedId = signal('');
@@ -84,21 +70,12 @@ export class AdminParticipatingOffice
   private lastPayload = '';
   private requestId = '';
 
-  deleteHint(
-    office: ParticipatingOffice
-  ): string {
-    if (
-      office.office_id === 'barangay-office'
-    ) {
-      return 'The core Barangay Office cannot be deleted.';
+  deleteHint(office: ParticipatingOffice): string {
+    if (office.office_id === 'barangay-office') {
+      return 'The core resident-management office cannot be deleted.';
     }
 
-    // A category alone must not disable deletion.
-    if (
-      this.offices.personnelFor(
-        office.office_id
-      ).length
-    ) {
+    if (this.offices.personnelFor(office.office_id).length) {
       return 'Personnel assigned: deactivate this office instead.';
     }
 
@@ -108,8 +85,7 @@ export class AdminParticipatingOffice
   async deleteOffice(
     office: ParticipatingOffice
   ): Promise<void> {
-    const uid =
-      this.auth.currentUser?.uid;
+    const uid = this.auth.currentUser?.uid;
 
     if (
       !uid ||
@@ -131,35 +107,46 @@ export class AdminParticipatingOffice
     this.success.set('');
 
     try {
-      const check =
-        await this.offices.checkOfficeDeletion(
-          office.office_id
-        );
+      const check = await this.offices.checkOfficeDeletion(
+        office.office_id
+      );
 
       if (!current()) return;
 
       if (!check.canDelete) {
         const result = await Swal.fire({
-          icon: 'warning',
-          title: 'Office cannot be deleted',
+          title: 'Office Deletion Unavailable',
           text: check.reason,
+          icon: 'warning',
+          iconColor: '#b7791f',
           showCancelButton: true,
+          reverseButtons: true,
           confirmButtonText: 'Edit Office',
           cancelButtonText: 'Close',
-          confirmButtonColor: '#087b49',
+          buttonsStyling: false,
+          focusCancel: true,
+          width: 440,
+          padding: '28px 24px 24px',
+          background: '#ffffff',
+          color: '#21372a',
+          backdrop: 'rgba(16, 34, 24, 0.45)',
+          customClass: {
+            popup: 'rbccms-confirm-popup',
+            icon: 'rbccms-confirm-icon',
+            title: 'rbccms-confirm-title',
+            htmlContainer: 'rbccms-confirm-message',
+            actions: 'rbccms-confirm-actions',
+            confirmButton: 'rbccms-confirm-primary',
+            cancelButton: 'rbccms-confirm-cancel',
+          },
         });
 
-        if (
-          current() &&
-          result.isConfirmed
-        ) {
+        if (current() && result.isConfirmed) {
           this.saving.set(false);
 
           this.edit(
             this.offices.records().find(
-              item =>
-                item.office_id ===
-                office.office_id
+              item => item.office_id === office.office_id
             ) || office
           );
         }
@@ -168,51 +155,55 @@ export class AdminParticipatingOffice
       }
 
       const decision = await Swal.fire({
-        icon: 'warning',
-        title: 'Delete Office?',
+        title: 'Confirm Office Deletion',
 
         text:
-          'Permanently delete ' +
-          check.officeName +
-          '?' +
+          `Please confirm the permanent deletion of "${check.officeName}".` +
           (
             check.categoryNames.length
-              ? ' The following unused categories will also be deleted: ' +
-                check.categoryNames.join(', ') +
-                '.'
+              ? ` The following unused categories will also be deleted: ${
+                  check.categoryNames.join(', ')
+                }.`
               : ''
           ) +
-          ' This cannot be undone. ' +
-          'Personnel, registrations, and linked concerns prevent deletion. ' +
-          'The deletion is recorded in Audit Logs.',
+          ' This action cannot be undone.',
+
+        icon: 'warning',
+        iconColor: '#b7791f',
 
         showCancelButton: true,
-
-        confirmButtonText:
-          check.categoryNames.length
-            ? 'Delete Office & Categories'
-            : 'Delete Office',
-
+        reverseButtons: true,
+        confirmButtonText: 'Yes, delete',
         cancelButtonText: 'Cancel',
-        confirmButtonColor: '#bd3a3a',
-        cancelButtonColor: '#64736a',
+
+        buttonsStyling: false,
         focusCancel: true,
+
+        width: 440,
+        padding: '28px 24px 24px',
+        background: '#ffffff',
+        color: '#21372a',
+        backdrop: 'rgba(16, 34, 24, 0.45)',
+
+        customClass: {
+          popup: 'rbccms-confirm-popup',
+          icon: 'rbccms-confirm-icon',
+          title: 'rbccms-confirm-title',
+          htmlContainer: 'rbccms-confirm-message',
+          actions: 'rbccms-confirm-actions',
+          confirmButton: 'rbccms-confirm-danger',
+          cancelButton: 'rbccms-confirm-cancel',
+        },
       });
 
-      if (
-        !current() ||
-        !decision.isConfirmed
-      ) {
+      if (!current() || !decision.isConfirmed) {
         return;
       }
 
       if (
-        this.deleteRequest?.officeId !==
-          office.office_id ||
-        this.deleteRequest.name !==
-          check.officeName ||
-        this.deleteRequest.categoryToken !==
-          check.categoryToken
+        this.deleteRequest?.officeId !== office.office_id ||
+        this.deleteRequest.name !== check.officeName ||
+        this.deleteRequest.categoryToken !== check.categoryToken
       ) {
         this.deleteRequest = {
           officeId: office.office_id,
@@ -234,13 +225,11 @@ export class AdminParticipatingOffice
       this.deleteRequest = null;
 
       this.success.set(
-        'Office and any unused categories deleted successfully and recorded in Audit Logs.'
+        'The office and any unused categories have been deleted successfully. The action was recorded in Audit Logs.'
       );
     } catch (error: unknown) {
       if (current()) {
-        this.error.set(
-          this.message(error)
-        );
+        this.error.set(this.message(error));
       }
     } finally {
       if (!this.destroyed) {
@@ -255,15 +244,12 @@ export class AdminParticipatingOffice
 
     this.closeEditors();
     this.creatingOffice.set(true);
-
     this.success.set('');
     this.error.set('');
     this.showViewStart();
   }
 
-  edit(
-    office: ParticipatingOffice
-  ): void {
+  edit(office: ParticipatingOffice): void {
     if (this.saving()) return;
 
     this.closeEditors();
@@ -278,22 +264,13 @@ export class AdminParticipatingOffice
     this.showViewStart();
   }
 
-  addPersonnel(
-    office: ParticipatingOffice
-  ): void {
-    if (
-      this.saving() ||
-      !office.is_active
-    ) {
+  addPersonnel(office: ParticipatingOffice): void {
+    if (this.saving() || !office.is_active) {
       return;
     }
 
     this.closeEditors();
-
-    this.personnelOfficeId.set(
-      office.office_id
-    );
-
+    this.personnelOfficeId.set(office.office_id);
     this.success.set('');
     this.error.set('');
     this.showViewStart();
@@ -302,8 +279,7 @@ export class AdminParticipatingOffice
   officeLabel(id: string): string {
     return (
       this.offices.records().find(
-        office =>
-          office.office_id === id
+        office => office.office_id === id
       )?.office_name ||
       'Selected office'
     );
@@ -317,15 +293,10 @@ export class AdminParticipatingOffice
     this.showViewStart();
   }
 
-  async save(
-    form: NgForm
-  ): Promise<void> {
+  async save(form: NgForm): Promise<void> {
     if (
       this.saving() ||
-      (
-        !this.selectedId() &&
-        !this.creatingOffice()
-      )
+      (!this.selectedId() && !this.creatingOffice())
     ) {
       return;
     }
@@ -351,7 +322,6 @@ export class AdminParticipatingOffice
       this.error.set(
         'Enter valid office information and a new category name.'
       );
-
       return;
     }
 
@@ -373,8 +343,7 @@ export class AdminParticipatingOffice
     this.saving.set(true);
 
     try {
-      const creating =
-        this.creatingOffice();
+      const creating = this.creatingOffice();
 
       if (creating) {
         await this.offices.createOffice(
@@ -407,9 +376,7 @@ export class AdminParticipatingOffice
       this.showViewStart();
     } catch (error: unknown) {
       if (!this.destroyed) {
-        this.error.set(
-          this.message(error)
-        );
+        this.error.set(this.message(error));
       }
     } finally {
       if (!this.destroyed) {
@@ -418,13 +385,8 @@ export class AdminParticipatingOffice
     }
   }
 
-  async registerPersonnel(
-    form: NgForm
-  ): Promise<void> {
-    if (
-      this.saving() ||
-      !this.personnelOfficeId()
-    ) {
+  async registerPersonnel(form: NgForm): Promise<void> {
+    if (this.saving() || !this.personnelOfficeId()) {
       return;
     }
 
@@ -442,20 +404,12 @@ export class AdminParticipatingOffice
       this.error.set(
         'Enter a name, valid email address, and password of 8-128 characters.'
       );
-
       return;
     }
 
-    if (
-      this.personnelPassword !==
-      this.confirmPassword
-    ) {
+    if (this.personnelPassword !== this.confirmPassword) {
       form.form.markAllAsTouched();
-
-      this.error.set(
-        'The passwords do not match.'
-      );
-
+      this.error.set('The passwords do not match.');
       return;
     }
 
@@ -463,15 +417,10 @@ export class AdminParticipatingOffice
       action: 'create-personnel',
       officeId: this.personnelOfficeId(),
       name: this.personnelName.trim(),
-      email:
-        this.personnelEmail
-          .trim()
-          .toLowerCase(),
+      email: this.personnelEmail.trim().toLowerCase(),
     };
 
-    const requestId =
-      this.idFor(payload);
-
+    const requestId = this.idFor(payload);
     this.saving.set(true);
 
     try {
@@ -494,9 +443,7 @@ export class AdminParticipatingOffice
       this.showViewStart();
     } catch (error: unknown) {
       if (!this.destroyed) {
-        this.error.set(
-          this.message(error)
-        );
+        this.error.set(this.message(error));
       }
     } finally {
       this.personnelPassword = '';
@@ -510,47 +457,36 @@ export class AdminParticipatingOffice
   }
 
   private showViewStart(): void {
-    afterNextRender(() => {
-      if (this.destroyed) return;
+    afterNextRender(
+      () => {
+        if (this.destroyed) return;
 
-      const scroller =
-        this.element.nativeElement.closest(
-          '.main-section'
-        );
+        const scroller =
+          this.element.nativeElement.closest('.main-section');
 
-      if (
-        scroller instanceof HTMLElement
-      ) {
-        scroller.scrollTop = 0;
-      } else {
-        window.scrollTo({
-          top: 0,
-          behavior: 'instant',
-        });
-      }
+        if (scroller instanceof HTMLElement) {
+          scroller.scrollTop = 0;
+        } else {
+          window.scrollTo({
+            top: 0,
+            behavior: 'instant',
+          });
+        }
 
-      this.viewHeading
-        ?.nativeElement.focus({
+        this.viewHeading?.nativeElement.focus({
           preventScroll: true,
         });
-    }, {
-      injector: this.injector,
-    });
+      },
+      { injector: this.injector }
+    );
   }
 
-  private idFor(
-    payload: object
-  ): string {
-    const value =
-      JSON.stringify(payload);
+  private idFor(payload: object): string {
+    const value = JSON.stringify(payload);
 
-    if (
-      value !== this.lastPayload ||
-      !this.requestId
-    ) {
+    if (value !== this.lastPayload || !this.requestId) {
       this.lastPayload = value;
-      this.requestId =
-        crypto.randomUUID();
+      this.requestId = crypto.randomUUID();
     }
 
     return this.requestId;
@@ -576,9 +512,7 @@ export class AdminParticipatingOffice
     this.requestId = '';
   }
 
-  private message(
-    error: unknown
-  ): string {
+  private message(error: unknown): string {
     return error instanceof Error
       ? error.message
       : 'Unable to complete the operation.';
