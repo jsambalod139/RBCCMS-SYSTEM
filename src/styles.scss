@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
+@import 'primeicons/primeicons.css';
 :root {
   --font-ui: 'Inter', Arial, sans-serif;
   --text-strong: #172b20;
@@ -753,3 +753,4 @@ app-notifications {
     transition: none;
   }
 }
+

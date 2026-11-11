@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
-import { getAuth } from 'firebase/auth';
+import { Injectable, OnDestroy } from '@angular/core';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { firebaseApp } from '../firebase.config';
 
 const ENDPOINT =
@@ -8,8 +8,86 @@ const ENDPOINT =
 const MAX_BYTES = 5 * 1024 * 1024;
 
 @Injectable({ providedIn: 'root' })
-export class ConcernPhotoService {
+export class ConcernPhotoService implements OnDestroy {
   private readonly auth = getAuth(firebaseApp);
+  private readonly cleanupPrefix = 'rbccms:concern-photo-cleanup:';
+  private readonly pending = new Set<string>();
+  private readonly running = new Set<string>();
+
+  private readonly retryCleanup = (): void => {
+    const uid = this.auth.currentUser?.uid;
+    if (!uid || !navigator.onLine) return;
+
+    const prefix = this.cleanupPrefix + uid + ':';
+
+    try {
+      for (let index = 0; index < localStorage.length; index++) {
+        const key = localStorage.key(index);
+        if (key?.startsWith(prefix)) this.pending.add(key);
+      }
+    } catch {
+      // Use the in-memory queue if browser storage is unavailable.
+    }
+
+    for (const key of this.pending) {
+      if (!key.startsWith(prefix) || this.running.has(key)) continue;
+
+      const concernId = key.slice(prefix.length);
+      if (!/^[A-Za-z0-9]{20}$/.test(concernId)) continue;
+
+      this.running.add(key);
+      void this.finishCleanup(key, concernId, uid);
+    }
+  };
+
+  private readonly stopAuth = onAuthStateChanged(this.auth, this.retryCleanup);
+
+  constructor() {
+    window.addEventListener('online', this.retryCleanup);
+  }
+
+  ngOnDestroy(): void {
+    window.removeEventListener('online', this.retryCleanup);
+    this.stopAuth();
+  }
+
+  queueCleanup(concernId: string, uid: string): void {
+    const key = this.cleanupPrefix + uid + ':' + concernId;
+    this.pending.add(key);
+
+    try {
+      localStorage.setItem(key, '1');
+    } catch {
+      // Keep this request in memory until it can be retried.
+    }
+
+    this.retryCleanup();
+  }
+
+  private async finishCleanup(
+    key: string,
+    concernId: string,
+    uid: string
+  ): Promise<void> {
+    try {
+      await this.cleanup(concernId, uid);
+    } catch (error) {
+      // The cleanup endpoint returns this error when a saved concern uses the photo.
+      if (!(error instanceof Error) ||
+          error.message !== 'A saved concern uses this photo. It cannot be removed.') {
+        return;
+      }
+    } finally {
+      this.running.delete(key);
+    }
+
+    this.pending.delete(key);
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // A later retry still goes through the server's saved-concern check.
+    }
+  }
 
   async upload(
     concernId: string,
@@ -63,7 +141,7 @@ export class ConcernPhotoService {
     return blob;
   }
 
-  async cleanup(
+  private async cleanup(
     concernId: string,
     uid: string
   ): Promise<void> {

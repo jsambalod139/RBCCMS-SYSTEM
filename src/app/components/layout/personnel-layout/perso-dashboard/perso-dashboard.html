@@ -1,9 +1,52 @@
 <div class="app-layout">
-  <app-personnel-sidebar></app-personnel-sidebar>
-    <div class="page-wrapper">
+  <aside
+    id="personnel-navigation"
+    class="mobile-drawer"
+    [class.mobile-drawer-open]="sidebarOpen()"
+    [attr.role]="sidebarOpen() ? 'dialog' : null"
+    [attr.aria-modal]="sidebarOpen() ? 'true' : null"
+    aria-label="Personnel navigation"
+    (click)="onSidebarClick($event)"
+  >
+    <button
+      #closeButton
+      type="button"
+      class="drawer-close"
+      aria-label="Close navigation"
+      (click)="closeSidebar()"
+    >
+      <span aria-hidden="true">&times;</span>
+    </button>
+
+    <app-personnel-sidebar></app-personnel-sidebar>
+  </aside>
+
+  <div
+    class="drawer-backdrop"
+    [class.drawer-backdrop-open]="sidebarOpen()"
+    aria-hidden="true"
+    (click)="closeSidebar()"
+  ></div>
+
+  <div class="page-wrapper" [inert]="sidebarOpen()">
+    <div class="dashboard-header">
+      <button
+        #menuButton
+        type="button"
+        class="drawer-toggle"
+        aria-label="Open navigation"
+        aria-controls="personnel-navigation"
+        [attr.aria-expanded]="sidebarOpen()"
+        (click)="openSidebar(menuButton, closeButton)"
+      >
+        <span class="drawer-toggle-icon" aria-hidden="true"></span>
+      </button>
+
       <app-personnel-topbar></app-personnel-topbar>
-      <div class="main-section">
-    <app-contents></app-contents>
+    </div>
+
+    <div class="main-section">
+      <app-contents></app-contents>
+    </div>
   </div>
- </div>
 </div>

@@ -1,11 +1,12 @@
 :host {
-  position: fixed;
-  inset: 0;
   display: block;
   min-width: 0;
+}
+
+:host(app-res-dashboard) {
+  position: fixed;
+  inset: 0;
   overflow: hidden;
-  font-family: 'Inter', Arial, sans-serif;
-  color: #21372a;
 }
 
 *,
@@ -17,17 +18,11 @@
 .app-layout {
   display: flex;
   width: 100%;
-  height: 100%;
+  height: 100vh;
   height: 100dvh;
   overflow: hidden;
   background: #f5f8f6;
-  font-family: inherit;
-}
-
-app-resident-sidebar {
-  display: block;
-  flex: 0 0 auto;
-  min-height: 0;
+  font-family: var(--font-ui, 'Inter', Arial, sans-serif);
 }
 
 .page-wrapper {
@@ -39,11 +34,11 @@ app-resident-sidebar {
   overflow: hidden;
 }
 
-app-resident-topbar {
+.dashboard-header {
   position: relative;
   z-index: 30;
-  display: block;
   flex: 0 0 auto;
+  min-width: 0;
 }
 
 .main-section {
@@ -51,44 +46,149 @@ app-resident-topbar {
   min-width: 0;
   min-height: 0;
   padding: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: auto;
   overscroll-behavior-y: contain;
   background: #f5f8f6;
   scrollbar-width: thin;
-  scrollbar-color: #bdcec2 transparent;
+  scrollbar-color: #b9cbbf transparent;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border: 2px solid #f5f8f6;
+    border-radius: 12px;
+    background: #b9cbbf;
+  }
 }
 
 app-contents {
   display: block;
   width: 100%;
   min-width: 0;
-  margin: 0;
-  padding: 0;
 }
 
-.main-section::-webkit-scrollbar {
-  width: 8px;
+.mobile-drawer {
+  position: relative;
+  z-index: 40;
+  flex: 0 0 auto;
+  min-height: 0;
 }
 
-.main-section::-webkit-scrollbar-thumb {
-  border: 2px solid #f5f8f6;
-  border-radius: 10px;
-  background: #bdcec2;
+.drawer-toggle,
+.drawer-close,
+.drawer-backdrop {
+  display: none;
 }
 
-@media (max-width: 600px) {
-  .app-layout {
-    flex-direction: column;
+@media screen and (min-width: 1440px) {
+  .mobile-drawer {
+    width: 280px;
+  }
+}
+
+@media screen and (width < 1440px) {
+  .dashboard-header {
+    display: flex;
+    align-items: center;
+    background: #fff;
   }
 
-  app-resident-sidebar {
-    width: 100%;
+  .dashboard-header > :last-child {
+    flex: 1 1 auto;
+    min-width: 0;
   }
+
+  .drawer-toggle,
+  .drawer-close {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid #d6e4da;
+    border-radius: 9px;
+    background: #f2f6f3;
+    color: #21372a;
+    cursor: pointer;
+  }
+
+  .drawer-toggle {
+    flex: 0 0 44px;
+    margin-inline-start: 12px;
+  }
+
+  .drawer-toggle-icon {
+    width: 18px;
+    height: 2px;
+    background: currentColor;
+    box-shadow: 0 -6px currentColor, 0 6px currentColor;
+  }
+
+  .drawer-close {
+    position: absolute;
+    z-index: 1;
+    inset-block-start: 12px;
+    inset-inline-end: 12px;
+    font: 28px/1 Arial, sans-serif;
+  }
+
+  .drawer-toggle:focus-visible,
+  .drawer-close:focus-visible {
+    outline: 2px solid #78b48c;
+    outline-offset: 3px;
+  }
+
+  .drawer-backdrop {
+    position: fixed;
+    z-index: 90;
+    inset: 0;
+    display: block;
+    background: rgb(13 28 18 / 55%);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity 320ms ease-in-out,
+      visibility 320ms linear;
+  }
+
+  .drawer-backdrop-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .mobile-drawer {
+    position: fixed;
+    z-index: 100;
+    inset: 0 auto 0 0;
+    width: min(280px, 86vw);
+    overflow: hidden;
+    background: #21372a;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateX(-100%);
+    transition:
+      transform 320ms ease-in-out,
+      visibility 320ms linear;
+  }
+
+  .mobile-drawer-open {
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(0);
+  box-shadow: 8px 0 28px rgb(0 0 0 / 20%);
+  transition: visibility 320ms linear;
+  animation: sidebar-slide-in 320ms ease-out both;
+}
 }
 
 @media print {
-  :host {
+  :host(app-res-dashboard) {
     position: static;
     overflow: visible;
   }
@@ -102,8 +202,27 @@ app-contents {
     background: #fff;
   }
 
-  app-resident-sidebar,
-  app-resident-topbar {
+  .mobile-drawer,
+  .dashboard-header,
+  .drawer-backdrop {
     display: none;
+  }
+}
+
+@keyframes sidebar-slide-in {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-drawer,
+  .drawer-backdrop {
+    animation: none;
+    transition: none;
   }
 }

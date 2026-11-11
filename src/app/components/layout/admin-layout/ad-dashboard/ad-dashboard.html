@@ -1,9 +1,52 @@
 <div class="app-layout">
-  <app-admin-sidebar></app-admin-sidebar>
-    <div class="page-wrapper">
+  <aside
+    id="admin-navigation"
+    class="mobile-drawer"
+    [class.mobile-drawer-open]="sidebarOpen()"
+    [attr.role]="sidebarOpen() ? 'dialog' : null"
+    [attr.aria-modal]="sidebarOpen() ? 'true' : null"
+    aria-label="Administrator navigation"
+    (click)="onSidebarClick($event)"
+  >
+    <button
+      #closeButton
+      type="button"
+      class="drawer-close"
+      aria-label="Close navigation"
+      (click)="closeSidebar()"
+    >
+      <span aria-hidden="true">&times;</span>
+    </button>
+
+    <app-admin-sidebar></app-admin-sidebar>
+  </aside>
+
+  <div
+    class="drawer-backdrop"
+    [class.drawer-backdrop-open]="sidebarOpen()"
+    aria-hidden="true"
+    (click)="closeSidebar()"
+  ></div>
+
+  <div class="page-wrapper" [inert]="sidebarOpen()">
+    <div class="dashboard-header">
+      <button
+        #menuButton
+        type="button"
+        class="drawer-toggle"
+        aria-label="Open navigation"
+        aria-controls="admin-navigation"
+        [attr.aria-expanded]="sidebarOpen()"
+        (click)="openSidebar(menuButton, closeButton)"
+      >
+        <span class="drawer-toggle-icon" aria-hidden="true"></span>
+      </button>
+
       <app-admin-topbar></app-admin-topbar>
-      <div class="main-section">
-    <app-contents></app-contents>
+    </div>
+
+    <div class="main-section">
+      <app-contents></app-contents>
+    </div>
   </div>
- </div>
 </div>

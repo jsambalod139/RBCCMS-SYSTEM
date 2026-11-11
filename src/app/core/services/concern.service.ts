@@ -1150,9 +1150,7 @@ export class ConcernService implements OnDestroy {
       };
     } catch (error) {
       if (uploaded && photoPath) {
-        await this.photoService
-          .cleanup(concernRef.id, user.uid)
-          .catch(() => undefined);
+        this.photoService.queueCleanup(concernRef.id, user.uid);
       }
 
       throw new Error(this.errorMessage(error));

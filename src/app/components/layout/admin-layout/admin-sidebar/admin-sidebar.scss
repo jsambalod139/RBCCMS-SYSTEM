@@ -135,35 +135,25 @@ nav {
   }
 }
 
-@media (max-width: 600px) {
+@media screen {
+  :host,
+  .app-layout,
   .sidenav {
     width: 100%;
-    height: auto;
-    overflow: visible;
+    height: 100%;
   }
 
-  .logo,
-  .sidenav-header {
-    display: none;
+  .sidenav {
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
   }
 
-  nav {
-    overflow-x: auto;
-    padding: 8px;
+  .logo {
+    padding: 28px 56px 14px;
 
-    ul {
-      display: flex;
-      width: max-content;
-      gap: 6px;
-    }
-
-    li + li {
-      margin-top: 0;
-    }
-
-    a {
-      padding: 10px 12px;
-      white-space: nowrap;
+    img {
+      width: 108px;
     }
   }
 }
@@ -176,5 +166,21 @@ nav {
 
   nav a:active {
     transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  nav a .pi {
+    transition: transform 180ms ease-out;
+  }
+
+  nav a:focus-visible .pi {
+    transform: translateX(3px);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    nav a:hover .pi {
+      transform: translateX(3px);
+    }
   }
 }
