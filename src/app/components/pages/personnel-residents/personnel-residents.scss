@@ -854,3 +854,253 @@ fieldset {
     animation: none;
   }
 }
+
+
+/* PERSONNEL RESIDENTS - RESPONSIVE CARDS */
+
+@media (max-width: 1100px) {
+
+  .residents-page,
+  .residents-page .list-card,
+  .residents-page .table-scroll {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .residents-page .table-scroll {
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .residents-page .table-scroll table,
+  .residents-page .table-scroll tbody {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .residents-page .table-scroll thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .residents-page .table-scroll tbody {
+    display: grid;
+    grid-template-columns:
+      repeat(auto-fit, minmax(min(100%, 350px), 1fr));
+    gap: 14px;
+  }
+
+  .residents-page .table-scroll tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 13px 12px;
+    min-width: 0;
+    padding: 17px;
+
+    border: 1px solid #dce7df;
+    border-radius: 13px;
+    background: #fff;
+    box-shadow: 0 3px 12px rgba(33, 55, 42, 0.05);
+  }
+
+  .residents-page .table-scroll tbody td {
+    display: block;
+    min-width: 0;
+    max-width: none;
+    padding: 0;
+    border: 0;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  .residents-page .table-scroll tbody td::before {
+    display: block;
+    margin-bottom: 5px;
+    color: #708176;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* RESIDENT DIRECTORY */
+
+  .residents-page .list-card .table-scroll tbody tr {
+    grid-template-areas:
+      "name verification"
+      "id id"
+      "account account"
+      "action action";
+  }
+
+  /* Resident ID */
+  .residents-page .list-card .table-scroll td:nth-child(1) {
+    grid-area: id;
+
+    &::before {
+      content: "Resident ID";
+    }
+  }
+
+  /* Name */
+  .residents-page .list-card .table-scroll td:nth-child(2) {
+    grid-area: name;
+    color: #21372a;
+    font-size: 15px;
+
+    &::before {
+      content: "Name";
+    }
+  }
+
+  /* Verification */
+  .residents-page .list-card .table-scroll td:nth-child(3) {
+    grid-area: verification;
+    justify-self: end;
+    text-align: right;
+    white-space: normal;
+
+    &::before {
+      content: "Verification";
+    }
+
+    .verification-date {
+      display: block;
+      margin: 4px 0 0;
+    }
+  }
+
+  /* Account Status */
+  .residents-page .list-card .table-scroll td:nth-child(4) {
+    grid-area: account;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #f5f8f6;
+
+    &::before {
+      content: "Account";
+    }
+  }
+
+  /* Action */
+  .residents-page .list-card .table-scroll td:nth-child(5) {
+    grid-area: action;
+    padding-top: 12px;
+    border-top: 1px solid #e4ebe6;
+
+    &::before {
+      content: "Action";
+    }
+
+    button {
+      width: 100%;
+      min-height: 44px;
+    }
+  }
+
+  /* RESIDENT CONCERN HISTORY */
+
+  .residents-page .history-table tbody tr {
+    grid-template-areas:
+      "category status"
+      "date date"
+      "action action";
+  }
+
+  .residents-page .history-table td:nth-child(1) {
+    grid-area: category;
+    font-weight: 700;
+
+    &::before {
+      content: "Category";
+    }
+  }
+
+  .residents-page .history-table td:nth-child(2) {
+    grid-area: status;
+    justify-self: end;
+    text-align: right;
+
+    &::before {
+      content: "Status";
+    }
+  }
+
+  .residents-page .history-table td:nth-child(3) {
+    grid-area: date;
+
+    &::before {
+      content: "Date Submitted";
+    }
+  }
+
+  .residents-page .history-table td:nth-child(4) {
+    grid-area: action;
+    padding-top: 12px;
+    border-top: 1px solid #e4ebe6;
+
+    &::before {
+      content: "Action";
+    }
+
+    button {
+      width: 100%;
+      min-height: 44px;
+    }
+  }
+}
+
+/* MOBILE SCREEN */
+
+@media (max-width: 600px) {
+
+  .residents-page .page-heading {
+    align-items: stretch;
+  }
+
+  .residents-page .page-heading > button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .residents-page .list-card {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "search"
+      "heading"
+      "count"
+      "table";
+    gap: 10px;
+  }
+
+  .residents-page .list-heading {
+    display: contents;
+  }
+
+  .residents-page .record-count {
+    text-align: left;
+  }
+
+  .residents-page .table-scroll tbody {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .residents-page .table-scroll tbody tr {
+    padding: 15px;
+  }
+
+  .residents-page .resident-profile-header {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+}

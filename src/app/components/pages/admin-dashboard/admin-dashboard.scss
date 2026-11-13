@@ -812,3 +812,224 @@ tbody tr {
     transform: none;
   }
 }
+
+
+/* =========================================
+   ADMIN DASHBOARD - RECENT CONCERNS
+   RESPONSIVE CARD DESIGN
+   ========================================= */
+
+@media (max-width: 1100px) {
+
+  /* Recent Concerns section */
+  .admin-dashboard .concerns-section {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  /* Section heading */
+  .admin-dashboard .concerns-section .section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Remove horizontal scrollbar */
+  .admin-dashboard .concerns-section .table-wrapper {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: visible;
+    border: none;
+    border-radius: 0;
+  }
+
+  /* Reset table */
+  .admin-dashboard .concerns-section table {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    border-collapse: separate;
+  }
+
+  /* Hide table header visually */
+  .admin-dashboard .concerns-section thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Card container */
+  .admin-dashboard .concerns-section tbody {
+    display: grid;
+    grid-template-columns:
+      repeat(auto-fit, minmax(min(100%, 350px), 1fr));
+    gap: 14px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Each concern becomes a card */
+  .admin-dashboard .concerns-section tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "category status"
+      "submitted submitted"
+      "date date";
+
+    gap: 15px 12px;
+    min-width: 0;
+    padding: 18px;
+
+    border: 1px solid #dce7df;
+    border-radius: 14px;
+    background: #ffffff;
+
+    box-shadow: 0 3px 12px
+      rgba(33, 55, 42, 0.05);
+
+    transition: border-color 0.2s ease;
+  }
+
+  /* Reset table cells */
+  .admin-dashboard .concerns-section tbody td {
+    display: block;
+    min-width: 0;
+    width: auto;
+    padding: 0;
+    border: none;
+
+    color: #21372a;
+    font-size: 13px;
+    line-height: 1.6;
+
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  /* Card field labels */
+  .admin-dashboard .concerns-section tbody td::before {
+    display: block;
+    margin-bottom: 5px;
+
+    color: #708176;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* Category */
+  .admin-dashboard .concerns-section tbody td:nth-child(1) {
+    grid-area: category;
+    font-size: 15px;
+    font-weight: 700;
+
+    &::before {
+      content: "Category";
+    }
+  }
+
+  /* Submitted By */
+  .admin-dashboard .concerns-section tbody td:nth-child(2) {
+    grid-area: submitted;
+
+    padding: 12px;
+    border-radius: 8px;
+    background: #f5f8f6;
+
+    &::before {
+      content: "Submitted By";
+    }
+  }
+
+  /* Status */
+  .admin-dashboard .concerns-section tbody td:nth-child(3) {
+    grid-area: status;
+    justify-self: end;
+    text-align: right;
+
+    &::before {
+      content: "Status";
+    }
+
+    .status-badge {
+      display: inline-block;
+      max-width: 100%;
+      white-space: normal;
+      text-align: center;
+    }
+  }
+
+  /* Date Submitted */
+  .admin-dashboard .concerns-section tbody td:nth-child(4) {
+    grid-area: date;
+
+    padding-top: 12px;
+    border-top: 1px solid #e7ece8;
+
+    color: #596b60;
+
+    &::before {
+      content: "Date Submitted";
+    }
+  }
+}
+
+/* =========================================
+   MOBILE SCREEN
+   ========================================= */
+
+@media (max-width: 600px) {
+
+  .admin-dashboard .concerns-section {
+    padding: 16px 12px;
+    border-radius: 12px;
+  }
+
+  .admin-dashboard .concerns-section .section-heading {
+    margin-bottom: 16px;
+
+    h2 {
+      font-size: 18px;
+    }
+
+    span {
+      font-size: 11px;
+    }
+  }
+
+  /* Display one card per row */
+  .admin-dashboard .concerns-section tbody {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .admin-dashboard .concerns-section tbody tr {
+    padding: 15px;
+    gap: 13px 10px;
+    border-radius: 12px;
+  }
+
+  .admin-dashboard .concerns-section tbody td {
+    font-size: 13px;
+  }
+
+  .admin-dashboard .concerns-section tbody td:nth-child(1) {
+    font-size: 14px;
+  }
+
+  .admin-dashboard .concerns-section tbody td:nth-child(2) {
+    padding: 11px;
+  }
+}

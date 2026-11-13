@@ -386,3 +386,303 @@ tbody tr:last-child td {
     transform: none;
   }
 }
+
+
+/* =========================================
+   ADMIN REPORTS - RESPONSIVE DESIGN
+   ========================================= */
+
+@media (max-width: 1100px) {
+
+  .reports-page,
+  .report-panel,
+  .table-scroll {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  /* Remove horizontal table scrolling */
+  .table-scroll {
+    overflow: visible;
+    border: none;
+    border-radius: 0;
+  }
+
+  .table-scroll table {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    border-collapse: separate;
+  }
+
+  /* Hide desktop table headings visually */
+  .table-scroll thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Card container */
+  .table-scroll tbody,
+  .table-scroll tfoot {
+    display: grid;
+    grid-template-columns:
+      repeat(auto-fit, minmax(min(100%, 350px), 1fr));
+
+    gap: 14px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .table-scroll tfoot {
+    margin-top: 14px;
+    background: transparent;
+  }
+
+  /* Each row becomes a card */
+  .table-scroll tbody tr,
+  .table-scroll tfoot tr {
+    display: grid;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    align-items: start;
+    gap: 14px 12px;
+    min-width: 0;
+    padding: 18px;
+
+    border: 1px solid #dfe7e1;
+    border-radius: 14px;
+    background: #ffffff;
+
+    box-shadow: 0 3px 12px
+      rgba(33, 55, 42, 0.05);
+  }
+
+  /* Overall total card */
+  .table-scroll tfoot tr {
+    background: #edf4ef;
+    border-color: #c8dbcc;
+  }
+
+  /* Category, Location, Office, or Status */
+  .table-scroll tbody th,
+  .table-scroll tfoot th {
+    display: block;
+    grid-column: 1 / -1;
+
+    min-width: 0;
+    max-width: none;
+    padding: 0 0 12px;
+
+    border-bottom: 1px solid #e2ebe5;
+
+    color: #21372a;
+    text-align: left;
+    font-size: 16px;
+    font-weight: 700;
+
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  /* Report values */
+  .table-scroll tbody td,
+  .table-scroll tfoot td {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+
+    min-width: 0;
+    max-width: none;
+    padding: 0;
+    border: none;
+
+    color: #21372a;
+    text-align: left;
+    font-size: 16px;
+    font-weight: 700;
+
+    overflow-wrap: anywhere;
+  }
+
+  /* Labels for each value */
+  .table-scroll tr td::before {
+    display: block;
+    color: #6b7d72;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+
+  .table-scroll tr td:nth-of-type(1)::before {
+    content: "Pending";
+  }
+
+  .table-scroll tr td:nth-of-type(2)::before {
+    content: "In Progress";
+  }
+
+  .table-scroll tr td:nth-of-type(3)::before {
+    content: "Resolved";
+  }
+
+  .table-scroll tr td:nth-of-type(4)::before {
+    content: "Rejected";
+  }
+
+  .table-scroll tr td:nth-of-type(5)::before {
+    content: "Not Recorded";
+  }
+
+  /* Last two columns: Total and Share.
+     These also work for the Statuses tab. */
+  .table-scroll tr td:nth-last-child(2)::before {
+    content: "Total";
+  }
+
+  .table-scroll tr td:last-child::before {
+    content: "Share";
+  }
+
+  .table-scroll tr td:nth-last-child(2) {
+    color: #246441;
+  }
+}
+
+/* =========================================
+   MOBILE SCREEN
+   ========================================= */
+
+@media (max-width: 600px) {
+
+  .reports-page {
+    padding: 14px 10px;
+  }
+
+  .page-heading {
+    align-items: flex-start;
+    gap: 12px;
+
+    > div {
+      min-width: 0;
+    }
+  }
+
+  h1 {
+    font-size: 23px;
+  }
+
+  /* Print and Export buttons */
+  .actions {
+    display: grid;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    gap: 8px;
+    width: 100%;
+
+    button {
+      min-width: 0;
+      min-height: 44px;
+      padding: 10px 8px;
+    }
+  }
+
+  /* Date filter */
+  .filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 14px;
+
+    label,
+    input,
+    > button {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .error {
+      grid-column: 1 / -1;
+    }
+  }
+
+  /* Report tabs */
+  .tabs {
+    display: grid;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    gap: 6px;
+
+    button {
+      min-width: 0;
+      width: 100%;
+      padding: 10px 7px;
+      font-size: 12px;
+      white-space: normal;
+    }
+  }
+
+  .report-panel {
+    padding: 14px 12px;
+  }
+
+  .report-heading h2 {
+    font-size: 17px;
+  }
+
+  /* Responsive summary statistics */
+  .summary-strip {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    gap: 1px;
+    background: #dfe7e1;
+
+    div {
+      min-width: 0;
+      padding: 13px 8px;
+      background: #f2f7f3;
+      font-size: 11px;
+    }
+
+    div:first-child {
+      grid-column: 1 / -1;
+      background: #e6f0e8;
+    }
+
+    strong {
+      font-size: 23px;
+    }
+  }
+
+  /* One report card per row */
+  .table-scroll tbody,
+  .table-scroll tfoot {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .table-scroll tbody tr,
+  .table-scroll tfoot tr {
+    padding: 15px;
+    gap: 13px 10px;
+  }
+
+  .table-scroll tbody th,
+  .table-scroll tfoot th {
+    font-size: 15px;
+  }
+}

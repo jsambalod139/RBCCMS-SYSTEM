@@ -10,7 +10,7 @@
           <h1>Concern Details</h1>
           <p class="reference-tag">
             Concern ID:
-            {{ concern.resident_concern_number ?? 'Not numbered' }}
+            {{ concern.concern_number ?? 'Not numbered' }}
           </p>
         </div>
 
@@ -322,7 +322,7 @@
               "
             >
               <td class="concern-id">
-                {{ concern.resident_concern_number ?? 'Not numbered' }}
+                 {{ concern.concern_number ?? 'Not numbered' }}
               </td>
 
               <td>

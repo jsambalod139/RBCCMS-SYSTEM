@@ -226,3 +226,157 @@ app-contents {
     transition: none;
   }
 }
+
+
+/* =========================================
+   PERSONNEL SIDEBAR - UNIFIED ANIMATION
+   ========================================= */
+
+:host {
+  --personnel-sidebar-speed: 420ms;
+  --personnel-sidebar-ease:
+    cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* MOBILE / TABLET */
+
+@media screen and (max-width: 1439px) {
+
+  /* Closed sidebar */
+  .mobile-drawer {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translate3d(-100%, 0, 0);
+    animation: none;
+
+    transition:
+      transform var(--personnel-sidebar-speed)
+        var(--personnel-sidebar-ease),
+      opacity var(--personnel-sidebar-speed)
+        var(--personnel-sidebar-ease),
+      visibility 0s linear
+        var(--personnel-sidebar-speed);
+  }
+
+  /* Open sidebar */
+  .mobile-drawer.mobile-drawer-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translate3d(0, 0, 0);
+    animation: none;
+
+    box-shadow:
+      8px 0 28px rgba(0, 0, 0, 0.2);
+
+    transition:
+      transform var(--personnel-sidebar-speed)
+        var(--personnel-sidebar-ease),
+      opacity var(--personnel-sidebar-speed)
+        var(--personnel-sidebar-ease),
+      visibility 0s;
+  }
+
+  /* Background overlay - closed */
+  .drawer-backdrop {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+
+    transition:
+      opacity var(--personnel-sidebar-speed)
+        var(--personnel-sidebar-ease),
+      visibility 0s linear
+        var(--personnel-sidebar-speed);
+  }
+
+  /* Background overlay - open */
+  .drawer-backdrop.drawer-backdrop-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+
+    transition:
+      opacity var(--personnel-sidebar-speed)
+        var(--personnel-sidebar-ease),
+      visibility 0s;
+  }
+
+  /* Buttons */
+  .drawer-toggle,
+  .drawer-close {
+    transition:
+      transform 200ms ease,
+      background-color 200ms ease;
+  }
+
+  .drawer-toggle:hover,
+  .drawer-close:hover {
+    transform: scale(1.05);
+    background-color: #e3eee6;
+  }
+
+  .drawer-toggle:active,
+  .drawer-close:active {
+    transform: scale(0.95);
+  }
+}
+
+/* DESKTOP SIDEBAR */
+
+@media screen and (min-width: 1440px) {
+
+  .mobile-drawer {
+    width: 280px;
+    flex: 0 0 280px;
+    overflow: hidden;
+
+    animation:
+      personnel-sidebar-desktop-in
+      var(--personnel-sidebar-speed)
+      var(--personnel-sidebar-ease)
+      both;
+  }
+
+  .mobile-drawer > app-personnel-sidebar {
+    display: block;
+    width: 280px;
+    min-width: 280px;
+    height: 100%;
+  }
+}
+
+/* DESKTOP AUTOMATIC OPENING */
+
+@keyframes personnel-sidebar-desktop-in {
+
+  from {
+    width: 0;
+    flex-basis: 0;
+    opacity: 0;
+    transform: translate3d(-100%, 0, 0);
+  }
+
+  to {
+    width: 280px;
+    flex-basis: 280px;
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* ACCESSIBILITY */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .mobile-drawer,
+  .mobile-drawer.mobile-drawer-open,
+  .drawer-backdrop,
+  .drawer-backdrop.drawer-backdrop-open,
+  .drawer-toggle,
+  .drawer-close {
+    animation: none !important;
+    transition: none !important;
+  }
+}

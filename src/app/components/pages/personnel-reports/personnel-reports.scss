@@ -469,3 +469,254 @@ tfoot {
     break-inside: avoid;
   }
 }
+
+
+/* PERSONNEL REPORTS - RESPONSIVE DESIGN */
+
+@media (max-width: 1100px) {
+
+  .reports-page,
+  .reports-page .report-panel,
+  .reports-page .table-scroll {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .reports-page .table-scroll {
+    width: 100%;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .reports-page .table-scroll table,
+  .reports-page .table-scroll tbody,
+  .reports-page .table-scroll tfoot {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .reports-page .table-scroll thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .reports-page .table-scroll tbody {
+    display: grid;
+    grid-template-columns:
+      repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+    gap: 14px;
+  }
+
+  .reports-page .table-scroll tfoot {
+    margin-top: 14px;
+  }
+
+  .reports-page .table-scroll tbody tr,
+  .reports-page .table-scroll tfoot tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 13px 12px;
+    min-width: 0;
+    padding: 17px;
+
+    border: 1px solid #dce7df;
+    border-radius: 13px;
+    background: #fff;
+    box-shadow: 0 3px 12px rgba(33, 55, 42, 0.05);
+  }
+
+  /* Total card */
+  .reports-page .table-scroll tfoot tr {
+    background: #eaf3ec;
+    border-color: #c8dacb;
+  }
+
+  .reports-page .table-scroll tbody td,
+  .reports-page .table-scroll tfoot td,
+  .reports-page .table-scroll tfoot th {
+    display: block;
+    min-width: 0;
+    max-width: none;
+    padding: 0;
+    border: 0;
+    text-align: left;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  /* Category, Office, Location, Purok, or Total */
+  .reports-page .table-scroll tr > :first-child {
+    grid-column: 1 / -1;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e2ebe5;
+
+    color: #21372a;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  /* Card labels */
+  .reports-page .table-scroll td::before {
+    display: block;
+    margin-bottom: 3px;
+    color: #6e8074;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.35px;
+    text-transform: uppercase;
+  }
+
+  /* Concern report columns */
+  .reports-page .table-scroll td:nth-child(1)::before {
+    content: "Group";
+  }
+
+  .reports-page .table-scroll td:nth-child(2)::before {
+    content: "Pending";
+  }
+
+  .reports-page .table-scroll td:nth-child(3)::before {
+    content: "In Progress";
+  }
+
+  .reports-page .table-scroll td:nth-child(4)::before {
+    content: "Resolved";
+  }
+
+  .reports-page .table-scroll td:nth-child(5)::before {
+    content: "Rejected";
+  }
+
+  .reports-page .table-scroll td:nth-child(6)::before {
+    content: "Total";
+  }
+
+  .reports-page .table-scroll td:nth-child(7)::before {
+    content: "Share";
+  }
+
+  /* Resident Accounts report column labels */
+  .reports-page:has(.tabs button:nth-child(4).active)
+    .table-scroll td:nth-child(1)::before {
+    content: "Purok";
+  }
+
+  .reports-page:has(.tabs button:nth-child(4).active)
+    .table-scroll td:nth-child(2)::before {
+    content: "Accounts";
+  }
+
+  .reports-page:has(.tabs button:nth-child(4).active)
+    .table-scroll td:nth-child(3)::before {
+    content: "Verified";
+  }
+
+  .reports-page:has(.tabs button:nth-child(4).active)
+    .table-scroll td:nth-child(4)::before {
+    content: "Not Verified";
+  }
+
+  .reports-page:has(.tabs button:nth-child(4).active)
+    .table-scroll td:nth-child(5)::before {
+    content: "Approved";
+  }
+
+  .reports-page:has(.tabs button:nth-child(4).active)
+    .table-scroll td:nth-child(6)::before {
+    content: "Other Account Statuses";
+  }
+
+  .reports-page .table-scroll tr > :nth-last-child(2) {
+    color: #197344;
+    font-weight: 700;
+  }
+}
+
+/* MOBILE SCREEN */
+
+@media (max-width: 600px) {
+
+  .reports-page .page-heading {
+    align-items: stretch;
+  }
+
+  /* Print and Export */
+  .reports-page .actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+
+  .reports-page .actions button {
+    min-width: 0;
+    width: 100%;
+    padding: 9px 6px;
+    white-space: normal;
+  }
+
+  /* Date filters */
+  .reports-page .filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .reports-page .filters label {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .reports-page .filters input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .reports-page .filters > button,
+  .reports-page .filters .error {
+    grid-column: 1 / -1;
+  }
+
+  /* Report tabs */
+  .reports-page .tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    overflow: visible;
+  }
+
+  .reports-page .tabs button {
+    min-width: 0;
+    padding: 10px 6px;
+    white-space: normal;
+  }
+
+  /* Summary statistics */
+  .reports-page .summary-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* One card per row */
+  .reports-page .table-scroll tbody {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .reports-page .table-scroll tbody tr,
+  .reports-page .table-scroll tfoot tr {
+    padding: 15px;
+  }
+
+  .reports-page .report-heading {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}

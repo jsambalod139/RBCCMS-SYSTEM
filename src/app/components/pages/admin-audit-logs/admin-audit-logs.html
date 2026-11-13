@@ -1,33 +1,102 @@
-<main class="audit-page" [attr.aria-busy]="loading()">
+
+<main
+  class="audit-page"
+  [attr.aria-busy]="loading()"
+>
+
+  <!-- ====================================
+       PAGE HEADER
+       ==================================== -->
+
   <header class="page-heading">
-    <p class="eyebrow">ADMINISTRATOR PORTAL</p>
+
+    <p class="eyebrow">
+      ADMINISTRATOR PORTAL
+    </p>
+
     <h1>Audit Logs</h1>
+
     <p class="page-description">
       Review recorded user actions and affected records.
     </p>
+
   </header>
 
-  <section class="filter-panel" aria-label="Audit log filters">
+  <!-- ====================================
+       FILTERS
+       ==================================== -->
+
+  <section
+    class="filter-panel"
+    aria-label="Audit log filters"
+  >
+
+    <!-- WEEKLY FILTER -->
     <div class="filter-field category-field">
-      <label for="audit-category">Category</label>
+
+      <label for="audit-period">
+        Period
+      </label>
+
+      <select
+        id="audit-period"
+        [ngModel]="selectedPeriod()"
+        (ngModelChange)="changePeriod($event)"
+      >
+
+        <option value="this-week">
+          This Week
+        </option>
+
+        <option value="last-week">
+          Last Week
+        </option>
+
+        <option value="all-history">
+          All History
+        </option>
+
+      </select>
+
+    </div>
+
+    <!-- CATEGORY FILTER -->
+    <div class="filter-field category-field">
+
+      <label for="audit-category">
+        Category
+      </label>
 
       <select
         id="audit-category"
         [ngModel]="selectedCategory()"
         (ngModelChange)="changeCategory($event)"
       >
-        @for (category of categoryOptions; track category) {
+
+        @for (
+          category of categoryOptions;
+          track category
+        ) {
+
           <option [value]="category">
             {{ category }}
           </option>
+
         }
+
       </select>
+
     </div>
 
+    <!-- SEARCH FIELD -->
     <div class="filter-field search-field">
-      <label for="audit-search">Search</label>
+
+      <label for="audit-search">
+        Search
+      </label>
 
       <div class="search-wrapper">
+
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -35,8 +104,15 @@
           stroke-width="1.7"
           aria-hidden="true"
         >
-          <circle cx="10.5" cy="10.5" r="6.5" />
+
+          <circle
+            cx="10.5"
+            cy="10.5"
+            r="6.5"
+          />
+
           <path d="m16 16 4 4" />
+
         </svg>
 
         <input
@@ -48,30 +124,82 @@
           [ngModel]="searchTerm()"
           (ngModelChange)="changeSearch($event)"
         />
+
       </div>
+
     </div>
+
   </section>
 
-  <section class="records-panel" aria-labelledby="activity-title">
+  <!-- ====================================
+       ACTIVITY RECORDS
+       ==================================== -->
+
+  <section
+    class="records-panel"
+    aria-labelledby="activity-title"
+  >
+
     <header class="records-heading">
-      <h2 id="activity-title">Activity Records</h2>
+
+      <h2 id="activity-title">
+        Activity Records
+      </h2>
 
       @if (!loading() && !errorMessage()) {
+
         <span class="record-count">
+
           {{ totalRecords() }}
-          {{ totalRecords() === 1 ? 'record' : 'records' }}
+
+          {{
+            totalRecords() === 1
+              ? 'record'
+              : 'records'
+          }}
+
         </span>
+
       }
+
     </header>
 
+    <!-- ==================================
+         LOADING STATE
+         ================================== -->
+
     @if (loading()) {
-      <div class="state-message" role="status">
-        <span class="spinner" aria-hidden="true"></span>
+
+      <div
+        class="state-message"
+        role="status"
+      >
+
+        <span
+          class="spinner"
+          aria-hidden="true"
+        ></span>
+
         <p>Loading audit logs...</p>
+
       </div>
-    } @else if (errorMessage()) {
-      <div class="state-message error-state" role="alert">
-        <p>{{ errorMessage() }}</p>
+
+    }
+
+    <!-- ==================================
+         ERROR STATE
+         ================================== -->
+
+    @else if (errorMessage()) {
+
+      <div
+        class="state-message error-state"
+        role="alert"
+      >
+
+        <p>
+          {{ errorMessage() }}
+        </p>
 
         <button
           type="button"
@@ -80,120 +208,249 @@
         >
           Try Again
         </button>
+
       </div>
-    } @else if (totalRecords() === 0) {
+
+    }
+
+    <!-- ==================================
+         EMPTY STATE
+         ================================== -->
+
+    @else if (totalRecords() === 0) {
+
       <div class="state-message">
+
         @if (
           searchTerm().trim() ||
           selectedCategory() !== 'All categories'
         ) {
-          <h3>No matching audit logs</h3>
+
+          <h3>
+            No matching audit logs
+          </h3>
+
           <p>
-            Try another search or select a different category.
+            Try another search or select
+            a different category.
           </p>
-        } @else {
-          <h3>No audit logs yet</h3>
-          <p>
-            Recorded activity will appear here after logging
-            is connected and a new action occurs.
-          </p>
+
         }
+
+        @else {
+
+          <h3>
+            No audit logs for this period
+          </h3>
+
+          <p>
+            Older records are still saved.
+            Choose Last Week or All History
+            to view them.
+          </p>
+
+        }
+
       </div>
-    } @else {
+
+    }
+
+    <!-- ==================================
+         AUDIT LOG TABLE
+         ================================== -->
+
+    @else {
+
       <div
         class="table-wrapper"
         role="region"
         aria-label="Audit activity records"
         tabindex="0"
       >
+
         <table>
+
+          <!-- TABLE HEADER -->
           <thead>
+
             <tr>
-              <th scope="col">Date &amp; Time</th>
-              <th scope="col">User</th>
-              <th scope="col">Category</th>
-              <th scope="col">Action</th>
-              <th scope="col">Details</th>
+
+              <th scope="col">
+                Date &amp; Time
+              </th>
+
+              <th scope="col">
+                User
+              </th>
+
+              <th scope="col">
+                Category
+              </th>
+
+              <th scope="col">
+                Action
+              </th>
+
+              <th scope="col">
+                Details
+              </th>
+
             </tr>
+
           </thead>
 
-          @for (page of [displayedPage()]; track page) {
+          <!-- TABLE BODY -->
+
+          @for (
+            page of [displayedPage()];
+            track page
+          ) {
+
             <tbody class="audit-page-rows">
-              @for (entry of pagedEntries(); track entry.id) {
+
+              @for (
+                entry of pagedEntries();
+                track entry.id
+              ) {
+
                 <tr>
+
+                  <!-- DATE & TIME -->
                   <td class="date-cell">
+
                     @if (entry.createdAt) {
-                      <time [attr.datetime]="entry.createdAt">
+
+                      <time
+                        [attr.datetime]="entry.createdAt"
+                      >
+
                         {{
                           entry.createdAt
                             | date:'MMM d, y, h:mm a':'GMT+08:00'
                         }}
+
                       </time>
-                    } @else {
-                      Date unavailable
+
                     }
+
+                    @else {
+
+                      Date unavailable
+
+                    }
+
                   </td>
 
+                  <!-- USER -->
                   <td class="user-cell">
+
                     {{ entry.userName }}
+
                   </td>
 
+                  <!-- CATEGORY -->
                   <td>
+
                     <span
                       class="category-badge"
                       [ngClass]="categoryClass(entry.category)"
                     >
+
                       {{ entry.category }}
+
                     </span>
+
                   </td>
 
+                  <!-- ACTION -->
                   <td class="action-cell">
+
                     {{ entry.action }}
+
                   </td>
 
+                  <!-- DETAILS -->
                   <td class="details-cell">
+
                     {{ displayDetails(entry) }}
+
                   </td>
+
                 </tr>
+
               }
+
             </tbody>
+
           }
+
         </table>
+
       </div>
 
+      <!-- ==================================
+           PAGINATION
+           ================================== -->
+
       <footer class="pagination">
-        <p class="pagination-summary" aria-live="polite">
-          Showing {{ firstRecord() }}–{{ lastRecord() }}
+
+        <p
+          class="pagination-summary"
+          aria-live="polite"
+        >
+
+          Showing
+          {{ firstRecord() }}–{{ lastRecord() }}
           of {{ totalRecords() }}
+
         </p>
 
         <nav
           class="pagination-controls"
           aria-label="Audit log pagination"
         >
+
+          <!-- PREVIOUS -->
           <button
             type="button"
             class="button button-outline"
             [disabled]="displayedPage() <= 1"
             (click)="previousPage()"
           >
+
             Previous
+
           </button>
 
-          <span class="page-number" aria-live="polite">
-            Page {{ displayedPage() }} of {{ totalPages() }}
+          <!-- PAGE NUMBER -->
+          <span
+            class="page-number"
+            aria-live="polite"
+          >
+
+            Page {{ displayedPage() }}
+            of {{ totalPages() }}
+
           </span>
 
+          <!-- NEXT -->
           <button
             type="button"
             class="button button-outline"
             [disabled]="displayedPage() >= totalPages()"
             (click)="nextPage()"
           >
+
             Next
+
           </button>
+
         </nav>
+
       </footer>
+
     }
+
   </section>
+
 </main>

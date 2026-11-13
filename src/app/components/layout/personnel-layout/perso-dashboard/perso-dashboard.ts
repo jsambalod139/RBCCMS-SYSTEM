@@ -13,6 +13,14 @@ export class PersoDashboard {
   readonly sidebarOpen = signal(false);
   private menuButton: HTMLButtonElement | null = null;
 
+private previousZoom = window.devicePixelRatio;
+private wasDesktop = window.matchMedia(
+  '(min-width: 1440px)'
+).matches;
+private resizeRequest = 0;
+
+
+
   openSidebar(menu: HTMLButtonElement, close: HTMLButtonElement): void {
   this.menuButton = menu;
   this.sidebarOpen.set(true);
@@ -50,15 +58,66 @@ export class PersoDashboard {
     this.closeSidebar();
   }
 
-  @HostListener('window:resize')
+ 
+@HostListener('window:resize')
 onResize(): void {
-  if (
-    this.sidebarOpen() &&
-    window.matchMedia('(min-width: 1440px)').matches
-  ) {
+  const isDesktop = window.matchMedia(
+    '(min-width: 1440px)'
+  ).matches;
+
+  const currentZoom = window.devicePixelRatio;
+
+  const zoomChanged =
+    Math.abs(currentZoom - this.previousZoom) > 0.01;
+
+  const enteredMobile =
+    this.wasDesktop && !isDesktop;
+
+  this.previousZoom = currentZoom;
+  this.wasDesktop = isDesktop;
+
+  // Desktop sidebar opens through CSS
+  if (isDesktop) {
+    this.resizeRequest++;
     this.sidebarOpen.set(false);
     this.menuButton = null;
+    return;
+  }
+
+  // Automatically open mobile sidebar on zoom
+  if (
+    (zoomChanged || enteredMobile) &&
+    !this.sidebarOpen()
+  ) {
+    const request = ++this.resizeRequest;
+
+    // Render closed position before sliding open
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+
+        if (
+          request !== this.resizeRequest ||
+          window.matchMedia(
+            '(min-width: 1440px)'
+          ).matches
+        ) {
+          return;
+        }
+
+        this.menuButton =
+          document.querySelector<HTMLButtonElement>(
+            '.drawer-toggle'
+          );
+
+        this.sidebarOpen.set(true);
+
+        requestAnimationFrame(() => {
+          document.querySelector<HTMLButtonElement>(
+            '#personnel-navigation .drawer-close'
+          )?.focus({ preventScroll: true });
+        });
+      });
+    });
   }
 }
- 
 }

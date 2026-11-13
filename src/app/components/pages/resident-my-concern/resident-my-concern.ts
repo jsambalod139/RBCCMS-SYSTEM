@@ -108,42 +108,38 @@ export class ResidentMyConcern implements OnInit {
     this.loadConcerns();
   }
 
-  get filteredConcerns(): ConcernWithRelations[] {
-    const search = this.searchTerm.trim().toLowerCase();
+ 
+get filteredConcerns(): ConcernWithRelations[] {
+  const search = this.searchTerm.trim().toLowerCase();
 
-    return this.concerns
-      .filter(concern => {
-        const categoryName =
-          concern.category?.category_name ??
-          `Category ${concern.category_id}`;
+  return this.concerns
+    .filter(concern => {
+      const categoryName =
+        concern.category?.category_name ??
+        `Category ${concern.category_id}`;
 
-        const matchesSearch = [
-          String(concern.resident_concern_number ?? ''),
-          categoryName,
-          concern.location_description,
-          concern.description,
-        ].some(value =>
-          (value ?? '').toLowerCase().includes(search)
-        );
-
-        const matchesStatus =
-          this.selectedStatus === 'All Status' ||
-          concern.current_status === this.selectedStatus;
-
-        return matchesSearch && matchesStatus;
-      })
-      .sort(
-        (a, b) =>
-          (
-            a.resident_concern_number ??
-            Number.MAX_SAFE_INTEGER
-          ) -
-          (
-            b.resident_concern_number ??
-            Number.MAX_SAFE_INTEGER
-          )
+      const matchesSearch = [
+        String(concern.concern_number ?? ''),
+        categoryName,
+        concern.location_description,
+        concern.description,
+      ].some(value =>
+        (value ?? '').toLowerCase().includes(search)
       );
-  }
+
+      const matchesStatus =
+        this.selectedStatus === 'All Status' ||
+        concern.current_status === this.selectedStatus;
+
+      return matchesSearch && matchesStatus;
+    })
+    .sort(
+      (a, b) =>
+        (a.concern_number ?? Number.MAX_SAFE_INTEGER) -
+        (b.concern_number ?? Number.MAX_SAFE_INTEGER)
+    );
+}
+
 
   getStatusClass(status: ConcernStatus): string {
     switch (status) {

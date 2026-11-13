@@ -226,3 +226,169 @@ app-contents {
     transition: none;
   }
 }
+
+
+/* =========================================
+   RESIDENT SIDEBAR - UNIFIED ANIMATION
+   ========================================= */
+
+:host {
+  --resident-sidebar-duration: 420ms;
+  --resident-sidebar-easing:
+    cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* =========================================
+   MOBILE / TABLET SIDEBAR
+   ========================================= */
+
+@media screen and (width < 1440px) {
+
+  /* Closed sidebar */
+  .mobile-drawer {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+
+    transform: translate3d(-100%, 0, 0);
+    animation: none;
+
+    transition:
+      transform var(--resident-sidebar-duration)
+        var(--resident-sidebar-easing),
+      opacity var(--resident-sidebar-duration)
+        var(--resident-sidebar-easing),
+      visibility 0s linear
+        var(--resident-sidebar-duration);
+  }
+
+  /* Opened sidebar */
+  .mobile-drawer.mobile-drawer-open {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+
+    transform: translate3d(0, 0, 0);
+    animation: none;
+
+    box-shadow:
+      8px 0 28px rgba(0, 0, 0, 0.2);
+
+    transition:
+      transform var(--resident-sidebar-duration)
+        var(--resident-sidebar-easing),
+      opacity var(--resident-sidebar-duration)
+        var(--resident-sidebar-easing),
+      visibility 0s;
+  }
+
+  /* Closed background overlay */
+  .drawer-backdrop {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+
+    transition:
+      opacity var(--resident-sidebar-duration)
+        var(--resident-sidebar-easing),
+      visibility 0s linear
+        var(--resident-sidebar-duration);
+  }
+
+  /* Opened background overlay */
+  .drawer-backdrop.drawer-backdrop-open {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+
+    transition:
+      opacity var(--resident-sidebar-duration)
+        var(--resident-sidebar-easing),
+      visibility 0s;
+  }
+
+  /* Hamburger and close buttons */
+  .drawer-toggle,
+  .drawer-close {
+    transition:
+      transform 200ms ease,
+      background-color 200ms ease,
+      border-color 200ms ease;
+  }
+
+  .drawer-toggle:hover,
+  .drawer-close:hover {
+    transform: scale(1.05);
+    background-color: #e3eee6;
+  }
+
+  .drawer-toggle:active,
+  .drawer-close:active {
+    transform: scale(0.95);
+  }
+}
+
+/* =========================================
+   DESKTOP SIDEBAR - AUTOMATIC OPENING
+   ========================================= */
+
+@media screen and (min-width: 1440px) {
+
+  .mobile-drawer {
+    width: 280px;
+    flex: 0 0 280px;
+    overflow: hidden;
+    background: #21372a;
+
+    animation:
+      resident-sidebar-desktop-enter
+      var(--resident-sidebar-duration)
+      var(--resident-sidebar-easing)
+      both;
+  }
+
+  .mobile-drawer > app-resident-sidebar {
+    display: block;
+    width: 280px;
+    min-width: 280px;
+    height: 100%;
+  }
+}
+
+/* =========================================
+   DESKTOP SLIDE-IN ANIMATION
+   ========================================= */
+
+@keyframes resident-sidebar-desktop-enter {
+
+  from {
+    width: 0;
+    flex-basis: 0;
+    opacity: 0;
+
+    transform: translate3d(-24px, 0, 0);
+  }
+
+  to {
+    width: 280px;
+    flex-basis: 280px;
+    opacity: 1;
+
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* =========================================
+   ACCESSIBILITY
+   ========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .mobile-drawer,
+  .drawer-backdrop,
+  .drawer-toggle,
+  .drawer-close {
+    animation: none !important;
+    transition: none !important;
+  }
+}

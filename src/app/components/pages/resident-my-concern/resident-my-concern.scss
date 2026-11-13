@@ -812,3 +812,239 @@ select:disabled {
     transform: none;
   }
 }
+
+
+/* =========================================
+   RESIDENT MY CONCERNS - RESPONSIVE CARDS
+   ========================================= */
+
+@media (max-width: 1100px) {
+
+  .my-concerns-page {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Remove horizontal scrollbar */
+  .my-concerns-page .table-card {
+    overflow: visible;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .my-concerns-page .table-responsive {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: visible;
+  }
+
+  .my-concerns-page .table-responsive table,
+  .my-concerns-page .table-responsive tbody {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Hide table headings visually */
+  .my-concerns-page .table-responsive thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Responsive card container */
+  .my-concerns-page .table-responsive tbody {
+    display: grid;
+    grid-template-columns:
+      repeat(auto-fit, minmax(min(100%, 350px), 1fr));
+    gap: 14px;
+  }
+
+  /* Each concern row becomes a card */
+  .my-concerns-page .table-responsive tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "id status"
+      "category category"
+      "date date"
+      "action action";
+
+    gap: 15px 12px;
+    min-width: 0;
+    padding: 18px;
+
+    border: 1px solid #dce7df;
+    border-radius: 14px;
+    background: #ffffff;
+
+    box-shadow: 0 3px 12px
+      rgba(33, 55, 42, 0.05);
+
+    transition:
+      border-color 200ms ease,
+      box-shadow 200ms ease;
+  }
+
+  /* Reset cells */
+  .my-concerns-page .table-responsive tbody td {
+    display: block;
+    min-width: 0;
+    width: auto;
+    max-width: none;
+    padding: 0;
+    border: none;
+
+    color: #21372a;
+    font-size: 13px;
+    line-height: 1.6;
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  /* Card labels */
+  .my-concerns-page
+  .table-responsive tbody td::before {
+    display: block;
+    margin-bottom: 5px;
+
+    color: #708176;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* Concern ID */
+  .my-concerns-page
+  .table-responsive tbody td:nth-child(1) {
+    grid-area: id;
+    font-size: 15px;
+    font-weight: 700;
+
+    &::before {
+      content: "Concern ID";
+    }
+  }
+
+  /* Category */
+  .my-concerns-page
+  .table-responsive tbody td:nth-child(2) {
+    grid-area: category;
+    padding: 12px;
+
+    border-radius: 8px;
+    background: #f5f8f6;
+
+    &::before {
+      content: "Category";
+    }
+  }
+
+  /* Status */
+  .my-concerns-page
+  .table-responsive tbody td:nth-child(3) {
+    grid-area: status;
+    justify-self: end;
+    text-align: right;
+
+    &::before {
+      content: "Status";
+    }
+
+    .status-badge {
+      max-width: 100%;
+      white-space: normal;
+      text-align: center;
+    }
+  }
+
+  /* Date Reported */
+  .my-concerns-page
+  .table-responsive tbody td:nth-child(4) {
+    grid-area: date;
+
+    &::before {
+      content: "Date Reported";
+    }
+  }
+
+  /* View Details action */
+  .my-concerns-page
+  .table-responsive tbody td:nth-child(5) {
+    grid-area: action;
+    padding-top: 13px;
+    border-top: 1px solid #e7ece8;
+
+    &::before {
+      content: "Action";
+    }
+
+    .btn-view-details {
+      width: 100%;
+      min-width: 0;
+      min-height: 44px;
+      border-radius: 8px;
+    }
+  }
+}
+
+/* =========================================
+   MOBILE SCREEN
+   ========================================= */
+
+@media (max-width: 600px) {
+
+  .my-concerns-page {
+    padding: 16px 12px;
+  }
+
+  .my-concerns-page .page-header {
+    margin-bottom: 20px;
+  }
+
+  .my-concerns-page .page-header h1 {
+    font-size: 23px;
+  }
+
+  /* Search and filter */
+  .my-concerns-page .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .my-concerns-page .search-box,
+  .my-concerns-page .filter-box,
+  .my-concerns-page .filter-box select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .my-concerns-page .search-box input,
+  .my-concerns-page .filter-box select {
+    font-size: 16px;
+  }
+
+  /* One concern card per row */
+  .my-concerns-page .table-responsive tbody {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .my-concerns-page .table-responsive tbody tr {
+    padding: 15px;
+    gap: 13px 10px;
+    border-radius: 12px;
+  }
+}

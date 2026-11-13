@@ -12,6 +12,11 @@ import { AdminTopbar } from '../admin-topbar/admin-topbar';
 export class AdDashboard {
   readonly sidebarOpen = signal(false);
   private menuButton: HTMLButtonElement | null = null;
+  private previousZoom = window.devicePixelRatio;
+  private wasDesktop = window.matchMedia(
+  '(min-width: 1440px)'
+).matches;
+
 
   openSidebar(menu: HTMLButtonElement, close: HTMLButtonElement): void {
   this.menuButton = menu;
@@ -51,14 +56,55 @@ onEscape(event: Event): void {
   this.closeSidebar();
 }
 
-  @HostListener('window:resize')
+/* Replace your existing onResize() */
+@HostListener('window:resize')
 onResize(): void {
-  if (
-    this.sidebarOpen() &&
-    window.matchMedia('(min-width: 1440px)').matches
-  ) {
+  const isDesktop = window.matchMedia(
+    '(min-width: 1440px)'
+  ).matches;
+
+  const currentZoom = window.devicePixelRatio;
+
+  const zoomedIn =
+    currentZoom > this.previousZoom + 0.01;
+
+  const enteredMobile =
+    this.wasDesktop && !isDesktop;
+
+  this.previousZoom = currentZoom;
+  this.wasDesktop = isDesktop;
+
+  // Zooming out into desktop mode
+  if (isDesktop) {
     this.sidebarOpen.set(false);
     this.menuButton = null;
+    return;
+  }
+
+  // Zooming in or entering mobile mode
+  if (
+    (zoomedIn || enteredMobile) &&
+    !this.sidebarOpen()
+  ) {
+    this.menuButton =
+      document.querySelector<HTMLButtonElement>(
+        '.drawer-toggle'
+      );
+
+    // Allow the closed layout to render first
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (this.wasDesktop) return;
+
+        this.sidebarOpen.set(true);
+
+        document
+          .querySelector<HTMLButtonElement>(
+            '#admin-navigation .drawer-close'
+          )
+          ?.focus({ preventScroll: true });
+      });
+    });
   }
 }
 }
