@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { AdminBackupRecovery } from '../admin-backup-recovery/admin-backup-recovery';
 
 import {
   Component,
@@ -23,7 +24,6 @@ import {
 } from 'firebase/auth';
 
 import Swal from 'sweetalert2';
-
 import { firebaseApp } from '../../../core/firebase.config';
 
 import {
@@ -35,7 +35,7 @@ import {
 @Component({
   selector: 'app-admin-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, AdminBackupRecovery],
   templateUrl: './admin-settings.html',
   styleUrl: './admin-settings.scss',
 })
@@ -43,7 +43,8 @@ export class AdminSettings implements OnDestroy {
   readonly account = inject(SettingsService);
 
   readonly activeTab =
-    signal<'account' | 'preferences' | 'privacy'>('account');
+    signal<'account' | 'preferences' | 'privacy' | 'backup'
+>('account');
 
   private readonly auth = getAuth(firebaseApp);
   private readonly router = inject(Router);

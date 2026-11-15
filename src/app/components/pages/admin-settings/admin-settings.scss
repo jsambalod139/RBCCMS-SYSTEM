@@ -698,3 +698,29 @@ legend {
     transform: none;
   }
 }
+
+
+/* Backup & Recovery tab responsive layout */
+
+@media (max-width: 600px) {
+  .settings-tabs {
+    display: grid;
+    grid-template-columns: repeat(
+      2,
+      minmax(0, 1fr)
+    );
+    gap: 6px;
+  }
+
+  .settings-tabs button {
+    white-space: normal;
+    min-width: 0;
+    min-height: 44px;
+  }
+
+  .settings-card:has(
+    app-admin-backup-recovery
+  ) {
+    padding: 12px;
+  }
+}

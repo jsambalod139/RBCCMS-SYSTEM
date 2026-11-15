@@ -754,3 +754,28 @@ app-notifications {
   }
 }
 
+
+
+/* Smooth page transitions, including router Back navigation */
+
+@keyframes rbccms-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+router-outlet + * {
+  animation: rbccms-page-enter 300ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  router-outlet + * {
+    animation: none;
+  }
+}

@@ -827,3 +827,127 @@ a:focus-visible,
 }
 
 
+
+/* =========================================
+   ADMIN ARCHIVE ANIMATIONS
+   ========================================= */
+
+@keyframes archiveSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes archiveDetailsIn {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes archiveBackIn {
+  from {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Archive page entrance */
+.admin-archive-page,
+.admin-concerns-page {
+  animation: archiveSlideIn 350ms ease-out;
+}
+
+/* Opening archived concern details */
+.details-page {
+  animation: archiveDetailsIn 350ms ease-out;
+}
+
+/* Archive list entrance, including when
+   the list is recreated after going Back */
+.admin-archive-page .toolbar,
+.admin-archive-page .results-heading,
+.admin-archive-page .table-card,
+.admin-archive-page .empty-state {
+  animation: archiveBackIn 350ms ease-out backwards;
+}
+
+.admin-archive-page .toolbar {
+  animation-delay: 60ms;
+}
+
+.admin-archive-page .results-heading,
+.admin-archive-page .table-card {
+  animation-delay: 120ms;
+}
+
+/* Archived concern rows */
+.admin-archive-page table tbody tr {
+  transition:
+    background-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.admin-archive-page table tbody tr:hover {
+  background-color: #edf8f0;
+  box-shadow: inset 3px 0 0 #16814c;
+}
+
+/* Back and action buttons */
+.details-page button,
+.archive-details-actions button {
+  transition:
+    transform 200ms ease,
+    background-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.details-page button:hover:not(:disabled),
+.archive-details-actions button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(20, 80, 45, 0.12);
+}
+
+.details-page button:active:not(:disabled),
+.archive-details-actions button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-archive-page,
+  .admin-concerns-page,
+  .details-page,
+  .admin-archive-page .toolbar,
+  .admin-archive-page .results-heading,
+  .admin-archive-page .table-card,
+  .admin-archive-page .empty-state {
+    animation: none;
+  }
+
+  .admin-archive-page table tbody tr,
+  .details-page button,
+  .archive-details-actions button {
+    transition: none;
+  }
+
+  .details-page button:hover:not(:disabled),
+  .archive-details-actions button:hover:not(:disabled) {
+    transform: none;
+  }
+}

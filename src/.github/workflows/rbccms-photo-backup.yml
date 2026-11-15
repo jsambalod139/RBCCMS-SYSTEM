@@ -1,0 +1,41 @@
+
+name: RBCCMS nightly combined backup
+
+on:
+  schedule:
+    # 16:00 UTC = approximately 12 AM
+    # the following day in the Philippines
+    - cron: '0 16 * * *'
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rbccms-full-backup
+  cancel-in-progress: false
+
+jobs:
+  combined-backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Start restricted Firestore export and photo backup
+        env:
+          BACKUP_URL: ${{ secrets.RBCCMS_BACKUP_URL }}
+          BACKUP_SECRET: ${{ secrets.RBCCMS_BACKUP_CRON_SECRET }}
+
+        run: |
+          set -eu
+
+          test -n "$BACKUP_URL"
+          test -n "$BACKUP_SECRET"
+
+          curl --fail-with-body --show-error --silent \
+            --max-time 720 \
+            --request POST "$BACKUP_URL" \
+            --header 'Content-Type: application/json' \
+            --header "x-backup-secret: ${BACKUP_SECRET}" \
+            --data '{"action":"scheduled-full-backup"}'

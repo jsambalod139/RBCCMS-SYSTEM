@@ -1,0 +1,673 @@
+
+<section class="backup-page" aria-labelledby="backup-title">
+
+  <!-- BACKUP HEADING -->
+
+  <header class="backup-heading">
+    <span class="heading-icon" aria-hidden="true">
+      <svg viewBox="0 0 32 32" fill="none"
+        stroke="currentColor" stroke-width="1.8"
+        stroke-linecap="round" stroke-linejoin="round">
+
+        <ellipse cx="14" cy="7" rx="10" ry="4"></ellipse>
+
+        <path
+          d="M4 7v8c0 2.2 4.5 4 10 4 1.4 0 2.7-.1 3.9-.4M4 15v8c0 2.2 4.5 4 10 4 1 0 2-.1 2.9-.2">
+        </path>
+
+        <path d="M24 11v4"></path>
+        <path d="M21 23a6 6 0 1 1 2 4.5M21 28v-5h5"></path>
+
+      </svg>
+    </span>
+
+    <div>
+      <h2 id="backup-title">
+        Backup &amp; Recovery
+      </h2>
+    </div>
+  </header>
+
+  <!-- BACKUP FEATURE CARDS -->
+
+  <div class="feature-grid">
+
+    <!-- DATABASE BACKUP -->
+
+    <article class="feature-card database-card">
+      <span class="feature-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="1.8"
+          stroke-linecap="round" stroke-linejoin="round">
+
+          <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+
+          <path
+            d="M4 5v7c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12v7c0 1.7 3.6 3 8 3s8-1.3 8-3v-7">
+          </path>
+        </svg>
+      </span>
+
+      <div>
+        <h3>Database Backup</h3>
+
+        <p>
+          Firestore concerns, residents, offices,
+          audit logs, and other records.
+        </p>
+
+        <span
+          class="feature-status"
+          [class.configured]="!!overview()?.fullBackupConfigured"
+        >
+          {{
+            overview()?.fullBackupConfigured
+              ? 'Custom JSON export enabled'
+              : 'Setup required'
+          }}
+        </span>
+      </div>
+    </article>
+
+    <!-- PHOTO BACKUP -->
+
+    <article class="feature-card photo-card">
+      <span class="feature-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="1.8"
+          stroke-linecap="round" stroke-linejoin="round">
+
+          <rect
+            x="3" y="3"
+            width="18" height="18" rx="2">
+          </rect>
+
+          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+
+          <path
+            d="m4 18 5.5-5.5 3.5 3.5 3-3 4 4">
+          </path>
+        </svg>
+      </span>
+
+      <div>
+        <h3>Photo Backup</h3>
+
+        <p>
+          Private backups of concern photos
+          and profile photos in Supabase.
+        </p>
+
+        <span
+          class="feature-status"
+          [class.configured]="
+            (overview()?.photos?.length ?? 0) > 0
+          "
+        >
+          {{ overview()?.photos?.length ?? 0 }}
+          saved snapshot(s)
+        </span>
+      </div>
+    </article>
+
+    <!-- DATA RECOVERY -->
+
+    <article class="feature-card recovery-card">
+      <span class="feature-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="1.8"
+          stroke-linecap="round" stroke-linejoin="round">
+
+          <path
+            d="M3 12a9 9 0 1 1 2.6 6.4M3 17v-5h5">
+          </path>
+
+          <path d="M12 7v5l3 2"></path>
+        </svg>
+      </span>
+
+      <div>
+        <h3>Data Recovery</h3>
+
+        <p>
+          Review saved snapshots and safely restore
+          missing photos and concern records.
+        </p>
+
+        <span class="feature-status">
+          Missing records only
+        </span>
+      </div>
+    </article>
+
+  </div>
+
+  <!-- MAIN ACTION BUTTONS -->
+
+  <div
+    class="main-actions"
+    aria-label="Backup and recovery actions"
+  >
+
+    <!-- FULL BACKUP BUTTON -->
+
+    <button
+      type="button"
+      class="action-button primary-action"
+      (click)="backupFull()"
+      [disabled]="
+        loading() ||
+        working() ||
+        !!downloadingId() ||
+        !overview()?.fullBackupConfigured
+      "
+      [attr.aria-busy]="working()"
+    >
+      <svg viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round"
+        aria-hidden="true">
+
+        <path
+          d="M12 3v12m-4-4 4 4 4-4M4 17v3h16v-3">
+        </path>
+      </svg>
+
+      {{
+        working()
+          ? 'Backing up...'
+          : 'Backup Now (Full Backup)'
+      }}
+    </button>
+
+    <!-- RECOVER DATA BUTTON -->
+
+    <button
+      type="button"
+      class="action-button secondary-action"
+      (click)="togglePanel('recovery')"
+      [disabled]="working()"
+      [attr.aria-expanded]="activePanel() === 'recovery'"
+      aria-controls="recover-data-panel"
+    >
+      <svg viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round"
+        aria-hidden="true">
+
+        <path
+          d="M3 12a9 9 0 1 1 2.6 6.4M3 17v-5h5">
+        </path>
+      </svg>
+
+      Recover Data
+    </button>
+
+  </div>
+
+  <!-- STATUS AND FEEDBACK -->
+
+  @if (loading() && !overview()) {
+    <p class="notice" role="status">
+      Loading backup information...
+    </p>
+  }
+
+  @if (error()) {
+    <p class="notice error" role="alert">
+      {{ error() }}
+    </p>
+  }
+
+  @if (feedback()) {
+    <p class="notice success" role="status">
+      {{ feedback() }}
+    </p>
+  }
+
+  <!-- DATA RECOVERY PANEL -->
+
+  @if (activePanel() === 'recovery') {
+
+    <section
+      class="expand-panel"
+      id="recover-data-panel"
+      aria-labelledby="recover-heading"
+    >
+
+      <div class="panel-heading">
+        <div>
+          <h3 id="recover-heading">
+            Recover Missing Photos
+          </h3>
+
+          <p>
+            Restore missing photo files from a saved
+            snapshot without replacing existing photos.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="close-panel"
+          (click)="togglePanel('recovery')"
+          aria-label="Close recovery panel"
+        >
+          ×
+        </button>
+      </div>
+
+      <!-- SELECT PHOTO BACKUP -->
+
+      <label for="snapshot-select">
+        Choose a photo backup
+      </label>
+
+      <select
+        id="snapshot-select"
+        name="snapshot"
+        [ngModel]="selectedSnapshotId"
+        (ngModelChange)="selectSnapshot($event)"
+        [disabled]="working()"
+      >
+        <option value="">
+          Select a saved backup
+        </option>
+
+        @for (
+          snapshot of overview()?.photos ?? [];
+          track snapshot.id
+        ) {
+          <option [value]="snapshot.id">
+            {{
+              snapshot.createdAt |
+              date:'MMM d, y, h:mm a':'GMT+08:00'
+            }}
+            — {{ snapshot.fileCount }} files
+          </option>
+        }
+      </select>
+
+      @if (!overview()?.photos?.length) {
+        <p class="schedule-warning">
+          No completed photo backups are
+          available for recovery.
+        </p>
+      }
+
+      <!-- PREVIEW RECOVERY BUTTON -->
+
+      @if (selectedSnapshotId && !preview()) {
+
+        <div class="preview-recovery-action">
+          <button
+            type="button"
+            class="small-button"
+            (click)="selectSnapshot(selectedSnapshotId)"
+            [disabled]="working()"
+          >
+            {{
+              working()
+                ? 'Checking...'
+                : 'Preview Recovery'
+            }}
+          </button>
+        </div>
+
+      }
+
+      <!-- RECOVERY RESULTS -->
+
+      @if (preview(); as result) {
+
+        <div class="recovery-stats">
+
+          <div>
+            <span>Files in backup</span>
+            <strong>{{ result.total }}</strong>
+          </div>
+
+          <div>
+            <span>Already present</span>
+            <strong>{{ result.existing }}</strong>
+          </div>
+
+          <div>
+            <span>Missing files</span>
+            <strong>{{ result.missing }}</strong>
+          </div>
+
+        </div>
+
+        <!-- RESTORE MISSING PHOTOS -->
+
+        @if (result.missing > 0) {
+
+          <p class="schedule-warning">
+            Re-enter your Admin password and confirm
+            the recovery before restoring missing photos.
+          </p>
+
+          <label for="recovery-confirmation">
+            Type
+            <strong>RECOVER MISSING PHOTOS</strong>
+          </label>
+
+          <input
+            id="recovery-confirmation"
+            name="confirmation"
+            autocomplete="off"
+            [(ngModel)]="confirmation"
+            placeholder="RECOVER MISSING PHOTOS"
+          />
+
+          <label for="recovery-password">
+            Current Admin password
+          </label>
+
+          <input
+            id="recovery-password"
+            name="adminPassword"
+            type="password"
+            autocomplete="current-password"
+            [(ngModel)]="password"
+          />
+
+          <button
+            type="button"
+            class="action-button primary-action restore-action"
+            (click)="restoreMissing()"
+            [disabled]="
+              working() ||
+              confirmation !== 'RECOVER MISSING PHOTOS' ||
+              !password
+            "
+          >
+            {{
+              working()
+                ? 'Recovering...'
+                : 'Restore Missing Photos'
+            }}
+          </button>
+
+        } @else {
+
+          <p class="notice success">
+            All photos in this snapshot are present.
+            No recovery is needed.
+          </p>
+
+        }
+
+      }
+
+      <!-- FIRESTORE CONCERN RECOVERY -->
+
+      <app-admin-firestore-recovery>
+      </app-admin-firestore-recovery>
+
+    </section>
+
+  }
+
+  <!-- BACKUP HISTORY -->
+
+  <section
+    class="history-section"
+    aria-labelledby="history-heading"
+  >
+
+    <div class="history-heading">
+
+      <div class="history-title">
+        <svg viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="1.8"
+          stroke-linecap="round" stroke-linejoin="round"
+          aria-hidden="true">
+
+          <path
+            d="M9 5h12M9 12h12M9 19h12">
+          </path>
+
+          <path
+            d="m3 5 1 1 2-2m-3 8 1 1 2-2m-3 8 1 1 2-2">
+          </path>
+        </svg>
+
+        <h3 id="history-heading">
+          Backup History
+        </h3>
+      </div>
+
+      <button
+        type="button"
+        class="refresh-button"
+        (click)="refresh()"
+        [disabled]="loading() || working()"
+      >
+        {{
+          loading()
+            ? 'Refreshing...'
+            : 'Refresh'
+        }}
+      </button>
+
+    </div>
+
+    <!-- BACKUP HISTORY TABLE -->
+
+    <div class="table-scroll">
+
+      <table class="history-table">
+
+        <thead>
+          <tr>
+            <th scope="col">Date &amp; Time</th>
+            <th scope="col">Type</th>
+            <th scope="col">Details</th>
+            <th scope="col">Size</th>
+            <th scope="col">Status</th>
+
+            <th scope="col" class="action-head">
+              Action
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          @for (item of history(); track item.id) {
+
+            <tr>
+
+              <!-- DATE -->
+
+              <td
+                data-label="Date & Time"
+                class="date-cell"
+              >
+                {{
+                  item.date
+                    ? (
+                        item.date |
+                        date:'MMM d, y, h:mm a':'GMT+08:00'
+                      )
+                    : 'Date unavailable'
+                }}
+              </td>
+
+              <!-- TYPE -->
+
+              <td data-label="Type">
+                <span
+                  class="type-pill"
+                  [class.database-pill]="
+                    item.type === 'Database' ||
+                    item.type === 'Full Backup'
+                  "
+                  [class.photo-pill]="
+                    item.type === 'Photos'
+                  "
+                >
+                  {{ item.type }}
+                </span>
+              </td>
+
+              <!-- DETAILS -->
+
+              <td
+                data-label="Details"
+                class="details-cell"
+              >
+                {{ item.details }}
+              </td>
+
+              <!-- SIZE -->
+
+              <td
+                data-label="Size"
+                class="size-cell"
+              >
+                {{
+                  item.sizeBytes === null
+                    ? '—'
+                    : (
+                        (item.sizeBytes / 1048576) |
+                        number:'1.1-1'
+                      ) + ' MB'
+                }}
+              </td>
+
+              <!-- STATUS -->
+
+              <td data-label="Status">
+                <span
+                  class="history-status"
+                  [class.completed]="item.completed"
+                >
+                  <span
+                    class="status-dot"
+                    aria-hidden="true"
+                  ></span>
+
+                  {{ item.status }}
+                </span>
+              </td>
+
+              <!-- DOWNLOAD ACTIONS -->
+
+              <td
+                data-label="Action"
+                class="action-cell"
+              >
+
+                <!-- FULL BACKUP ZIP -->
+
+                @if (item.fullBackupId; as backupId) {
+
+                  <button
+                    type="button"
+                    class="download-button"
+                    (click)="downloadFullSnapshot(backupId)"
+                    [disabled]="
+                      loading() ||
+                      working() ||
+                      !!downloadingId() ||
+                      (item.sizeBytes ?? 0) > 33554432
+                    "
+                    [attr.aria-label]="
+                      'Download complete backup from ' +
+                      item.date
+                    "
+                  >
+                    <svg viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true">
+
+                      <path
+                        d="M12 3v12m-4-4 4 4 4-4M4 17v3h16v-3">
+                      </path>
+                    </svg>
+
+                    {{
+                      downloadingId() === backupId
+                        ? 'Preparing...'
+                        : 'Full ZIP'
+                    }}
+                  </button>
+
+                }
+
+                <!-- PHOTO BACKUP ZIP -->
+
+                @else if (item.photoSnapshotId; as snapshotId) {
+
+                  <button
+                    type="button"
+                    class="download-button"
+                    (click)="downloadSnapshot(snapshotId)"
+                    [disabled]="
+                      loading() ||
+                      working() ||
+                      !!downloadingId() ||
+                      (item.sizeBytes ?? 0) > 33554432
+                    "
+                    [attr.aria-label]="
+                      'Download photo backup from ' +
+                      item.date
+                    "
+                  >
+                    <svg viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true">
+
+                      <path
+                        d="M12 3v12m-4-4 4 4 4-4M4 17v3h16v-3">
+                      </path>
+                    </svg>
+
+                    {{
+                      downloadingId() === snapshotId
+                        ? 'Preparing...'
+                        : 'Photos ZIP'
+                    }}
+                  </button>
+
+                } @else {
+
+                  <span class="managed-label">
+                    Managed backup
+                  </span>
+
+                }
+
+              </td>
+
+            </tr>
+
+          } @empty {
+
+            <tr>
+              <td colspan="6" class="empty-history">
+                No backups yet. Click Backup Now
+                to create a combined backup.
+              </td>
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </section>
+
+</section>
