@@ -248,150 +248,378 @@
         Back to Archive
       </button>
     </div>
+  
   } @else {
+
     <header class="page-header">
-      <p class="eyebrow">ADMINISTRATOR PORTAL</p>
+      <p class="eyebrow">
+        ADMINISTRATOR PORTAL
+      </p>
+
       <h1>Archive</h1>
     </header>
 
-    <section class="toolbar" aria-label="Archived concern filters">
+    <!-- SEARCH AND STATUS FILTER -->
+
+    <section
+      class="toolbar"
+      aria-label="Archived concern filters"
+    >
+
       <div class="search-box">
+
         <span aria-hidden="true">⌕</span>
 
         <input
           type="search"
           name="searchTerm"
           [ngModel]="searchTerm()"
-          (ngModelChange)="searchTerm.set($event)"
+          (ngModelChange)="
+            clearSelection();
+            searchTerm.set($event)
+          "
+          [disabled]="!!archiving()"
           placeholder="Search concern ID, resident, category, location, or description..."
           aria-label="Search archived concerns"
           maxlength="200"
         />
+
       </div>
 
       <div class="filter-box">
-        <label for="archiveStatusFilter">Status</label>
+
+        <label for="archiveStatusFilter">
+          Status
+        </label>
 
         <select
           id="archiveStatusFilter"
           [ngModel]="selectedStatus()"
-          (ngModelChange)="selectedStatus.set($event)"
+          (ngModelChange)="
+            clearSelection();
+            selectedStatus.set($event)
+          "
+          [disabled]="!!archiving()"
         >
-          @for (status of statusOptions; track status) {
-            <option [ngValue]="status">{{ status }}</option>
+
+          @for (
+            status of statusOptions;
+            track status
+          ) {
+
+            <option [ngValue]="status">
+              {{ status }}
+            </option>
+
           }
+
         </select>
+
       </div>
+
     </section>
 
+    <!-- ARCHIVED CONCERNS HEADER -->
+
+
     <div class="results-heading">
+
       <h2>Archived Concerns</h2>
-      <span>{{ filteredConcerns().length }} record(s)</span>
+
+      <span>
+        {{ filteredConcerns().length }} record(s)
+      </span>
+
     </div>
 
     @if (filteredConcerns().length === 0) {
+
       <section class="empty-state">
+
         <h3>No archived concerns found</h3>
+
         <p>
-          No archived concerns match the current search and status filter.
+          No archived concerns match the current
+          search and status filter.
         </p>
+
       </section>
+
     } @else {
+
+      <!-- BULK RESTORE TOOLBAR -->
+
+      <section
+        class="bulk-archive-toolbar"
+        aria-label="Select concerns to restore"
+      >
+
+        <label class="select-all-label">
+
+          <input
+            type="checkbox"
+            [checked]="allSelected()"
+            [indeterminate]="partiallySelected()"
+            [disabled]="
+              !!archiving() ||
+              selectableConcerns().length === 0
+            "
+            (change)="toggleSelectAll($event)"
+          />
+
+          Select All
+
+        </label>
+
+        <span
+          class="selected-count"
+          aria-live="polite"
+        >
+          {{ selectedCount() }} selected
+        </span>
+
+        <!-- SHOW BUTTONS ONLY WHEN SELECTED -->
+
+        @if (
+          selectedCount() > 0 ||
+          archiving() === 'bulk'
+        ) {
+
+          <div class="bulk-actions">
+
+            <button
+              type="button"
+              class="secondary-button clear-selection-button"
+              (click)="clearSelection()"
+              [disabled]="!!archiving()"
+            >
+              Clear Selection
+            </button>
+
+            <button
+              type="button"
+              class="bulk-archive-button"
+              (click)="restoreSelected()"
+              [disabled]="
+                !!archiving() ||
+                selectedCount() === 0
+              "
+            >
+
+              {{
+                archiving() === 'bulk'
+                  ? 'Restoring...'
+                  : 'Restore Selected'
+              }}
+
+            </button>
+
+          </div>
+
+        }
+
+      </section>
+
+      <!-- ARCHIVED CONCERNS TABLE -->
+
       <section class="table-card">
+
         <div
           class="table-wrapper"
           role="region"
           aria-label="Archived concerns"
           tabindex="0"
         >
+
           <table>
+
             <thead>
+
               <tr>
-                <th scope="col">Concern ID</th>
-                <th scope="col">Category</th>
-                <th scope="col">Location</th>
-                <th scope="col">Date Reported</th>
-                <th scope="col">Status</th>
-                <th scope="col">Date Archived</th>
-                <th scope="col">Action</th>
+
+                <th scope="col">
+                  Concern ID
+                </th>
+
+                <th scope="col">
+                  Category
+                </th>
+
+                <th scope="col">
+                  Location
+                </th>
+
+                <th scope="col">
+                  Date Reported
+                </th>
+
+                <th scope="col">
+                  Status
+                </th>
+
+                <th scope="col">
+                  Date Archived
+                </th>
+
+                <th scope="col">
+                  Action
+                </th>
+
               </tr>
+
             </thead>
 
             <tbody>
+
               @for (
                 concern of filteredConcerns();
                 track concern.concern_id
               ) {
-                <tr>
+
+                <tr
+                  [class.selected-concern-row]="
+                    isConcernSelected(
+                      concern.concern_id
+                    )
+                  "
+                >
+
+                  <!-- CHECKBOX AND CONCERN ID -->
+
                   <td>
-                    {{ concern.concern_number ?? 'Not numbered' }}
+
+                    <label class="concern-selection">
+
+                      <input
+                        type="checkbox"
+                        [checked]="
+                          isConcernSelected(
+                            concern.concern_id
+                          )
+                        "
+                        [disabled]="
+                          !!archiving() ||
+                          !canArchive(concern)
+                        "
+                        [attr.aria-label]="
+                          'Select archived concern ' +
+                          (
+                            concern.concern_number ??
+                            'Not numbered'
+                          )
+                        "
+                        (change)="
+                          toggleConcernSelection(
+                            concern,
+                            $event
+                          )
+                        "
+                      />
+
+                      <span>
+
+                        {{
+                          concern.concern_number ??
+                          'Not numbered'
+                        }}
+
+                      </span>
+
+                    </label>
+
                   </td>
 
-                  <td>{{ categoryName(concern) }}</td>
+                  <!-- CATEGORY -->
+
+                  <td>
+                    {{ categoryName(concern) }}
+                  </td>
+
+                  <!-- LOCATION -->
 
                   <td class="location-cell">
                     {{ concern.location_description }}
                   </td>
 
-                  <td>
-                    {{
-                      concern.reported_at
-                        ? (concern.reported_at | date:'MMM d, y':'GMT+08:00')
-                        : 'Not recorded'
-                    }}
-                  </td>
+                  <!-- DATE REPORTED -->
 
                   <td>
+
+                    {{
+                      concern.reported_at
+                        ? (
+                            concern.reported_at |
+                            date:'MMM d, y':'GMT+08:00'
+                          )
+                        : 'Not recorded'
+                    }}
+
+                  </td>
+
+                  <!-- STATUS -->
+
+                  <td>
+
                     <span
                       class="status-badge"
-                      [ngClass]="statusClass(concern.current_status)"
+                      [ngClass]="
+                        statusClass(
+                          concern.current_status
+                        )
+                      "
                     >
                       {{ concern.current_status }}
                     </span>
+
                   </td>
 
+                  <!-- DATE ARCHIVED -->
+
                   <td>
+
                     {{
                       concern.archive_changed_at
-                        ? (concern.archive_changed_at | date:'MMM d, y':'GMT+08:00')
+                        ? (
+                            concern.archive_changed_at |
+                            date:'MMM d, y':'GMT+08:00'
+                          )
                         : 'Not recorded'
                     }}
+
                   </td>
 
+                  <!-- VIEW DETAILS ONLY -->
+
                   <td>
+
                     <button
                       type="button"
                       class="view-button"
-                      (click)="viewDetails(concern)"
-                      [attr.aria-label]="
-                        'View details for concern ' +
-                        (concern.concern_number ?? '')
+                      (click)="
+                        clearSelection();
+                        viewDetails(concern)
                       "
+                      [disabled]="!!archiving()"
                     >
                       View Details
                     </button>
 
-                    @if (canArchive(concern)) {
-                      <button
-                        type="button"
-                        class="secondary-button archive-button"
-                        [disabled]="!!archiving()"
-                        (click)="changeArchive(concern)"
-                      >
-                        {{
-                          archiving() === concern.concern_id
-                            ? 'Please wait...'
-                            : 'Restore'
-                        }}
-                      </button>
-                    }
                   </td>
+
                 </tr>
+
               }
+
             </tbody>
+
           </table>
+
         </div>
+
       </section>
+
     }
+    
   }
+
 </main>

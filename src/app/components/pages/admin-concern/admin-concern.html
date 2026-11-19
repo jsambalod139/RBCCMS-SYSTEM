@@ -1,22 +1,46 @@
-<main class="admin-concerns-page" [attr.aria-busy]="loading()">
+
+<main
+  class="admin-concerns-page"
+  [attr.aria-busy]="loading() || !!archiving()"
+>
+
+  <!-- SUCCESS MESSAGE -->
+
   @if (archiveFeedback()) {
-    <p class="page-notice archive-success" role="status">
+    <p
+      class="page-notice archive-success"
+      role="status"
+    >
       {{ archiveFeedback() }}
     </p>
   }
 
+  <!-- ERROR MESSAGE -->
+
   @if (archiveError()) {
-    <p class="page-notice error-notice" role="alert">
+    <p
+      class="page-notice error-notice"
+      role="alert"
+    >
       {{ archiveError() }}
     </p>
   }
 
+  <!-- LOADING -->
+
   @if (loading()) {
+
     <p class="page-notice" role="status">
       Loading community concerns...
     </p>
+
   } @else if (loadError()) {
-    <div class="page-notice error-notice" role="alert">
+
+    <div
+      class="page-notice error-notice"
+      role="alert"
+    >
+
       <p>{{ loadError() }}</p>
 
       <button
@@ -26,13 +50,32 @@
       >
         Try Again
       </button>
+
     </div>
+
   } @else if (selectedConcern(); as concern) {
-    <article class="details-page" aria-labelledby="details-title">
+
+    <!-- ===================================
+         CONCERN DETAILS
+    ==================================== -->
+
+    <article
+      class="details-page"
+      aria-labelledby="details-title"
+    >
+
       <header class="details-header">
+
         <div>
-          <p class="eyebrow">ADMINISTRATOR PORTAL</p>
-          <h1 id="details-title">Concern Details</h1>
+
+          <p class="eyebrow">
+            ADMINISTRATOR PORTAL
+          </p>
+
+          <h1 id="details-title">
+            Concern Details
+          </h1>
+
         </div>
 
         <button
@@ -42,70 +85,112 @@
         >
           ← Back to Concerns
         </button>
+
       </header>
 
+      <!-- CONCERN INFORMATION -->
+
       <section aria-labelledby="information-title">
-        <h2 id="information-title" class="information-heading">
+
+        <h2
+          id="information-title"
+          class="information-heading"
+        >
           Concern Information
         </h2>
 
         <dl class="detail-grid">
+
+          <!-- SUBMITTED BY -->
+
           <div>
             <dt>Submitted By</dt>
             <dd>{{ submittedBy(concern) }}</dd>
           </div>
 
+          <!-- CONCERN ID -->
+
           <div>
             <dt>Concern ID</dt>
-            <dd>{{ concern.concern_number ?? 'Not numbered' }}</dd>
+
+            <dd>
+              {{
+                concern.concern_number ??
+                'Not numbered'
+              }}
+            </dd>
           </div>
+
+          <!-- CATEGORY -->
 
           <div>
             <dt>Category</dt>
             <dd>{{ categoryName(concern) }}</dd>
           </div>
 
+          <!-- LOCATION -->
+
           <div>
             <dt>Location</dt>
             <dd>{{ concern.location_description }}</dd>
           </div>
 
+          <!-- DATE REPORTED -->
+
           <div>
             <dt>Date Reported</dt>
+
             <dd>
               {{
                 concern.reported_at
-                  ? (concern.reported_at | date:'MMMM d, y, h:mm a':'GMT+08:00')
+                  ? (
+                      concern.reported_at |
+                      date:'MMMM d, y, h:mm a':'GMT+08:00'
+                    )
                   : 'Not recorded'
               }}
             </dd>
           </div>
 
+          <!-- CURRENT STATUS -->
+
           <div>
             <dt>Current Status</dt>
+
             <dd>
               <span
                 class="status-badge"
-                [ngClass]="statusClass(concern.current_status)"
+                [ngClass]="
+                  statusClass(concern.current_status)
+                "
               >
                 {{ concern.current_status }}
               </span>
             </dd>
           </div>
 
+          <!-- LAST UPDATED -->
+
           <div>
             <dt>Last Updated</dt>
+
             <dd>
               {{
                 concern.updated_at
-                  ? (concern.updated_at | date:'MMM d, y, h:mm a':'GMT+08:00')
+                  ? (
+                      concern.updated_at |
+                      date:'MMM d, y, h:mm a':'GMT+08:00'
+                    )
                   : 'No updates yet'
               }}
             </dd>
           </div>
 
+          <!-- RESPONSIBLE OFFICE -->
+
           <div>
             <dt>Responsible Office</dt>
+
             <dd>
               {{
                 concern.office?.office_name ||
@@ -118,8 +203,11 @@
             </dd>
           </div>
 
+          <!-- LAST UPDATED BY -->
+
           <div>
             <dt>Last Updated By</dt>
+
             <dd>
               {{
                 concern.last_updated_by_label ||
@@ -127,22 +215,47 @@
               }}
             </dd>
           </div>
+
         </dl>
+
       </section>
+
+      <!-- DESCRIPTION -->
 
       <section class="description-section">
+
         <h2>Description</h2>
+
         <p>{{ concern.description }}</p>
+
       </section>
 
+      <!-- ATTACHED PHOTO -->
+
       @if (concern.photo_path) {
-        <section class="photo-section" aria-labelledby="photo-title">
-          <h2 id="photo-title">Attached Photo</h2>
+
+        <section
+          class="photo-section"
+          aria-labelledby="photo-title"
+        >
+
+          <h2 id="photo-title">
+            Attached Photo
+          </h2>
 
           @if (photoLoading()) {
-            <p role="status">Loading attached photo...</p>
+
+            <p role="status">
+              Loading attached photo...
+            </p>
+
           } @else if (photoError()) {
-            <div class="page-notice error-notice" role="alert">
+
+            <div
+              class="page-notice error-notice"
+              role="alert"
+            >
+
               <p>{{ photoError() }}</p>
 
               <button
@@ -152,8 +265,11 @@
               >
                 Reload Photo
               </button>
+
             </div>
+
           } @else if (photoUrl()) {
+
             <a
               [href]="photoUrl()"
               target="_blank"
@@ -168,64 +284,122 @@
               class="concern-photo"
               (error)="imageFailed()"
             />
+
           }
+
         </section>
+
       }
 
+      <!-- ===================================
+           STATUS HISTORY AND REMARKS
+      ==================================== -->
+
       <section class="history-section">
+
         <h2>Status History &amp; Remarks</h2>
 
-        @for (update of concern.updates; track update.update_id) {
+        @for (
+          update of concern.updates;
+          track update.update_id
+        ) {
+
           <article class="history-item">
+
             <div>
+
               <span
                 class="status-badge"
-                [ngClass]="statusClass(update.new_status)"
+                [ngClass]="
+                  statusClass(update.new_status)
+                "
               >
                 {{ update.new_status }}
               </span>
 
               <p class="status-transition">
-                @if (update.previous_status === update.new_status) {
+
+                @if (
+                  update.previous_status ===
+                  update.new_status
+                ) {
+
                   <strong>Progress update</strong>
                   — Status unchanged
+
                 } @else {
-                  {{ update.previous_status || 'Created' }}
+
+                  {{
+                    update.previous_status ||
+                    'Created'
+                  }}
+
                   → {{ update.new_status }}
+
                 }
+
               </p>
 
               <p>
+
                 Updated by
+
                 {{
                   update.updated_by_label ||
                   'Personnel (name not recorded)'
                 }}
+
               </p>
 
               <p class="remarks">
-                {{ update.remarks || 'No remarks provided.' }}
+
+                {{
+                  update.remarks ||
+                  'No remarks provided.'
+                }}
+
               </p>
+
             </div>
 
-            <time [attr.datetime]="update.created_at">
+            <time
+              [attr.datetime]="update.created_at"
+            >
+
               {{
                 update.created_at
-                  ? (update.created_at | date:'MMM d, y, h:mm a':'GMT+08:00')
+                  ? (
+                      update.created_at |
+                      date:'MMM d, y, h:mm a':'GMT+08:00'
+                    )
                   : 'Date not recorded'
               }}
+
             </time>
+
           </article>
+
         } @empty {
+
           <p class="history-empty">
             No updates have been recorded yet.
           </p>
+
         }
+
       </section>
+
     </article>
+
   } @else if (requestedId()) {
+
+    <!-- CONCERN NOT FOUND -->
+
     <div class="page-notice" role="status">
-      <p>This concern was not found or has been archived.</p>
+
+      <p>
+        This concern was not found or has been archived.
+      </p>
 
       <button
         type="button"
@@ -234,140 +408,390 @@
       >
         Back to Concerns
       </button>
+
     </div>
+
   } @else {
+
+    <!-- ===================================
+         COMMUNITY CONCERNS
+    ==================================== -->
+
     <header class="page-header">
-      <p class="eyebrow">ADMINISTRATOR PORTAL</p>
+
+      <p class="eyebrow">
+        ADMINISTRATOR PORTAL
+      </p>
+
       <h1>Community Concerns</h1>
+
     </header>
 
-    <section class="toolbar" aria-label="Concern filters">
+    <!-- SEARCH AND STATUS FILTER -->
+
+    <section
+      class="toolbar"
+      aria-label="Concern filters"
+    >
+
       <div class="search-box">
+
         <span aria-hidden="true">⌕</span>
 
         <input
           type="search"
           name="searchTerm"
           [ngModel]="searchTerm()"
-          (ngModelChange)="searchTerm.set($event)"
+          (ngModelChange)="setSearchTerm($event)"
+          [disabled]="!!archiving()"
           placeholder="Search concern ID, resident, category, location, or description..."
           aria-label="Search concerns"
           maxlength="200"
         />
+
       </div>
 
       <div class="filter-box">
-        <label for="adminStatusFilter">Status</label>
+
+        <label for="adminStatusFilter">
+          Status
+        </label>
 
         <select
           id="adminStatusFilter"
           [ngModel]="selectedStatus()"
-          (ngModelChange)="selectedStatus.set($event)"
+          (ngModelChange)="setStatusFilter($event)"
+          [disabled]="!!archiving()"
         >
-          @for (status of statusOptions; track status) {
-            <option [ngValue]="status">{{ status }}</option>
+
+          @for (
+            status of statusOptions;
+            track status
+          ) {
+
+            <option [ngValue]="status">
+              {{ status }}
+            </option>
+
           }
+
         </select>
+
       </div>
+
     </section>
 
+    <!-- CONCERN RECORDS HEADER -->
+
     <div class="results-heading">
+
       <h2>Concern Records</h2>
-      <span>{{ filteredConcerns().length }} record(s)</span>
+
+      <span>
+        {{ filteredConcerns().length }} record(s)
+      </span>
+
     </div>
 
     @if (filteredConcerns().length === 0) {
+
+      <!-- EMPTY STATE -->
+
       <section class="empty-state">
+
         <h3>No concerns found</h3>
-        <p>No concerns match the current search and status filter.</p>
+
+        <p>
+          No concerns match the current search
+          and status filter.
+        </p>
+
       </section>
+
     } @else {
+
+      <!-- ===================================
+           BULK ARCHIVE TOOLBAR
+      ==================================== -->
+
+      <section
+        class="bulk-archive-toolbar"
+        aria-label="Select concerns to archive"
+      >
+
+        <!-- SELECT ALL -->
+
+        <label class="select-all-label">
+
+          <input
+            type="checkbox"
+            [checked]="allSelected()"
+            [indeterminate]="partiallySelected()"
+            [disabled]="
+              !!archiving() ||
+              selectableConcerns().length === 0
+            "
+            (change)="toggleSelectAll($event)"
+          />
+
+          Select All
+
+        </label>
+
+        <!-- SELECTED COUNT -->
+
+        <span
+          class="selected-count"
+          aria-live="polite"
+        >
+          {{ selectedCount() }} selected
+        </span>
+
+        <!--
+          SHOW BUTTONS ONLY WHEN
+          A CONCERN IS SELECTED
+        -->
+
+        @if (
+          selectedCount() > 0 ||
+          archiving() === 'bulk'
+        ) {
+
+          <div class="bulk-actions">
+
+            <!-- CLEAR SELECTION -->
+
+            <button
+              type="button"
+              class="secondary-button clear-selection-button"
+              (click)="clearSelection()"
+              [disabled]="!!archiving()"
+            >
+              Clear Selection
+            </button>
+
+            <!-- ARCHIVE SELECTED -->
+
+            <button
+              type="button"
+              class="bulk-archive-button"
+              (click)="archiveSelected()"
+              [disabled]="
+                !!archiving() ||
+                selectedCount() === 0
+              "
+            >
+
+              {{
+                archiving() === 'bulk'
+                  ? 'Archiving...'
+                  : 'Archive Selected'
+              }}
+
+            </button>
+
+          </div>
+
+        }
+
+      </section>
+
+      <!-- ===================================
+           CONCERN TABLE
+      ==================================== -->
+
       <section class="table-card">
+
         <div
           class="table-wrapper"
           role="region"
           aria-label="Community concerns"
           tabindex="0"
         >
+
           <table>
+
+            <!-- TABLE HEADER -->
+
             <thead>
+
               <tr>
-                <th scope="col">Concern ID</th>
-                <th scope="col">Category</th>
-                <th scope="col">Location</th>
-                <th scope="col">Date Reported</th>
-                <th scope="col">Status</th>
-                <th scope="col">Action</th>
+
+                <th scope="col">
+                  Concern ID
+                </th>
+
+                <th scope="col">
+                  Category
+                </th>
+
+                <th scope="col">
+                  Location
+                </th>
+
+                <th scope="col">
+                  Date Reported
+                </th>
+
+                <th scope="col">
+                  Status
+                </th>
+
+                <th scope="col">
+                  Action
+                </th>
+
               </tr>
+
             </thead>
 
+            <!-- TABLE BODY -->
+
             <tbody>
+
               @for (
                 concern of filteredConcerns();
                 track concern.concern_id
               ) {
-                <tr>
+
+                <tr
+                  [class.selected-concern-row]="
+                    isConcernSelected(
+                      concern.concern_id
+                    )
+                  "
+                >
+
+                  <!-- CONCERN ID AND CHECKBOX -->
+
                   <td>
-                    {{ concern.concern_number ?? 'Not numbered' }}
+
+                    <label class="concern-selection">
+
+                      <input
+                        type="checkbox"
+                        [checked]="
+                          isConcernSelected(
+                            concern.concern_id
+                          )
+                        "
+                        [disabled]="
+                          !!archiving() ||
+                          !canArchive(concern)
+                        "
+                        [attr.aria-label]="
+                          'Select concern ' +
+                          (
+                            concern.concern_number ??
+                            'Not numbered'
+                          )
+                        "
+                        (change)="
+                          toggleConcernSelection(
+                            concern,
+                            $event
+                          )
+                        "
+                      />
+
+                      <span>
+
+                        {{
+                          concern.concern_number ??
+                          'Not numbered'
+                        }}
+
+                      </span>
+
+                    </label>
+
                   </td>
 
-                  <td>{{ categoryName(concern) }}</td>
+                  <!-- CATEGORY -->
+
+                  <td>
+                    {{ categoryName(concern) }}
+                  </td>
+
+                  <!-- LOCATION -->
 
                   <td class="location-cell">
                     {{ concern.location_description }}
                   </td>
 
-                  <td>
-                    {{
-                      concern.reported_at
-                        ? (concern.reported_at | date:'MMM d, y':'GMT+08:00')
-                        : 'Not recorded'
-                    }}
-                  </td>
+                  <!-- DATE REPORTED -->
 
                   <td>
+
+                    {{
+                      concern.reported_at
+                        ? (
+                            concern.reported_at |
+                            date:'MMM d, y':'GMT+08:00'
+                          )
+                        : 'Not recorded'
+                    }}
+
+                  </td>
+
+                  <!-- STATUS -->
+
+                  <td>
+
                     <span
                       class="status-badge"
-                      [ngClass]="statusClass(concern.current_status)"
+                      [ngClass]="
+                        statusClass(
+                          concern.current_status
+                        )
+                      "
                     >
                       {{ concern.current_status }}
                     </span>
+
                   </td>
 
+                  <!--
+                    VIEW DETAILS ONLY
+
+                    Individual Archive button
+                    has been removed.
+                  -->
+
                   <td>
+
                     <button
                       type="button"
                       class="view-button"
                       (click)="viewDetails(concern)"
+                      [disabled]="!!archiving()"
                       [attr.aria-label]="
                         'View details for concern ' +
-                        (concern.concern_number ?? '')
+                        (
+                          concern.concern_number ??
+                          ''
+                        )
                       "
                     >
                       View Details
                     </button>
 
-                    @if (canArchive(concern)) {
-                      <button
-                        type="button"
-                        class="secondary-button archive-button"
-                        [disabled]="!!archiving()"
-                        (click)="changeArchive(concern)"
-                      >
-                        {{
-                          archiving() === concern.concern_id
-                            ? 'Please wait...'
-                            : 'Archive'
-                        }}
-                      </button>
-                    }
                   </td>
+
                 </tr>
+
               }
+
             </tbody>
+
           </table>
+
         </div>
+
       </section>
+
     }
+
   }
+
 </main>

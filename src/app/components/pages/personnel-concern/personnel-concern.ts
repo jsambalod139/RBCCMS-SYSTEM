@@ -346,35 +346,37 @@ export class PersonnelConcerns {
   });
 
   readonly filteredConcerns = computed(() => {
-    const search = this.searchTerm()
-      .trim()
-      .toLowerCase();
+  const search = this.searchTerm()
+    .trim()
+    .toLowerCase();
 
-    const status = this.selectedStatus();
+  const status = this.selectedStatus();
 
-    return this.concerns()
-      .filter(concern => {
-        const matchesSearch = [
-          String(concern.concern_number ?? ''),
-          this.categoryName(concern),
-          concern.location_description,
-          concern.description,
-          concern.office?.office_name ?? '',
-        ].some(value =>
-          (value ?? '').toLowerCase().includes(search)
-        );
-
-        const matchesStatus =
-          status === 'All Status' ||
-          concern.current_status === status;
-
-        return matchesSearch && matchesStatus;
-      })
-      .sort((a, b) =>
-        (a.concern_number ?? Number.MAX_SAFE_INTEGER) -
-        (b.concern_number ?? Number.MAX_SAFE_INTEGER)
+  return this.concerns()
+    .filter(concern => {
+      const matchesSearch = [
+        String(concern.concern_number ?? ''),
+        this.categoryName(concern),
+        concern.location_description,
+        concern.description,
+        concern.office?.office_name ?? '',
+      ].some(value =>
+        (value ?? '').toLowerCase().includes(search)
       );
-  });
+
+      const matchesStatus =
+        status === 'All Status' ||
+        concern.current_status === status;
+
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) =>
+      b.reported_at.localeCompare(a.reported_at) ||
+      (b.concern_number ?? 0) -
+      (a.concern_number ?? 0) ||
+      a.concern_id.localeCompare(b.concern_id)
+    );
+});
 
   submittedBy(concern: Concern): string {
     return this.historyMode()

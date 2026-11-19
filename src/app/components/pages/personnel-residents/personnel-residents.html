@@ -1,4 +1,6 @@
+
 <main class="residents-page">
+
   <header class="page-heading">
     <div>
       <p class="eyebrow">PERSONNEL PORTAL</p>
@@ -59,17 +61,27 @@
     </p>
   }
 
+  <!-- =====================================
+       RESIDENT RECORDS
+  ====================================== -->
+
   @if (mode() === 'list') {
+
     <section
       class="list-card"
       aria-label="Registered residents"
       [attr.aria-busy]="service.loading()"
     >
+
       <div class="list-heading">
+
         <h2>Resident Records</h2>
 
         <label class="search-label">
-          <span class="visually-hidden">Search residents</span>
+
+          <span class="visually-hidden">
+            Search residents
+          </span>
 
           <input
             type="search"
@@ -77,15 +89,21 @@
             [value]="search()"
             (input)="search.set($any($event.target).value)"
           />
+
         </label>
+
       </div>
 
       @if (service.loading()) {
+
         <p class="empty-state" role="status">
           Loading residents…
         </p>
+
       } @else if (service.error()) {
+
         <div class="notice error" role="alert">
+
           <p>{{ service.error() }}</p>
 
           <button
@@ -95,9 +113,13 @@
           >
             Try Again
           </button>
+
         </div>
+
       } @else if (!filteredResidents().length) {
+
         <div class="empty-state">
+
           <h3>
             {{
               search()
@@ -113,14 +135,19 @@
                 : 'Use Add Resident after verifying identity and residency in person.'
             }}
           </p>
+
         </div>
+
       } @else {
+
         <p class="record-count">
           {{ filteredResidents().length }} resident(s)
         </p>
 
         <div class="table-scroll">
+
           <table>
+
             <thead>
               <tr>
                 <th scope="col">Resident ID</th>
@@ -132,12 +159,17 @@
             </thead>
 
             <tbody>
+
               @for (
                 resident of filteredResidents();
                 track resident.uid
               ) {
+
                 <tr>
-                  <td>{{ residentNumber(resident) }}</td>
+
+                  <td>
+                    {{ residentNumber(resident) }}
+                  </td>
 
                   <td>
                     <strong>
@@ -146,6 +178,7 @@
                   </td>
 
                   <td>
+
                     <span
                       class="badge"
                       [class.verified]="resident.residencyVerified"
@@ -158,22 +191,29 @@
                     </span>
 
                     @if (resident.verifiedAt) {
+
                       <span class="verification-date">
                         {{ resident.verifiedAt | date:'MMM d, y' }}
                       </span>
+
                     }
+
                   </td>
 
                   <td>
+
                     {{
                       resident.registrationState === 'incomplete'
                         ? 'Setup incomplete'
                         : (resident.accountStatus | titlecase)
                     }}
+
                   </td>
 
                   <td>
+
                     @if (service.canResume(resident)) {
+
                       <button
                         type="button"
                         class="btn-secondary small"
@@ -181,9 +221,11 @@
                       >
                         Finish Setup
                       </button>
+
                     } @else if (
                       resident.registrationState !== 'incomplete'
                     ) {
+
                       <button
                         type="button"
                         class="btn-secondary small"
@@ -192,22 +234,41 @@
                       >
                         View
                       </button>
+
                     }
+
                   </td>
+
                 </tr>
+
               }
+
             </tbody>
+
           </table>
+
         </div>
+
       }
+
     </section>
+
   } @else if (mode() === 'view') {
+
+    <!-- =====================================
+         RESIDENT PROFILE
+    ====================================== -->
+
     @if (service.loading()) {
+
       <p class="empty-state" role="status">
         Loading resident profile...
       </p>
+
     } @else if (service.error()) {
+
       <div class="notice error" role="alert">
+
         <p>{{ service.error() }}</p>
 
         <button
@@ -217,12 +278,18 @@
         >
           Try Again
         </button>
+
       </div>
+
     } @else if (selectedResident(); as resident) {
+
+      <!-- PROFILE TABS -->
+
       <nav
         class="profile-tabs"
         aria-label="Resident profile sections"
       >
+
         <button
           type="button"
           [class.active]="profileTab() === 'personal'"
@@ -240,46 +307,71 @@
         >
           Concern History
         </button>
+
       </nav>
 
+      <!-- =====================================
+           PERSONAL INFORMATION
+      ====================================== -->
+
       @if (profileTab() === 'personal') {
+
         <section
           class="resident-profile-card"
           aria-label="Resident information"
         >
+
           <header class="resident-profile-header">
+
             <div
               class="resident-avatar"
               aria-hidden="true"
               style="overflow: hidden;"
             >
+
               @if (residentPhotoUrl()) {
+
                 <img
                   [src]="residentPhotoUrl()"
                   alt=""
                   style="display: block; width: 100%; height: 100%; object-fit: cover;"
                   (error)="residentPhotoFailed()"
                 />
+
               } @else {
+
                 {{ initials(resident) }}
+
               }
+
             </div>
 
             <div class="resident-heading">
+
               <p>
                 Resident ID:
                 <strong>{{ residentNumber(resident) }}</strong>
               </p>
 
-              <h2>{{ resident.name || 'Name not recorded' }}</h2>
+              <h2>
+                {{ resident.name || 'Name not recorded' }}
+              </h2>
+
               <p>Barangay Resident</p>
 
               @if (residentPhotoLoading()) {
-                <p role="status">Loading profile photo...</p>
+
+                <p role="status">
+                  Loading profile photo...
+                </p>
+
               }
 
               @if (residentPhotoError()) {
-                <p role="status">{{ residentPhotoError() }}</p>
+
+                <p role="status">
+                  {{ residentPhotoError() }}
+                </p>
 
                 <button
                   type="button"
@@ -288,10 +380,13 @@
                 >
                   Retry Photo
                 </button>
+
               }
+
             </div>
 
             @if (service.canResume(resident)) {
+
               <button
                 type="button"
                 class="btn-primary"
@@ -299,9 +394,11 @@
               >
                 Finish Setup
               </button>
+
             } @else if (
               resident.registrationState !== 'incomplete'
             ) {
+
               <button
                 type="button"
                 class="btn-primary"
@@ -309,12 +406,15 @@
               >
                 Edit Profile
               </button>
+
             }
+
           </header>
 
           <h3>Resident Information</h3>
 
           <dl class="resident-info-grid">
+
             <div>
               <dt>Full Name</dt>
               <dd>{{ resident.name || 'Not recorded' }}</dd>
@@ -331,8 +431,11 @@
             </div>
 
             <div>
+
               <dt>Residency Verification</dt>
+
               <dd>
+
                 <span
                   class="badge"
                   [class.verified]="resident.residencyVerified"
@@ -343,11 +446,15 @@
                       : 'Not verified'
                   }}
                 </span>
+
               </dd>
+
             </div>
 
             <div>
+
               <dt>Verification Date</dt>
+
               <dd>
                 {{
                   resident.verifiedAt
@@ -355,10 +462,13 @@
                     : 'Not recorded'
                 }}
               </dd>
+
             </div>
 
             <div>
+
               <dt>Account Status</dt>
+
               <dd>
                 {{
                   resident.registrationState === 'incomplete'
@@ -366,12 +476,15 @@
                     : ((resident.accountStatus | titlecase) || 'Not recorded')
                 }}
               </dd>
+
             </div>
+
           </dl>
 
           <h3>Contact Information</h3>
 
           <dl class="resident-info-grid">
+
             <div>
               <dt>Email Address</dt>
               <dd>{{ resident.email || 'Not recorded' }}</dd>
@@ -381,35 +494,96 @@
               <dt>Contact Number</dt>
               <dd>{{ resident.contactNumber || 'Not recorded' }}</dd>
             </div>
+
           </dl>
+
         </section>
+
       } @else {
+
+        <!-- =====================================
+             CONCERN HISTORY
+        ====================================== -->
+
         <section
           class="resident-profile-card"
           aria-label="Resident concern history"
           [attr.aria-busy]="historyLoading()"
         >
+
           <div class="history-heading">
+
             <div>
+
               <h2>Concern History</h2>
 
               <p>
                 {{ resident.name }}
                 · Resident ID: {{ residentNumber(resident) }}
               </p>
+
             </div>
 
             <span>
-              {{ residentConcerns().length }} concern(s)
+              {{ filteredHistory().length }} concern(s)
             </span>
+
           </div>
 
+          <!-- SEARCH BAR AND STATUS FILTER -->
+
+          <div class="history-toolbar">
+
+            <label class="search-label history-search">
+
+              <span class="visually-hidden">
+                Search concerns
+              </span>
+
+              <input
+                type="search"
+                placeholder="Search concern ID, category, location, or description..."
+                [value]="historySearch()"
+                (input)="historySearch.set($any($event.target).value)"
+                maxlength="200"
+              />
+
+            </label>
+
+            <select
+              class="history-status-filter"
+              aria-label="Filter concern history by status"
+              [value]="historyStatus()"
+              (change)="historyStatus.set($any($event.target).value)"
+            >
+
+              @for (
+                status of historyStatusOptions;
+                track status
+              ) {
+
+                <option [value]="status">
+                  {{ status }}
+                </option>
+
+              }
+
+            </select>
+
+          </div>
+
+          <!-- LOADING -->
+
           @if (historyLoading()) {
+
             <p class="empty-state" role="status">
               Loading concerns...
             </p>
+
           } @else if (historyError()) {
+
             <div class="notice error" role="alert">
+
               <p>{{ historyError() }}</p>
 
               <button
@@ -419,86 +593,170 @@
               >
                 Try Again
               </button>
+
             </div>
+
           } @else if (!residentConcerns().length) {
+
             <p class="empty-state">
               This resident has not submitted any concerns.
             </p>
+
+          } @else if (!filteredHistory().length) {
+
+            <div class="empty-state">
+
+              <p>
+                No concerns match your search and status filter.
+              </p>
+
+              <button
+                type="button"
+                class="btn-secondary small"
+                (click)="clearHistoryFilters()"
+              >
+                Clear Filters
+              </button>
+
+            </div>
+
           } @else {
+
+            <!-- CONCERN HISTORY TABLE -->
+
             <div class="table-scroll history-table">
+
               <table>
+
                 <thead>
+
                   <tr>
+                    <th scope="col">Concern ID</th>
                     <th scope="col">Category</th>
                     <th scope="col">Status</th>
                     <th scope="col">Date Submitted</th>
                     <th scope="col">Action</th>
                   </tr>
+
                 </thead>
 
                 <tbody>
+
                   @for (
-                    concern of residentConcerns();
+                    concern of filteredHistory();
                     track concern.concern_id
                   ) {
+
                     <tr>
-                      <td>{{ categoryName(concern) }}</td>
+
+                      <!-- CONCERN ID -->
 
                       <td>
+                        {{
+                          concern.concern_number ??
+                          'Not numbered'
+                        }}
+                      </td>
+
+                      <!-- CATEGORY -->
+
+                      <td>
+                        {{ categoryName(concern) }}
+                      </td>
+
+                      <!-- STATUS -->
+
+                      <td>
+
                         <span
                           class="concern-status"
                           [ngClass]="statusClass(concern.current_status)"
                         >
                           {{ concern.current_status }}
                         </span>
+
                       </td>
+
+                      <!-- DATE SUBMITTED -->
 
                       <td>
                         {{ concern.reported_at | date:'MMM d, y' }}
                       </td>
 
+                      <!-- VIEW DETAILS -->
+
                       <td>
+
                         <button
                           type="button"
-                          class="btn-secondary small"
+                          class="btn-primary history-view-button"
                           (click)="showConcern(concern)"
                         >
                           View Details
                         </button>
+
                       </td>
+
                     </tr>
+
                   }
+
                 </tbody>
+
               </table>
+
             </div>
+
           }
+
         </section>
+
       }
+
     } @else {
+
       <p class="notice error" role="alert">
         Resident record unavailable. Return to Residents
         and select an existing record.
       </p>
+
     }
+
   } @else {
+
+    <!-- =====================================
+         ADD / EDIT RESIDENT FORM
+    ====================================== -->
+
     <form
       class="form-card"
       [formGroup]="form"
       (ngSubmit)="save()"
       novalidate
     >
+
       @if (saveError()) {
+
         <p class="notice error" role="alert">
           {{ saveError() }}
         </p>
+
       }
 
       <fieldset [disabled]="saving()">
+
+        <!-- PERSONAL INFORMATION -->
+
         <section class="form-section">
+
           <h2>Personal Information</h2>
 
           <div class="form-grid">
+
+            <!-- FIRST NAME -->
+
             <div class="field">
+
               <label for="first-name">
                 First Name <span>*</span>
               </label>
@@ -512,13 +770,19 @@
               />
 
               @if (invalid('firstName')) {
+
                 <small class="field-error">
                   Enter a first name, up to 60 characters.
                 </small>
+
               }
+
             </div>
 
+            <!-- MIDDLE NAME -->
+
             <div class="field">
+
               <label for="middle-name">
                 Middle Name <small>(Optional)</small>
               </label>
@@ -529,9 +793,13 @@
                 maxlength="60"
                 autocomplete="additional-name"
               />
+
             </div>
 
+            <!-- LAST NAME -->
+
             <div class="field">
+
               <label for="last-name">
                 Last Name <span>*</span>
               </label>
@@ -545,27 +813,41 @@
               />
 
               @if (invalid('lastName')) {
+
                 <small class="field-error">
                   Enter a last name, up to 60 characters.
                 </small>
+
               }
+
             </div>
+
           </div>
+
         </section>
 
+        <!-- LOGIN CREDENTIALS -->
+
         <section class="form-section">
+
           <h2>Login Credentials</h2>
 
           <p class="section-hint">
+
             {{
               mode() === 'edit'
                 ? 'The login email is read-only. Passwords are not shown or changed here.'
                 : 'Use the resident’s email address. Let the resident choose their password privately.'
             }}
+
           </p>
 
           <div class="form-grid">
+
+            <!-- EMAIL -->
+
             <div class="field">
+
               <label for="resident-email">
                 Email <span>*</span>
               </label>
@@ -582,19 +864,27 @@
               />
 
               @if (invalid('email')) {
+
                 <small class="field-error">
                   Enter a valid email address.
                 </small>
+
               }
+
             </div>
 
+            <!-- PASSWORD -->
+
             @if (mode() !== 'edit') {
+
               <div class="field">
+
                 <label for="resident-password">
                   Password <span>*</span>
                 </label>
 
                 <div class="password-field">
+
                   <input
                     id="resident-password"
                     [type]="passwordVisible() ? 'text' : 'password'"
@@ -613,6 +903,7 @@
                   >
                     {{ passwordVisible() ? 'Hide' : 'Show' }}
                   </button>
+
                 </div>
 
                 <small>
@@ -620,20 +911,33 @@
                 </small>
 
                 @if (invalid('password')) {
+
                   <small class="field-error">
                     Enter a password with 8–128 characters.
                   </small>
+
                 }
+
               </div>
+
             }
+
           </div>
+
         </section>
 
+        <!-- CONTACT AND ADDRESS -->
+
         <section class="form-section">
+
           <h2>Contact and Address Information</h2>
 
           <div class="form-grid">
+
+            <!-- CONTACT NUMBER -->
+
             <div class="field">
+
               <label for="resident-contact">
                 Contact Number <small>(Optional)</small>
               </label>
@@ -648,13 +952,19 @@
               />
 
               @if (invalid('contactNumber')) {
+
                 <small class="field-error">
                   Enter a valid contact number.
                 </small>
+
               }
+
             </div>
 
+            <!-- PUROK -->
+
             <div class="field">
+
               <label for="resident-purok">
                 Purok <span>*</span>
               </label>
@@ -668,13 +978,19 @@
               />
 
               @if (invalid('purok')) {
+
                 <small class="field-error">
                   Enter the resident’s purok.
                 </small>
+
               }
+
             </div>
 
+            <!-- COMPLETE ADDRESS -->
+
             <div class="field full">
+
               <label for="resident-address">
                 Complete Address <span>*</span>
               </label>
@@ -689,23 +1005,35 @@
               ></textarea>
 
               @if (invalid('address')) {
+
                 <small class="field-error">
                   Enter an address, up to 255 characters.
                 </small>
+
               }
+
             </div>
+
           </div>
+
         </section>
 
+        <!-- RESIDENCY VERIFICATION -->
+
         <section class="form-section verification-section">
+
           <h2>Residency Verification</h2>
 
           @if (mode() === 'edit' && verifiedAlready()) {
+
             <p class="notice success">
               This resident’s residency is already verified.
             </p>
+
           } @else {
+
             <label class="verification-check">
+
               <input
                 type="checkbox"
                 formControlName="residencyVerified"
@@ -715,6 +1043,7 @@
                 I have verified this resident’s identity
                 and residency in person.
               </span>
+
             </label>
 
             <p class="section-hint">
@@ -723,15 +1052,22 @@
             </p>
 
             @if (invalid('residencyVerified')) {
+
               <small class="field-error">
                 Confirm in-person verification before
                 creating this account.
               </small>
+
             }
+
           }
+
         </section>
 
+        <!-- FORM BUTTONS -->
+
         <footer class="form-actions">
+
           <button
             type="button"
             class="btn-secondary"
@@ -745,8 +1081,14 @@
             class="btn-primary"
             [attr.aria-busy]="saving()"
           >
+
             @if (saving()) {
-              <span class="spinner" aria-hidden="true"></span>
+
+              <span
+                class="spinner"
+                aria-hidden="true"
+              ></span>
+
             }
 
             {{
@@ -758,9 +1100,15 @@
                     ? 'Finish Setup'
                     : 'Add Resident'
             }}
+
           </button>
+
         </footer>
+
       </fieldset>
+
     </form>
+
   }
+
 </main>

@@ -848,3 +848,594 @@ table {
     }
   }
 }
+
+
+/* ========================================
+   BULK ARCHIVE TOOLBAR
+======================================== */
+
+.bulk-archive-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+
+  margin: 0 0 16px;
+  padding: 12px 14px;
+
+  border: 1px solid #dce7df;
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  animation: concerns-enter 200ms ease-out;
+}
+
+/* SELECT ALL AND INDIVIDUAL CHECKBOX */
+
+.select-all-label,
+.concern-selection {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  cursor: pointer;
+  min-width: 0;
+
+  color: #21372a;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* CHECKBOX DESIGN */
+
+.select-all-label input,
+.concern-selection input {
+  width: 18px;
+  height: 18px;
+
+  flex: 0 0 18px;
+  margin: 0;
+
+  accent-color: #087c48;
+  cursor: pointer;
+}
+
+.select-all-label input:disabled,
+.concern-selection input:disabled {
+  cursor: not-allowed;
+}
+
+.select-all-label input:focus-visible,
+.concern-selection input:focus-visible {
+  outline: 2px solid #557b61;
+  outline-offset: 3px;
+}
+
+/* NUMBER OF SELECTED CONCERNS */
+
+.selected-count {
+  margin-right: auto;
+
+  font-size: 12px;
+  color: #68776e;
+}
+
+/* ARCHIVE SELECTED BUTTON */
+
+.bulk-archive-button {
+  min-height: 40px;
+  padding: 10px 14px;
+
+  border: 1px solid #087c48;
+  border-radius: 7px;
+
+  background: #087c48;
+  color: #ffffff;
+
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+/* ARCHIVE BUTTON HOVER */
+
+.bulk-archive-button:hover:not(:disabled) {
+  background: #09663d;
+  border-color: #09663d;
+
+  box-shadow:
+    0 3px 12px rgb(8 124 72 / 16%);
+}
+
+/* HIGHLIGHT SELECTED CONCERNS */
+
+.admin-concerns-page
+table tbody tr.selected-concern-row {
+  background: #edf7f0;
+}
+
+/* RESPONSIVE CARD SELECTION */
+
+@media (max-width: 1100px) {
+
+  .admin-concerns-page
+  table tbody tr.selected-concern-row {
+    border-color: #85b99a;
+
+    box-shadow:
+      0 0 0 1px #85b99a;
+  }
+
+}
+
+/* MOBILE RESPONSIVE */
+
+@media (max-width: 600px) {
+
+  .bulk-archive-toolbar {
+    gap: 10px;
+  }
+
+  .clear-selection-button,
+  .bulk-archive-button {
+    flex: 1 1 120px;
+    min-height: 44px;
+  }
+
+}
+
+/* REDUCED MOTION ACCESSIBILITY */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .bulk-archive-toolbar {
+    animation: none;
+  }
+
+}
+
+
+/* =========================================
+   BULK ARCHIVE AND RESTORE DESIGN
+========================================= */
+
+.bulk-archive-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+
+  margin: 0 0 16px;
+  padding: 12px 14px;
+
+  min-height: 60px;
+
+  background: #ffffff;
+  border: 1px solid #dce7df;
+  border-radius: 10px;
+
+  animation: bulkToolbarIn 350ms ease-out;
+}
+
+
+/* CHECKBOX LABELS */
+
+.select-all-label,
+.concern-selection {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  min-width: 0;
+
+  color: #21372a;
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+
+/* CHECKBOX DESIGN */
+
+.select-all-label input,
+.concern-selection input {
+  width: 18px;
+  height: 18px;
+
+  flex: 0 0 18px;
+
+  margin: 0;
+
+  accent-color: #087c48;
+  cursor: pointer;
+
+  transition: transform 180ms ease;
+}
+
+.select-all-label input:checked,
+.concern-selection input:checked {
+  animation: checkboxPop 200ms ease-out;
+}
+
+.select-all-label input:disabled,
+.concern-selection input:disabled {
+  cursor: not-allowed;
+}
+
+.select-all-label input:focus-visible,
+.concern-selection input:focus-visible {
+  outline: 2px solid #557b61;
+  outline-offset: 3px;
+}
+
+
+/* SELECTED COUNT */
+
+.selected-count {
+  margin-right: auto;
+
+  font-size: 12px;
+  color: #68776e;
+}
+
+
+/* ACTION BUTTON CONTAINER */
+
+.bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+
+  animation: bulkActionsIn 250ms ease-out both;
+}
+
+
+/* ARCHIVE AND RESTORE BUTTON */
+
+.bulk-archive-button {
+  min-height: 40px;
+  padding: 10px 14px;
+
+  background: #087c48;
+  color: #ffffff;
+
+  border: 1px solid #087c48;
+  border-radius: 7px;
+
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    transform 200ms ease,
+    background-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+
+/* CLEAR SELECTION BUTTON */
+
+.clear-selection-button {
+  min-height: 40px;
+  padding: 10px 14px;
+
+  background: #ffffff;
+  color: #33483a;
+
+  border: 1px solid #cbd9cf;
+  border-radius: 7px;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    transform 200ms ease,
+    background-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+
+/* DISABLED BUTTONS */
+
+.bulk-archive-button:disabled,
+.clear-selection-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+/* =========================================
+   SELECTED CONCERN HIGHLIGHT
+========================================= */
+
+.admin-concerns-page table tbody tr,
+.admin-archive-page table tbody tr {
+  transition:
+    background-color 200ms ease,
+    box-shadow 200ms ease,
+    border-color 200ms ease;
+}
+
+.admin-concerns-page
+table tbody tr.selected-concern-row,
+
+.admin-archive-page
+table tbody tr.selected-concern-row {
+  background: #eaf6ee;
+
+  box-shadow: inset 3px 0 0 #16814c;
+}
+
+
+/* =========================================
+   HOVER EFFECTS
+========================================= */
+
+@media (hover: hover) and (pointer: fine) {
+
+  .bulk-archive-button:hover:not(:disabled) {
+    background: #09663d;
+    border-color: #09663d;
+
+    transform: translateY(-2px);
+
+    box-shadow:
+      0 4px 12px rgb(8 124 72 / 18%);
+  }
+
+  .clear-selection-button:hover:not(:disabled) {
+    background: #edf5ef;
+
+    transform: translateY(-2px);
+  }
+
+  .view-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+
+    background: #edf5ef;
+
+    box-shadow:
+      0 4px 10px rgb(33 55 42 / 10%);
+  }
+
+  .admin-concerns-page table tbody tr:hover,
+  .admin-archive-page table tbody tr:hover {
+    background: #f0f8f2;
+  }
+
+  .admin-concerns-page
+  table tbody tr.selected-concern-row:hover,
+
+  .admin-archive-page
+  table tbody tr.selected-concern-row:hover {
+    background: #dff1e5;
+  }
+
+}
+
+
+/* BUTTON CLICK ANIMATION */
+
+.bulk-archive-button:active:not(:disabled),
+.clear-selection-button:active:not(:disabled),
+.view-button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+
+/* =========================================
+   PAGE ANIMATIONS
+========================================= */
+
+/* Entrance animation */
+
+@keyframes concernListIn {
+
+  from {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+}
+
+
+/* Concern details animation */
+
+@keyframes concernDetailsIn {
+
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+}
+
+
+/* Toolbar animation */
+
+@keyframes bulkToolbarIn {
+
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+}
+
+
+/* Bulk buttons appearance */
+
+@keyframes bulkActionsIn {
+
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+}
+
+
+/* Checkbox animation */
+
+@keyframes checkboxPop {
+
+  0% {
+    transform: scale(0.85);
+  }
+
+  60% {
+    transform: scale(1.12);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+
+}
+
+
+/* ANIMATION WHEN OPENING OR GOING BACK */
+
+.page-header,
+.toolbar,
+.results-heading,
+.table-card,
+.empty-state {
+  animation:
+    concernListIn 350ms ease-out backwards;
+}
+
+.toolbar {
+  animation-delay: 50ms;
+}
+
+.results-heading {
+  animation-delay: 80ms;
+}
+
+.table-card {
+  animation-delay: 120ms;
+}
+
+.details-page {
+  animation:
+    concernDetailsIn 350ms ease-out;
+}
+
+
+/* SUCCESS AND ERROR MESSAGE ANIMATION */
+
+.archive-success,
+.error-notice {
+  animation:
+    bulkToolbarIn 250ms ease-out;
+}
+
+
+/* =========================================
+   RESPONSIVE LAYOUT
+========================================= */
+
+@media (max-width: 1100px) {
+
+  .admin-concerns-page
+  table tbody tr.selected-concern-row,
+
+  .admin-archive-page
+  table tbody tr.selected-concern-row {
+    border-color: #85b99a;
+
+    box-shadow:
+      0 0 0 1px #85b99a;
+  }
+
+}
+
+
+@media (max-width: 600px) {
+
+  .bulk-archive-toolbar {
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .bulk-actions {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .bulk-archive-button,
+  .clear-selection-button {
+    flex: 1 1 120px;
+    min-height: 44px;
+  }
+
+}
+
+
+/* ACCESSIBILITY */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .page-header,
+  .toolbar,
+  .results-heading,
+  .table-card,
+  .empty-state,
+  .details-page,
+  .archive-success,
+  .error-notice,
+  .bulk-archive-toolbar,
+  .bulk-actions,
+  .select-all-label input,
+  .concern-selection input {
+    animation: none;
+  }
+
+  .bulk-archive-button,
+  .clear-selection-button,
+  .view-button,
+  .select-all-label input,
+  .concern-selection input {
+    transition: none;
+  }
+
+  .bulk-archive-button:hover:not(:disabled),
+  .clear-selection-button:hover:not(:disabled),
+  .view-button:hover:not(:disabled),
+  .bulk-archive-button:active:not(:disabled),
+  .clear-selection-button:active:not(:disabled),
+  .view-button:active:not(:disabled) {
+    transform: none;
+  }
+
+}

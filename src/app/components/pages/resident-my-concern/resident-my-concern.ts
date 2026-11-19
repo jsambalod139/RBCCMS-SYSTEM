@@ -133,10 +133,11 @@ get filteredConcerns(): ConcernWithRelations[] {
 
       return matchesSearch && matchesStatus;
     })
-    .sort(
-      (a, b) =>
-        (a.concern_number ?? Number.MAX_SAFE_INTEGER) -
-        (b.concern_number ?? Number.MAX_SAFE_INTEGER)
+    .sort((a, b) =>
+      b.reported_at.localeCompare(a.reported_at) ||
+      (b.concern_number ?? 0) -
+      (a.concern_number ?? 0) ||
+      a.concern_id.localeCompare(b.concern_id)
     );
 }
 
