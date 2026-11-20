@@ -208,9 +208,7 @@ export class NotificationService implements OnDestroy {
 
               if (!allowed) continue;
 
-              const number = personnel
-                ? concern.concern_number
-                : concern.resident_concern_number;
+             const number = concern.concern_number;
 
               items.push({
                 id,

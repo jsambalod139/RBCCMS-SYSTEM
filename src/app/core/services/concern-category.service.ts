@@ -1,3 +1,4 @@
+
 import {
   Injectable,
   OnDestroy,
@@ -27,6 +28,7 @@ import { ConcernCategory } from '../models/concern.model';
 
 interface CategoryRecord extends ConcernCategory {
   active: boolean;
+  officeId: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -46,6 +48,7 @@ export class ConcernCategoryService implements OnDestroy {
   private stopAuth?: () => void;
   private stopProfile?: () => void;
   private stopCategories?: () => void;
+  private stopOffices?: () => void;
 
   private generation = 0;
   private listGeneration = 0;
@@ -108,8 +111,93 @@ export class ConcernCategoryService implements OnDestroy {
           generation === this.generation &&
           listGeneration === this.listGeneration;
 
+        // New submissions need both an active category
+        // and an active office.
+        // Keep historical category records separate
+        // from available choices.
+
+        let categoriesReady = false;
+        let officesReady = false;
+        let categoryError = '';
+        let officeError = '';
+        let activeOfficeIds = new Set<string>();
+
+        const publishAvailability = (): void => {
+          if (!current()) return;
+
+          const error = categoryError || officeError;
+
+          this.error.set(error);
+
+          this.loading.set(
+            !error && (!categoriesReady || !officesReady)
+          );
+
+          if (
+            error ||
+            !categoriesReady ||
+            !officesReady
+          ) {
+            this.available.next([]);
+            return;
+          }
+
+          this.available.next(
+            this.records()
+              .filter(row =>
+                row.active &&
+                row.officeId !== null &&
+                activeOfficeIds.has(row.officeId)
+              )
+              .map(row => ({
+                category_id: row.category_id,
+                category_name: row.category_name,
+              }))
+          );
+        };
+
+        // MONITOR OFFICE AVAILABILITY
+
+        this.stopOffices = onSnapshot(
+          collection(this.db, 'offices'),
+
+          result => {
+            if (!current()) return;
+
+            activeOfficeIds = new Set(
+              result.docs
+                .filter(
+                  item =>
+                    item.data()['is_active'] === true
+                )
+                .map(item => item.id)
+            );
+
+            officesReady = true;
+            officeError = '';
+
+            publishAvailability();
+          },
+
+          () => {
+            if (!current()) return;
+
+            activeOfficeIds.clear();
+
+            officesReady = false;
+
+            officeError =
+              'Unable to verify office availability. Please try again.';
+
+            publishAvailability();
+          }
+        );
+
+        // MONITOR CONCERN CATEGORIES
+
         this.stopCategories = onSnapshot(
           collection(this.db, 'categories'),
+
           result => {
             if (!current()) return;
 
@@ -136,7 +224,16 @@ export class ConcernCategoryService implements OnDestroy {
               rows.push({
                 category_id: id,
                 category_name: name,
-                active: data['is_active'] === true,
+
+                active:
+                  data['is_active'] === true,
+
+                officeId:
+                  typeof data['office_id'] === 'string' &&
+                  data['office_id'].trim().length > 0 &&
+                  !data['office_id'].includes('/')
+                    ? data['office_id']
+                    : null,
               });
             }
 
@@ -153,41 +250,42 @@ export class ConcernCategoryService implements OnDestroy {
 
             this.records.set(rows);
 
-            this.available.next(
-              rows
-                .filter(row => row.active)
-                .map(row => ({
-                  category_id: row.category_id,
-                  category_name: row.category_name,
-                }))
-            );
+            categoriesReady = true;
+            categoryError = '';
 
-            this.loading.set(false);
-            this.error.set('');
+            publishAvailability();
           },
+
           () => {
             if (!current()) return;
 
             this.records.set([]);
-            this.available.next([]);
-            this.loading.set(false);
-            this.error.set(
-              'Unable to load concern categories. Please try again.'
-            );
+
+            categoriesReady = false;
+
+            categoryError =
+              'Unable to load concern categories. Please try again.';
+
+            publishAvailability();
           }
         );
       },
+
       () => {
         if (generation !== this.generation) return;
 
         this.clear();
+
         this.loading.set(false);
+
         this.error.set(
           'Unable to verify access to concern categories.'
         );
       }
     );
   }
+
+  // KEEP OTHER COMMUNITY CONCERNS AT THE BOTTOM
 
   private isOtherCategory(
     category: ConcernCategory
@@ -201,9 +299,14 @@ export class ConcernCategoryService implements OnDestroy {
     );
   }
 
+  // AVAILABLE CATEGORIES FOR NEW SUBMISSIONS
+
   getCategories(): Observable<ConcernCategory[]> {
     return this.available.asObservable();
   }
+
+  // KEEP HISTORICAL CATEGORY INFORMATION
+  // INCLUDING INACTIVE CATEGORIES
 
   getById(
     categoryId: number
@@ -230,6 +333,9 @@ export class ConcernCategoryService implements OnDestroy {
       },
     };
   }
+
+  // VALIDATE CATEGORY AND OFFICE
+  // INSIDE THE EXISTING SUBMISSION TRANSACTION
 
   async getOfficeId(
     categoryId: number,
@@ -267,7 +373,12 @@ export class ConcernCategoryService implements OnDestroy {
       doc(this.db, 'offices', officeId)
     );
 
-    if (!officeSnapshot.exists()) {
+    // ADDITIONAL OFFICE AVAILABILITY VALIDATION
+
+    if (
+      !officeSnapshot.exists() ||
+      officeSnapshot.data()?.['is_active'] !== true
+    ) {
       throw new Error(
         'The responsible office is unavailable. ' +
         'Please contact the barangay.'
@@ -277,11 +388,16 @@ export class ConcernCategoryService implements OnDestroy {
     return officeId;
   }
 
+  // CLEAN UP EXISTING LISTENERS
+
   private clear(): void {
     ++this.listGeneration;
 
     this.stopCategories?.();
     this.stopCategories = undefined;
+
+    this.stopOffices?.();
+    this.stopOffices = undefined;
 
     this.records.set([]);
     this.available.next([]);
@@ -292,6 +408,7 @@ export class ConcernCategoryService implements OnDestroy {
 
     this.stopAuth?.();
     this.stopProfile?.();
+
     this.clear();
 
     this.available.complete();

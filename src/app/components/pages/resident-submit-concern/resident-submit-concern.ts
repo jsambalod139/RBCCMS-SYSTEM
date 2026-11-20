@@ -1,9 +1,11 @@
+
 import { CommonModule } from '@angular/common';
 
 import {
   Component,
   ElementRef,
   OnDestroy,
+  effect,
   inject,
   signal,
   viewChild
@@ -49,6 +51,7 @@ import {
   styleUrl: './resident-submit-concern.scss'
 })
 export class ResidentSubmitConcern implements OnDestroy {
+
   private readonly fb =
     inject(FormBuilder);
 
@@ -88,7 +91,10 @@ export class ResidentSubmitConcern implements OnDestroy {
   private photoVersion = 0;
   private destroyed = false;
 
+  // CONCERN FORM
+
   readonly concernForm = this.fb.group({
+
     category_id: [
       '',
       Validators.required
@@ -109,7 +115,49 @@ export class ResidentSubmitConcern implements OnDestroy {
         Validators.maxLength(5000)
       ]
     ]
+
   });
+
+  // MONITOR CATEGORY AVAILABILITY
+  // Clear the selected category if the office
+  // or category becomes inactive.
+  // Do not interrupt an ongoing submission.
+  // The transaction checks availability again.
+
+  private readonly watchCategoryAvailability =
+    effect(() => {
+
+      const categories = this.categories();
+
+      const loading =
+        this.categoryService.loading();
+
+      const submitting = this.isLoading();
+
+      if (loading || submitting) return;
+
+      const selected =
+        this.categoryControl.value;
+
+      if (
+        selected &&
+        !categories.some(category =>
+          category.category_id === Number(selected)
+        )
+      ) {
+
+        this.categoryControl.setValue('');
+
+        this.categoryControl.markAsTouched();
+
+        this.submitError.set(
+          'The selected category is no longer available. Please choose another category.'
+        );
+
+      }
+    });
+
+  // SUBMISSION GUIDELINES
 
   readonly guidelines = [
     'Select the correct concern category.',
@@ -118,6 +166,8 @@ export class ResidentSubmitConcern implements OnDestroy {
     'Attach a photo if available.',
     'Report only non-emergency community concerns.'
   ];
+
+  // FORM CONTROLS
 
   get categoryControl() {
     return this.concernForm.controls.category_id;
@@ -131,9 +181,12 @@ export class ResidentSubmitConcern implements OnDestroy {
     return this.concernForm.controls.description;
   }
 
+  // PHOTO SELECTION AND VALIDATION
+
   async onPhotoSelected(
     event: Event
   ): Promise<void> {
+
     const input =
       event.target as HTMLInputElement;
 
@@ -144,6 +197,7 @@ export class ResidentSubmitConcern implements OnDestroy {
     const version = ++this.photoVersion;
 
     this.clearPreview();
+
     this.fileError.set('');
     this.isProcessingPhoto.set(false);
 
@@ -152,6 +206,7 @@ export class ResidentSubmitConcern implements OnDestroy {
     this.isProcessingPhoto.set(true);
 
     try {
+
       const compressed =
         await compressConcernPhoto(file);
 
@@ -167,7 +222,9 @@ export class ResidentSubmitConcern implements OnDestroy {
       this.imagePreview.set(
         URL.createObjectURL(compressed)
       );
+
     } catch (error) {
+
       if (
         this.destroyed ||
         version !== this.photoVersion
@@ -182,17 +239,23 @@ export class ResidentSubmitConcern implements OnDestroy {
           ? error.message
           : 'Unable to process this photo.'
       );
+
     } finally {
+
       if (
         !this.destroyed &&
         version === this.photoVersion
       ) {
         this.isProcessingPhoto.set(false);
       }
+
     }
   }
 
+  // REMOVE SELECTED PHOTO
+
   removePhoto(): void {
+
     ++this.photoVersion;
 
     const input =
@@ -203,11 +266,15 @@ export class ResidentSubmitConcern implements OnDestroy {
     }
 
     this.clearPreview();
+
     this.fileError.set('');
     this.isProcessingPhoto.set(false);
   }
 
+  // CLEAR PHOTO PREVIEW
+
   private clearPreview(): void {
+
     const url = this.imagePreview();
 
     if (url) {
@@ -218,15 +285,24 @@ export class ResidentSubmitConcern implements OnDestroy {
     this.selectedFile.set(null);
   }
 
+  // SUBMIT CONCERN
+
   submitConcern(): void {
+
     this.isSubmitted.set(true);
     this.showSuccess.set(false);
     this.submitError.set('');
 
+    // EXISTING FORM VALIDATION
+
     if (this.concernForm.invalid) {
+
       this.concernForm.markAllAsTouched();
+
       return;
     }
+
+    // EXISTING PHOTO AND SUBMISSION VALIDATION
 
     if (
       this.fileError() ||
@@ -239,7 +315,33 @@ export class ResidentSubmitConcern implements OnDestroy {
     const value =
       this.concernForm.getRawValue();
 
+    // ADDITIONAL CATEGORY AVAILABILITY VALIDATION
+    // Reject unavailable categories before
+    // uploading any photo.
+
+    if (
+      this.categoryService.loading() ||
+
+      this.categoryService.error() ||
+
+      !this.categories().some(category =>
+        category.category_id === Number(
+          value.category_id
+        )
+      )
+    ) {
+
+      this.submitError.set(
+        'The selected category is unavailable. Please choose an active category.'
+      );
+
+      return;
+    }
+
+    // EXISTING CONCERN PAYLOAD
+
     const payload: ConcernPayload = {
+
       category_id:
         Number(value.category_id),
 
@@ -248,11 +350,15 @@ export class ResidentSubmitConcern implements OnDestroy {
 
       description:
         value.description!.trim()
+
     };
 
     this.isLoading.set(true);
 
+    // EXISTING CONCERN SUBMISSION SERVICE
+
     this.concernService
+
       .submitConcern(
         payload,
         this.selectedFile()
@@ -265,25 +371,36 @@ export class ResidentSubmitConcern implements OnDestroy {
       )
 
       .subscribe({
+
         next: () => {
+
           this.showSuccess.set(true);
+
           this.resetForm();
+
         },
 
         error: (error: unknown) => {
+
           this.submitError.set(
             error instanceof Error
               ? error.message
               : 'Unable to submit your concern. Please try again.'
           );
+
         }
+
       });
   }
 
+  // CANCEL SUBMISSION
+
   cancel(): void {
+
     if (this.isLoading()) return;
 
     this.resetForm();
+
     this.showSuccess.set(false);
     this.submitError.set('');
 
@@ -292,20 +409,31 @@ export class ResidentSubmitConcern implements OnDestroy {
     ]);
   }
 
+  // RESET FORM
+
   private resetForm(): void {
+
     this.concernForm.reset({
+
       category_id: '',
       location_description: '',
       description: ''
+
     });
 
     this.removePhoto();
+
     this.isSubmitted.set(false);
   }
 
+  // CLEANUP
+
   ngOnDestroy(): void {
+
     this.destroyed = true;
+
     ++this.photoVersion;
+
     this.clearPreview();
   }
 }

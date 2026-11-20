@@ -1223,6 +1223,22 @@ export class ConcernService implements OnDestroy {
         );
       }
 
+
+      // Prevent updates when the category or office is inactive.
+
+      const activeOfficeId =
+        await this.categoryService.getOfficeId(
+          data['category_id'],
+          transaction
+        );
+
+      if (activeOfficeId !== officeId) {
+        throw new Error(
+          'This concern category is no longer assigned to your office.'
+        );
+      }
+
+
       const personnelName =
         typeof personnel['name'] === 'string' &&
         personnel['name'].length > 0
