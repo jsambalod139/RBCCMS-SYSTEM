@@ -1487,3 +1487,24 @@ fieldset {
   }
 
 }
+
+.btn-primary,
+.profile-tabs button.active {
+  border-color: #087b49;
+  background: #087b49;
+  color: #fff;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover:not(:disabled),
+  .profile-tabs button.active:hover:not(:disabled) {
+    border-color: #06643b;
+    background: #06643b;
+    color: #fff;
+  }
+
+  .profile-tabs button:not(.active):hover:not(:disabled) {
+    background: #e7f2e9;
+    color: #06643b;
+  }
+}

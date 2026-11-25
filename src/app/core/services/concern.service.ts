@@ -651,7 +651,7 @@ export class ConcernService implements OnDestroy {
                         name:
                           typeof data['name'] === 'string'
                             ? data['name'].trim()
-                            : 'Name not recorded',
+                            : '',
                         id:
                           typeof data['residentId'] === 'string'
                             ? data['residentId'].trim()
@@ -1223,7 +1223,6 @@ export class ConcernService implements OnDestroy {
         );
       }
 
-
       // Prevent updates when the category or office is inactive.
 
       const activeOfficeId =
@@ -1237,7 +1236,6 @@ export class ConcernService implements OnDestroy {
           'This concern category is no longer assigned to your office.'
         );
       }
-
 
       const personnelName =
         typeof personnel['name'] === 'string' &&
@@ -1642,7 +1640,7 @@ export class ConcernService implements OnDestroy {
         : '';
 
     if (code.includes('permission-denied')) {
-      return 'Access denied. Check account approval, office assignment, and Firestore rules.';
+      return 'Access to these records is restricted. Please contact the system administrator to verify your account status and office assignment.';
     }
 
     if (code.includes('unavailable')) {

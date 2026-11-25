@@ -95,8 +95,6 @@ export class AdminUserManagement implements OnDestroy {
     'All Status',
     'approved',
     'suspended',
-    'pending',
-    'rejected',
   ];
 
   readonly selectedAccount = computed(
@@ -306,10 +304,11 @@ export class AdminUserManagement implements OnDestroy {
                   account => !account.isArchived
                 )
                 .sort(
-                  (a, b) =>
-                    a.name.localeCompare(b.name) ||
-                    a.uid.localeCompare(b.uid)
-                )
+                (a, b) =>
+                  (b.createdAt ?? '').localeCompare(a.createdAt ?? '') ||
+                  a.name.localeCompare(b.name) ||
+                  a.uid.localeCompare(b.uid)
+              )
             );
 
             this.loading.set(false);

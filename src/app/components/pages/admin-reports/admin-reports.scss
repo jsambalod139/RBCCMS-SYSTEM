@@ -89,11 +89,9 @@ button {
   }
 }
 
-button.primary,
-.tabs button.active {
-  border-color: #21372a;
-  background: #21372a;
-  color: #fff;
+.actions .secondary {
+  border-color: #9bbca6;
+  color: #087b49;
 }
 
 button:focus-visible,
@@ -147,13 +145,14 @@ input {
     flex: 1 1 140px;
     border-color: transparent;
     background: transparent;
-
-    &.active {
-      border-color: #21372a;
-      background: #21372a;
-      color: #fff;
-    }
   }
+}
+
+button.primary,
+.tabs button.active {
+  border-color: #087b49;
+  background: #087b49;
+  color: #fff;
 }
 
 .report-panel {
@@ -178,29 +177,83 @@ input {
   margin: 12px 0;
 }
 
-.summary-strip {
+.summary-grid {
   display: grid;
   grid-template-columns:
-    repeat(auto-fit, minmax(110px, 1fr));
+    repeat(auto-fit, minmax(min(100%, 175px), 1fr));
+  gap: 16px;
   margin: 20px 0;
-  overflow: hidden;
-  border: 1px solid #dfe7e1;
-  border-radius: 8px;
-  background: #f2f7f3;
+}
 
-  div {
-    padding: 16px 10px;
-    color: #607267;
+.summary-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-width: 0;
+  min-height: 104px;
+  padding: 20px;
+  border: 1px solid #dfe8e2;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 3px 14px rgb(33 55 42 / 4%);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.summary-icon {
+  display: grid;
+  flex: 0 0 48px;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: #e7f2e9;
+  color: #24613b;
+  font-size: 20px;
+}
+
+.pending-icon {
+  background: #fff4df;
+  color: #a56c0b;
+}
+
+.progress-icon {
+  background: #e8f1fc;
+  color: #2866a8;
+}
+
+.rejected-icon {
+  background: #fbe8e8;
+  color: #a83232;
+}
+
+.neutral-icon {
+  background: #edf0ed;
+  color: #536158;
+}
+
+.summary-information {
+  min-width: 0;
+
+  span {
+    display: block;
+    color: #68736c;
     font-size: 12px;
-    text-align: center;
+    font-weight: 500;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
   }
 
   strong {
     display: block;
     margin-top: 6px;
     color: #21372a;
-    font-size: 25px;
+    font-size: 30px;
+    line-height: 1.1;
     font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
   }
 }
 
@@ -297,9 +350,24 @@ tbody tr:last-child td {
     border-color: #91ae9a;
   }
 
-  button.primary:hover:not(:disabled) {
-    background: #304c3a;
+  button.primary:hover:not(:disabled),
+  .tabs button.active:hover:not(:disabled) {
+    border-color: #06643b;
+    background: #06643b;
     color: #fff;
+  }
+
+  .actions .secondary:hover:not(:disabled),
+  .tabs button:hover:not(.active) {
+    border-color: #9bbca6;
+    background: #e7f2e9;
+    color: #06643b;
+  }
+
+  .summary-card:hover {
+    transform: translateY(-2px);
+    border-color: #9bbca6;
+    box-shadow: 0 7px 22px rgb(33 55 42 / 8%);
   }
 
   tbody tr:hover {
@@ -382,18 +450,15 @@ tbody tr:last-child td {
     transition: none !important;
   }
 
+  .summary-card:hover,
   button:active:not(:disabled) {
     transform: none;
   }
 }
 
-
-/* =========================================
-   ADMIN REPORTS - RESPONSIVE DESIGN
-   ========================================= */
+/* Admin Reports responsive table layout */
 
 @media (max-width: 1100px) {
-
   .reports-page,
   .report-panel,
   .table-scroll {
@@ -402,7 +467,6 @@ tbody tr:last-child td {
     min-width: 0;
   }
 
-  /* Remove horizontal table scrolling */
   .table-scroll {
     overflow: visible;
     border: none;
@@ -416,7 +480,6 @@ tbody tr:last-child td {
     border-collapse: separate;
   }
 
-  /* Hide desktop table headings visually */
   .table-scroll thead {
     position: absolute;
     width: 1px;
@@ -429,13 +492,11 @@ tbody tr:last-child td {
     border: 0;
   }
 
-  /* Card container */
   .table-scroll tbody,
   .table-scroll tfoot {
     display: grid;
     grid-template-columns:
       repeat(auto-fit, minmax(min(100%, 350px), 1fr));
-
     gap: 14px;
     width: 100%;
     min-width: 0;
@@ -446,75 +507,58 @@ tbody tr:last-child td {
     background: transparent;
   }
 
-  /* Each row becomes a card */
   .table-scroll tbody tr,
   .table-scroll tfoot tr {
     display: grid;
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
     gap: 14px 12px;
     min-width: 0;
     padding: 18px;
-
     border: 1px solid #dfe7e1;
     border-radius: 14px;
-    background: #ffffff;
-
-    box-shadow: 0 3px 12px
-      rgba(33, 55, 42, 0.05);
+    background: #fff;
+    box-shadow: 0 3px 12px rgb(33 55 42 / 5%);
   }
 
-  /* Overall total card */
   .table-scroll tfoot tr {
     background: #edf4ef;
     border-color: #c8dbcc;
   }
 
-  /* Category, Location, Office, or Status */
   .table-scroll tbody th,
   .table-scroll tfoot th {
     display: block;
     grid-column: 1 / -1;
-
     min-width: 0;
     max-width: none;
     padding: 0 0 12px;
-
     border-bottom: 1px solid #e2ebe5;
-
     color: #21372a;
     text-align: left;
     font-size: 16px;
     font-weight: 700;
-
     overflow-wrap: anywhere;
     white-space: normal;
   }
 
-  /* Report values */
   .table-scroll tbody td,
   .table-scroll tfoot td {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
-
     min-width: 0;
     max-width: none;
     padding: 0;
     border: none;
-
     color: #21372a;
     text-align: left;
     font-size: 16px;
     font-weight: 700;
-
     overflow-wrap: anywhere;
   }
 
-  /* Labels for each value */
   .table-scroll tr td::before {
     display: block;
     color: #6b7d72;
@@ -526,33 +570,31 @@ tbody tr:last-child td {
   }
 
   .table-scroll tr td:nth-of-type(1)::before {
-    content: "Pending";
+    content: 'Pending';
   }
 
   .table-scroll tr td:nth-of-type(2)::before {
-    content: "In Progress";
+    content: 'In Progress';
   }
 
   .table-scroll tr td:nth-of-type(3)::before {
-    content: "Resolved";
+    content: 'Resolved';
   }
 
   .table-scroll tr td:nth-of-type(4)::before {
-    content: "Rejected";
+    content: 'Rejected';
   }
 
   .table-scroll tr td:nth-of-type(5)::before {
-    content: "Not Recorded";
+    content: 'Not Recorded';
   }
 
-  /* Last two columns: Total and Share.
-     These also work for the Statuses tab. */
   .table-scroll tr td:nth-last-child(2)::before {
-    content: "Total";
+    content: 'Total';
   }
 
   .table-scroll tr td:last-child::before {
-    content: "Share";
+    content: 'Share';
   }
 
   .table-scroll tr td:nth-last-child(2) {
@@ -560,12 +602,7 @@ tbody tr:last-child td {
   }
 }
 
-/* =========================================
-   MOBILE SCREEN
-   ========================================= */
-
 @media (max-width: 600px) {
-
   .reports-page {
     padding: 14px 10px;
   }
@@ -583,12 +620,9 @@ tbody tr:last-child td {
     font-size: 23px;
   }
 
-  /* Print and Export buttons */
   .actions {
     display: grid;
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
     width: 100%;
 
@@ -599,7 +633,6 @@ tbody tr:last-child td {
     }
   }
 
-  /* Date filter */
   .filters {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -618,12 +651,9 @@ tbody tr:last-child td {
     }
   }
 
-  /* Report tabs */
   .tabs {
     display: grid;
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
 
     button {
@@ -643,32 +673,28 @@ tbody tr:last-child td {
     font-size: 17px;
   }
 
-  /* Responsive summary statistics */
-  .summary-strip {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-
-    gap: 1px;
-    background: #dfe7e1;
-
-    div {
-      min-width: 0;
-      padding: 13px 8px;
-      background: #f2f7f3;
-      font-size: 11px;
-    }
-
-    div:first-child {
-      grid-column: 1 / -1;
-      background: #e6f0e8;
-    }
-
-    strong {
-      font-size: 23px;
-    }
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
 
-  /* One report card per row */
+  .summary-card {
+    gap: 8px;
+    min-height: 80px;
+    padding: 10px;
+  }
+
+  .summary-icon {
+    flex-basis: 34px;
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
+  }
+
+  .summary-information strong {
+    font-size: 23px;
+  }
+
   .table-scroll tbody,
   .table-scroll tfoot {
     grid-template-columns: minmax(0, 1fr);
@@ -684,5 +710,19 @@ tbody tr:last-child td {
   .table-scroll tbody th,
   .table-scroll tfoot th {
     font-size: 15px;
+  }
+}
+
+.summary-card {
+  box-shadow:
+    0 5px 14px rgb(33 55 42 / 12%),
+    0 2px 4px rgb(33 55 42 / 7%);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .summary-card:hover {
+    box-shadow:
+      0 10px 24px rgb(33 55 42 / 18%),
+      0 3px 8px rgb(33 55 42 / 10%);
   }
 }

@@ -12,6 +12,7 @@
     <div class="actions">
       <button
         type="button"
+        class="secondary"
         (click)="printReport()"
         [disabled]="feed.loading() || !!feed.error()"
       >
@@ -91,25 +92,62 @@
         <h2>{{ title() }}</h2>
       </div>
 
-      <div class="summary-strip">
-        <div>
-          Total
-          <strong>{{ totals().total }}</strong>
+      <section
+        class="summary-grid"
+        aria-label="Concern totals for the selected reporting period"
+      >
+        <div class="summary-card">
+          <i class="pi pi-file summary-icon" aria-hidden="true"></i>
+          <div class="summary-information">
+            <span>Total Concerns</span>
+            <strong>{{ totals().total }}</strong>
+          </div>
         </div>
 
-        @for (
-          status of statuses;
-          track status;
-          let index = $index
-        ) {
+        @for (status of statuses; track status; let index = $index) {
           @if (index < 4 || totals().counts[index]) {
-            <div>
-              {{ status }}
-              <strong>{{ totals().counts[index] }}</strong>
+            <div class="summary-card">
+              @switch (status) {
+                @case ('Pending') {
+                  <i
+                    class="pi pi-clock summary-icon pending-icon"
+                    aria-hidden="true"
+                  ></i>
+                }
+                @case ('In Progress') {
+                  <i
+                    class="pi pi-sync summary-icon progress-icon"
+                    aria-hidden="true"
+                  ></i>
+                }
+                @case ('Resolved') {
+                  <i
+                    class="pi pi-check-circle summary-icon"
+                    aria-hidden="true"
+                  ></i>
+                }
+                @case ('Rejected') {
+                  <i
+                    class="pi pi-times-circle summary-icon rejected-icon"
+                    aria-hidden="true"
+                  ></i>
+                }
+                @default {
+                  <i
+                    class="pi pi-question-circle summary-icon neutral-icon"
+                    aria-hidden="true"
+                  ></i>
+                }
+              }
+
+              <div class="summary-information">
+                <span>{{ status }}</span>
+                <strong>{{ totals().counts[index] }}</strong>
+              </div>
             </div>
           }
         }
-      </div>
+      </section>
 
       @if (tab() === 'location') {
         <p class="note">

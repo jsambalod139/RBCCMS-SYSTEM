@@ -19,11 +19,7 @@
     <div class="page-notice error-notice" role="alert">
       <p>{{ loadError() }}</p>
 
-      <button
-        type="button"
-        class="secondary-button"
-        (click)="retryLoad()"
-      >
+      <button type="button" class="secondary-button" (click)="retryLoad()">
         Try Again
       </button>
     </div>
@@ -35,11 +31,7 @@
           <h1 id="details-title">Concern Details</h1>
         </div>
 
-        <button
-          type="button"
-          class="secondary-button"
-          (click)="closeDetails()"
-        >
+        <button type="button" class="secondary-button" (click)="closeDetails()">
           ← Back to Archive
         </button>
       </header>
@@ -121,10 +113,7 @@
           <div>
             <dt>Last Updated By</dt>
             <dd>
-              {{
-                concern.last_updated_by_label ||
-                'No personnel update yet'
-              }}
+              {{ concern.last_updated_by_label || 'No personnel update yet' }}
             </dd>
           </div>
 
@@ -165,11 +154,7 @@
               </button>
             </div>
           } @else if (photoUrl()) {
-            <a
-              [href]="photoUrl()"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a [href]="photoUrl()" target="_blank" rel="noopener noreferrer">
               Open Full Photo
             </a>
 
@@ -189,10 +174,7 @@
         @for (update of concern.updates; track update.update_id) {
           <article class="history-item">
             <div>
-              <span
-                class="status-badge"
-                [ngClass]="statusClass(update.new_status)"
-              >
+              <span class="status-badge" [ngClass]="statusClass(update.new_status)">
                 {{ update.new_status }}
               </span>
 
@@ -201,17 +183,13 @@
                   <strong>Progress update</strong>
                   — Status unchanged
                 } @else {
-                  {{ update.previous_status || 'Created' }}
-                  → {{ update.new_status }}
+                  {{ update.previous_status || 'Created' }} → {{ update.new_status }}
                 }
               </p>
 
               <p>
                 Updated by
-                {{
-                  update.updated_by_label ||
-                  'Personnel (name not recorded)'
-                }}
+                {{ update.updated_by_label || 'Personnel (name not recorded)' }}
               </p>
 
               <p class="remarks">
@@ -240,20 +218,13 @@
         This archived concern was not found or has already been restored.
       </p>
 
-      <button
-        type="button"
-        class="secondary-button"
-        (click)="closeDetails()"
-      >
+      <button type="button" class="secondary-button" (click)="closeDetails()">
         Back to Archive
       </button>
     </div>
   } @else {
     <header class="page-header">
-      <p class="eyebrow">
-        ADMINISTRATOR PORTAL
-      </p>
-
+      <p class="eyebrow">ADMINISTRATOR PORTAL</p>
       <h1>Archive</h1>
     </header>
 
@@ -287,10 +258,7 @@
     </nav>
 
     @if (archiveTab() === 'concerns') {
-      <section
-        class="toolbar"
-        aria-label="Archived concern filters"
-      >
+      <section class="toolbar" aria-label="Archived concern filters">
         <div class="search-box">
           <span aria-hidden="true">⌕</span>
 
@@ -298,10 +266,7 @@
             type="search"
             name="searchTerm"
             [ngModel]="searchTerm()"
-            (ngModelChange)="
-              clearSelection();
-              searchTerm.set($event)
-            "
+            (ngModelChange)="clearSelection(); searchTerm.set($event)"
             [disabled]="!!archiving()"
             placeholder="Search concern ID, resident, category, location, or description..."
             aria-label="Search archived concerns"
@@ -310,26 +275,15 @@
         </div>
 
         <div class="filter-box">
-          <label for="archiveStatusFilter">
-            Status
-          </label>
-
           <select
             id="archiveStatusFilter"
+            aria-label="Filter archived concerns by status"
             [ngModel]="selectedStatus()"
-            (ngModelChange)="
-              clearSelection();
-              selectedStatus.set($event)
-            "
+            (ngModelChange)="clearSelection(); selectedStatus.set($event)"
             [disabled]="!!archiving()"
           >
-            @for (
-              status of statusOptions;
-              track status
-            ) {
-              <option [ngValue]="status">
-                {{ status }}
-              </option>
+            @for (status of statusOptions; track status) {
+              <option [ngValue]="status">{{ status }}</option>
             }
           </select>
         </div>
@@ -337,52 +291,32 @@
 
       <div class="results-heading">
         <h2>Archived Concerns</h2>
-
-        <span>
-          {{ filteredConcerns().length }} record(s)
-        </span>
+        <span>{{ filteredConcerns().length }} record(s)</span>
       </div>
 
       @if (filteredConcerns().length === 0) {
         <section class="empty-state">
           <h3>No archived concerns found</h3>
-
-          <p>
-            No archived concerns match the current
-            search and status filter.
-          </p>
+          <p>No archived concerns match the current search and status filter.</p>
         </section>
       } @else {
-        <section
-          class="bulk-archive-toolbar"
-          aria-label="Select concerns to restore"
-        >
+        <section class="bulk-archive-toolbar" aria-label="Select concerns to restore">
           <label class="select-all-label">
             <input
               type="checkbox"
               [checked]="allSelected()"
               [indeterminate]="partiallySelected()"
-              [disabled]="
-                !!archiving() ||
-                selectableConcerns().length === 0
-              "
+              [disabled]="!!archiving() || selectableConcerns().length === 0"
               (change)="toggleSelectAll($event)"
             />
-
             Select All
           </label>
 
-          <span
-            class="selected-count"
-            aria-live="polite"
-          >
+          <span class="selected-count" aria-live="polite">
             {{ selectedCount() }} selected
           </span>
 
-          @if (
-            selectedCount() > 0 ||
-            archiving() === 'bulk'
-          ) {
+          @if (selectedCount() > 0 || archiving() === 'bulk') {
             <div class="bulk-actions">
               <button
                 type="button"
@@ -397,16 +331,9 @@
                 type="button"
                 class="bulk-archive-button"
                 (click)="restoreSelected()"
-                [disabled]="
-                  !!archiving() ||
-                  selectedCount() === 0
-                "
+                [disabled]="!!archiving() || selectedCount() === 0"
               >
-                {{
-                  archiving() === 'bulk'
-                    ? 'Restoring...'
-                    : 'Restore Selected'
-                }}
+                {{ archiving() === 'bulk' ? 'Restoring...' : 'Restore Selected' }}
               </button>
             </div>
           }
@@ -422,100 +349,43 @@
             <table>
               <thead>
                 <tr>
-                  <th scope="col">
-                    Concern ID
-                  </th>
-
-                  <th scope="col">
-                    Category
-                  </th>
-
-                  <th scope="col">
-                    Location
-                  </th>
-
-                  <th scope="col">
-                    Date Reported
-                  </th>
-
-                  <th scope="col">
-                    Status
-                  </th>
-
-                  <th scope="col">
-                    Date Archived
-                  </th>
-
-                  <th scope="col">
-                    Action
-                  </th>
+                  <th scope="col">Concern ID</th>
+                  <th scope="col">Category</th>
+                  <th scope="col">Location</th>
+                  <th scope="col">Date Reported</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Date Archived</th>
+                  <th scope="col">Action</th>
                 </tr>
               </thead>
 
               <tbody>
-                @for (
-                  concern of filteredConcerns();
-                  track concern.concern_id
-                ) {
-                  <tr
-                    [class.selected-concern-row]="
-                      isConcernSelected(
-                        concern.concern_id
-                      )
-                    "
-                  >
+                @for (concern of filteredConcerns(); track concern.concern_id) {
+                  <tr [class.selected-concern-row]="isConcernSelected(concern.concern_id)">
                     <td>
                       <label class="concern-selection">
                         <input
                           type="checkbox"
-                          [checked]="
-                            isConcernSelected(
-                              concern.concern_id
-                            )
-                          "
-                          [disabled]="
-                            !!archiving() ||
-                            !canArchive(concern)
-                          "
+                          [checked]="isConcernSelected(concern.concern_id)"
+                          [disabled]="!!archiving() || !canArchive(concern)"
                           [attr.aria-label]="
                             'Select archived concern ' +
-                            (
-                              concern.concern_number ??
-                              'Not numbered'
-                            )
+                            (concern.concern_number ?? 'Not numbered')
                           "
-                          (change)="
-                            toggleConcernSelection(
-                              concern,
-                              $event
-                            )
-                          "
+                          (change)="toggleConcernSelection(concern, $event)"
                         />
 
-                        <span>
-                          {{
-                            concern.concern_number ??
-                            'Not numbered'
-                          }}
-                        </span>
+                        <span>{{ concern.concern_number ?? 'Not numbered' }}</span>
                       </label>
                     </td>
 
-                    <td>
-                      {{ categoryName(concern) }}
-                    </td>
-
-                    <td class="location-cell">
-                      {{ concern.location_description }}
-                    </td>
+                    <td>{{ categoryName(concern) }}</td>
+                    <td class="location-cell">{{ concern.location_description }}</td>
 
                     <td>
                       {{
                         concern.reported_at
-                          ? (
-                              concern.reported_at |
-                              date:'MMM d, y':'GMT+08:00'
-                            )
+                          ? (concern.reported_at | date:'MMM d, y':'GMT+08:00')
                           : 'Not recorded'
                       }}
                     </td>
@@ -523,11 +393,7 @@
                     <td>
                       <span
                         class="status-badge"
-                        [ngClass]="
-                          statusClass(
-                            concern.current_status
-                          )
-                        "
+                        [ngClass]="statusClass(concern.current_status)"
                       >
                         {{ concern.current_status }}
                       </span>
@@ -536,10 +402,7 @@
                     <td>
                       {{
                         concern.archive_changed_at
-                          ? (
-                              concern.archive_changed_at |
-                              date:'MMM d, y':'GMT+08:00'
-                            )
+                          ? (concern.archive_changed_at | date:'MMM d, y':'GMT+08:00')
                           : 'Not recorded'
                       }}
                     </td>
@@ -548,10 +411,7 @@
                       <button
                         type="button"
                         class="view-button"
-                        (click)="
-                          clearSelection();
-                          viewDetails(concern)
-                        "
+                        (click)="clearSelection(); viewDetails(concern)"
                         [disabled]="!!archiving()"
                       >
                         View Details
@@ -565,417 +425,335 @@
         </section>
       }
     } @else if (archiveTab() === 'offices') {
-  <section
-    class="archive-directory"
-    aria-labelledby="archived-offices-title"
-  >
-      <div class="archive-directory-heading">
-      <div>
-        <h2 id="archived-offices-title">
-          Archived Participating Offices
-        </h2>
-      </div>
+      <section aria-labelledby="archived-offices-title">
+        <section class="toolbar" aria-label="Archived office filters">
+          <div class="search-box">
+            <span aria-hidden="true">⌕</span>
 
-      <span>
-        {{ filteredArchivedOffices().length }} record(s)
-      </span>
-    </div>
+            <input
+              type="search"
+              maxlength="200"
+              aria-label="Search archived offices"
+              [ngModel]="officeSearchTerm()"
+              (ngModelChange)="setOfficeSearch($event)"
+              placeholder="Search office name or description..."
+            />
+          </div>
 
-    <div class="archive-directory-toolbar">
-      <label class="archive-search-field">
-        <i class="pi pi-search" aria-hidden="true"></i>
-
-        <input
-          type="search"
-          maxlength="200"
-          aria-label="Search archived offices"
-          [ngModel]="officeSearchTerm()"
-          (ngModelChange)="setOfficeSearch($event)"
-          placeholder="Search office name or description..."
-        />
-      </label>
-
-      <label class="archive-filter-field">
-        Previous availability
-        <select
-          [ngModel]="officeAvailability()"
-          (ngModelChange)="setOfficeAvailability($event)"
-        >
-          @for (option of officeAvailabilityOptions; track option) {
-            <option [value]="option">{{ option }}</option>
-          }
-        </select>
-      </label>
-    </div>
-
-    @if (officeService.loading()) {
-      <p class="page-notice" role="status">
-        Loading archived offices...
-      </p>
-    } @else if (officeService.error()) {
-      <div class="page-notice error-notice" role="alert">
-        <p>{{ officeService.error() }}</p>
-
-        <button
-          type="button"
-          class="secondary-button"
-          (click)="officeService.reload()"
-        >
-          Try Again
-        </button>
-      </div>
-    } @else if (filteredArchivedOffices().length === 0) {
-      <section class="empty-state">
-        <h3>No archived offices found</h3>
-        <p>No participating offices match the current search.</p>
-      </section>
-    } @else {
-      <div
-        class="bulk-archive-toolbar"
-        aria-label="Select offices to restore"
-      >
-        <label class="select-all-label">
-          <input
-            type="checkbox"
-            [checked]="allArchivedOfficesSelected()"
-            [indeterminate]="partiallyArchivedOfficesSelected()"
-            [disabled]="!!restoring()"
-            (change)="toggleAllArchivedOffices($event)"
-          />
-          Select All
-        </label>
-
-        <span class="selected-count">
-          {{ selectedArchivedOfficeCount() }} selected
-        </span>
-
-        @if (selectedArchivedOfficeCount() > 0) {
-          <div class="bulk-actions">
-            <button
-              type="button"
-              class="clear-selection-button"
-              [disabled]="!!restoring()"
-              (click)="clearOfficeSelection()"
+          <div class="filter-box">
+            <select
+              aria-label="Filter by previous availability"
+              [ngModel]="officeAvailability()"
+              (ngModelChange)="setOfficeAvailability($event)"
             >
-              Clear Selection
-            </button>
+              @for (option of officeAvailabilityOptions; track option) {
+                <option [value]="option">{{ option }}</option>
+              }
+            </select>
+          </div>
+        </section>
+
+        <div class="results-heading">
+          <h2 id="archived-offices-title">Archived Participating Offices</h2>
+          <span>{{ filteredArchivedOffices().length }} record(s)</span>
+        </div>
+
+        @if (officeService.loading()) {
+          <p class="page-notice" role="status">Loading archived offices...</p>
+        } @else if (officeService.error()) {
+          <div class="page-notice error-notice" role="alert">
+            <p>{{ officeService.error() }}</p>
 
             <button
               type="button"
-              class="bulk-archive-button"
-              [disabled]="!!restoring()"
-              (click)="restoreSelectedOffices()"
+              class="secondary-button"
+              (click)="officeService.reload()"
             >
-              {{
-                restoring() === 'bulk-offices'
-                  ? 'Restoring...'
-                  : 'Restore Selected'
-              }}
+              Try Again
             </button>
           </div>
-        }
-      </div>
+        } @else if (filteredArchivedOffices().length === 0) {
+          <section class="empty-state">
+            <h3>No archived offices found</h3>
+            <p>No participating offices match the current search.</p>
+          </section>
+        } @else {
+          <div class="bulk-archive-toolbar" aria-label="Select offices to restore">
+            <label class="select-all-label">
+              <input
+                type="checkbox"
+                [checked]="allArchivedOfficesSelected()"
+                [indeterminate]="partiallyArchivedOfficesSelected()"
+                [disabled]="!!restoring()"
+                (change)="toggleAllArchivedOffices($event)"
+              />
+              Select All
+            </label>
 
-      <section class="table-card">
-        <div
-          class="table-wrapper"
-          role="region"
-          aria-label="Archived participating offices"
-          tabindex="0"
-        >
-          <table class="archive-directory-table office-archive-table">
-            <thead>
-              <tr>
-                <th scope="col">Select</th>
-                <th scope="col">Office</th>
-                <th scope="col">Previous Availability</th>
-                <th scope="col">Date Archived</th>
-                <th scope="col">Action</th>
-              </tr>
-            </thead>
+            <span class="selected-count">
+              {{ selectedArchivedOfficeCount() }} selected
+            </span>
 
-            <tbody>
-              @for (
-                office of filteredArchivedOffices();
-                track office.office_id
-              ) {
-                <tr
-                  [class.selected-concern-row]="
-                    isArchivedOfficeSelected(office.office_id)
-                  "
+            @if (selectedArchivedOfficeCount() > 0) {
+              <div class="bulk-actions">
+                <button
+                  type="button"
+                  class="clear-selection-button"
+                  [disabled]="!!restoring()"
+                  (click)="clearOfficeSelection()"
                 >
-                  <td class="concern-selection">
-                    <input
-                      type="checkbox"
-                      [checked]="
-                        isArchivedOfficeSelected(office.office_id)
-                      "
-                      [disabled]="!!restoring()"
-                      [attr.aria-label]="
-                        'Select ' + office.office_name
-                      "
-                      (change)="
-                        toggleArchivedOfficeSelection(office, $event)
-                      "
-                    />
-                  </td>
+                  Clear Selection
+                </button>
 
-                  <td>
-                    <strong>{{ office.office_name }}</strong>
-                    <p class="muted">
-                      {{
-                        office.description ||
-                        'No description provided.'
-                      }}
-                    </p>
-                  </td>
+                <button
+                  type="button"
+                  class="bulk-archive-button"
+                  [disabled]="!!restoring()"
+                  (click)="restoreSelectedOffices()"
+                >
+                  {{ restoring() === 'bulk-offices' ? 'Restoring...' : 'Restore Selected' }}
+                </button>
+              </div>
+            }
+          </div>
 
-                  <td>
-                    {{
-                      office.archived_was_active
-                        ? 'Active'
-                        : 'Inactive'
-                    }}
-                  </td>
+          <section class="table-card">
+            <div
+              class="table-wrapper"
+              role="region"
+              aria-label="Archived participating offices"
+              tabindex="0"
+            >
+              <table class="archive-directory-table office-archive-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Select</th>
+                    <th scope="col">Office</th>
+                    <th scope="col">Previous Availability</th>
+                    <th scope="col">Date Archived</th>
+                    <th scope="col">Action</th>
+                  </tr>
+                </thead>
 
-                  <td>
-                    {{
-                      office.archive_changed_at
-                        ? (
-                            office.archive_changed_at
-                            | date:'MMM d, y, h:mm a':'GMT+08:00'
-                          )
-                        : 'Not recorded'
-                    }}
-                  </td>
+                <tbody>
+                  @for (office of filteredArchivedOffices(); track office.office_id) {
+                    <tr [class.selected-concern-row]="isArchivedOfficeSelected(office.office_id)">
+                      <td class="concern-selection">
+                        <input
+                          type="checkbox"
+                          [checked]="isArchivedOfficeSelected(office.office_id)"
+                          [disabled]="!!restoring()"
+                          [attr.aria-label]="'Select ' + office.office_name"
+                          (change)="toggleArchivedOfficeSelection(office, $event)"
+                        />
+                      </td>
 
-                  <td>
-                    <button
-                      type="button"
-                      class="restore-button"
-                      [disabled]="!!restoring()"
-                      [attr.aria-busy]="
-                        isRestoring('office:' + office.office_id)
-                      "
-                      (click)="restoreArchivedOffice(office)"
-                    >
-                      {{
-                        isRestoring('office:' + office.office_id)
-                          ? 'Restoring...'
-                          : 'Restore Office'
-                      }}
-                    </button>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </section>
-    }
-  </section>
-} @else {
-  <section
-    class="archive-directory"
-    aria-labelledby="archived-users-title"
-  >
-      <div class="archive-directory-heading">
-      <div>
-        <h2 id="archived-users-title">
-          Archived User Accounts
-        </h2>
-      </div>
+                      <td>
+                        <strong>{{ office.office_name }}</strong>
+                        <p class="muted">
+                          {{ office.description || 'No description provided.' }}
+                        </p>
+                      </td>
 
-      <span>
-        {{ filteredArchivedAccounts().length }} record(s)
-      </span>
-    </div>
+                      <td>{{ office.archived_was_active ? 'Active' : 'Inactive' }}</td>
 
-    <div class="archive-directory-toolbar">
-      <label class="archive-search-field">
-        <i class="pi pi-search" aria-hidden="true"></i>
+                      <td>
+                        {{
+                          office.archive_changed_at
+                            ? (office.archive_changed_at | date:'MMM d, y, h:mm a':'GMT+08:00')
+                            : 'Not recorded'
+                        }}
+                      </td>
 
-        <input
-          type="search"
-          maxlength="200"
-          aria-label="Search archived accounts"
-          [ngModel]="accountSearchTerm()"
-          (ngModelChange)="setAccountSearch($event)"
-          placeholder="Search name, email, or role..."
-        />
-      </label>
-
-      <label class="archive-filter-field">
-        Role
-        <select
-          [ngModel]="accountRole()"
-          (ngModelChange)="setAccountRole($event)"
-        >
-          @for (option of accountRoleOptions; track option) {
-            <option [value]="option">{{ option }}</option>
-          }
-        </select>
-      </label>
-
-      <label class="archive-filter-field">
-        Status
-        <select
-          [ngModel]="accountStatus()"
-          (ngModelChange)="setAccountStatus($event)"
-        >
-          @for (option of accountStatusOptions; track option) {
-            <option [value]="option">{{ option }}</option>
-          }
-        </select>
-      </label>
-    </div>
-
-    @if (archiveDirectoryLoading()) {
-      <p class="page-notice" role="status">
-        Loading archived accounts...
-      </p>
-    } @else if (archiveDirectoryError()) {
-      <div class="page-notice error-notice" role="alert">
-        <p>{{ archiveDirectoryError() }}</p>
-      </div>
-    } @else if (filteredArchivedAccounts().length === 0) {
-      <section class="empty-state">
-        <h3>No archived accounts found</h3>
-        <p>No user accounts match the current search.</p>
+                      <td>
+                        <button
+                          type="button"
+                          class="restore-button"
+                          [disabled]="!!restoring()"
+                          [attr.aria-busy]="isRestoring('office:' + office.office_id)"
+                          (click)="restoreArchivedOffice(office)"
+                        >
+                          {{
+                            isRestoring('office:' + office.office_id)
+                              ? 'Restoring...'
+                              : 'Restore Office'
+                          }}
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+        }
       </section>
     } @else {
-      <div
-        class="bulk-archive-toolbar"
-        aria-label="Select accounts to restore"
-      >
-        <label class="select-all-label">
-          <input
-            type="checkbox"
-            [checked]="allArchivedAccountsSelected()"
-            [indeterminate]="partiallyArchivedAccountsSelected()"
-            [disabled]="!!restoring()"
-            (change)="toggleAllArchivedAccounts($event)"
-          />
-          Select All
-        </label>
+      <section aria-labelledby="archived-users-title">
+        <section class="toolbar" aria-label="Archived account filters">
+          <div class="search-box">
+            <span aria-hidden="true">⌕</span>
 
-        <span class="selected-count">
-          {{ selectedArchivedAccountCount() }} selected
-        </span>
-
-        @if (selectedArchivedAccountCount() > 0) {
-          <div class="bulk-actions">
-            <button
-              type="button"
-              class="clear-selection-button"
-              [disabled]="!!restoring()"
-              (click)="clearAccountSelection()"
-            >
-              Clear Selection
-            </button>
-
-            <button
-              type="button"
-              class="bulk-archive-button"
-              [disabled]="!!restoring()"
-              (click)="restoreSelectedAccounts()"
-            >
-              {{
-                restoring() === 'bulk-accounts'
-                  ? 'Restoring...'
-                  : 'Restore Selected'
-              }}
-            </button>
+            <input
+              type="search"
+              maxlength="200"
+              aria-label="Search archived accounts"
+              [ngModel]="accountSearchTerm()"
+              (ngModelChange)="setAccountSearch($event)"
+              placeholder="Search name, email, or role..."
+            />
           </div>
-        }
-      </div>
 
-      <section class="table-card">
-        <div
-          class="table-wrapper"
-          role="region"
-          aria-label="Archived user accounts"
-          tabindex="0"
-        >
-          <table class="archive-directory-table account-archive-table">
-            <thead>
-              <tr>
-                <th scope="col">Select</th>
-                <th scope="col">Name</th>
-                <th scope="col">Email</th>
-                <th scope="col">Role</th>
-                <th scope="col">Status Before Restore</th>
-                <th scope="col">Date Archived</th>
-                <th scope="col">Action</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              @for (
-                account of filteredArchivedAccounts();
-                track account.uid
-              ) {
-                <tr
-                  [class.selected-concern-row]="
-                    isArchivedAccountSelected(account.uid)
-                  "
-                >
-                  <td class="concern-selection">
-                    <input
-                      type="checkbox"
-                      [checked]="
-                        isArchivedAccountSelected(account.uid)
-                      "
-                      [disabled]="!!restoring()"
-                      [attr.aria-label]="'Select ' + account.name"
-                      (change)="
-                        toggleArchivedAccountSelection(account, $event)
-                      "
-                    />
-                  </td>
-
-                  <td>{{ account.name }}</td>
-                  <td>{{ account.email || 'Not recorded' }}</td>
-                  <td>{{ account.role | titlecase }}</td>
-                  <td>{{ account.status | titlecase }}</td>
-
-                  <td>
-                    {{
-                      account.archiveChangedAt
-                        ? (
-                            account.archiveChangedAt
-                            | date:'MMM d, y, h:mm a':'GMT+08:00'
-                          )
-                        : 'Not recorded'
-                    }}
-                  </td>
-
-                  <td>
-                    <button
-                      type="button"
-                      class="restore-button"
-                      [disabled]="!!restoring()"
-                      [attr.aria-busy]="
-                        isRestoring('user:' + account.uid)
-                      "
-                      (click)="restoreArchivedAccount(account)"
-                    >
-                      {{
-                        isRestoring('user:' + account.uid)
-                          ? 'Restoring...'
-                          : 'Restore Account'
-                      }}
-                    </button>
-                  </td>
-                </tr>
+          <div class="filter-box">
+            <select
+              aria-label="Filter archived accounts by role"
+              [ngModel]="accountRole()"
+              (ngModelChange)="setAccountRole($event)"
+            >
+              @for (option of accountRoleOptions; track option) {
+                <option [value]="option">{{ option }}</option>
               }
-            </tbody>
-          </table>
+            </select>
+          </div>
+
+          <div class="filter-box">
+            <select
+              aria-label="Filter archived accounts by status"
+              [ngModel]="accountStatus()"
+              (ngModelChange)="setAccountStatus($event)"
+            >
+              @for (option of accountStatusOptions; track option) {
+                <option [value]="option">{{ option }}</option>
+              }
+            </select>
+          </div>
+        </section>
+
+        <div class="results-heading">
+          <h2 id="archived-users-title">Archived User Accounts</h2>
+          <span>{{ filteredArchivedAccounts().length }} record(s)</span>
         </div>
+
+        @if (archiveDirectoryLoading()) {
+          <p class="page-notice" role="status">Loading archived accounts...</p>
+        } @else if (archiveDirectoryError()) {
+          <div class="page-notice error-notice" role="alert">
+            <p>{{ archiveDirectoryError() }}</p>
+          </div>
+        } @else if (filteredArchivedAccounts().length === 0) {
+          <section class="empty-state">
+            <h3>No archived accounts found</h3>
+            <p>No user accounts match the current search.</p>
+          </section>
+        } @else {
+          <div class="bulk-archive-toolbar" aria-label="Select accounts to restore">
+            <label class="select-all-label">
+              <input
+                type="checkbox"
+                [checked]="allArchivedAccountsSelected()"
+                [indeterminate]="partiallyArchivedAccountsSelected()"
+                [disabled]="!!restoring()"
+                (change)="toggleAllArchivedAccounts($event)"
+              />
+              Select All
+            </label>
+
+            <span class="selected-count">
+              {{ selectedArchivedAccountCount() }} selected
+            </span>
+
+            @if (selectedArchivedAccountCount() > 0) {
+              <div class="bulk-actions">
+                <button
+                  type="button"
+                  class="clear-selection-button"
+                  [disabled]="!!restoring()"
+                  (click)="clearAccountSelection()"
+                >
+                  Clear Selection
+                </button>
+
+                <button
+                  type="button"
+                  class="bulk-archive-button"
+                  [disabled]="!!restoring()"
+                  (click)="restoreSelectedAccounts()"
+                >
+                  {{ restoring() === 'bulk-accounts' ? 'Restoring...' : 'Restore Selected' }}
+                </button>
+              </div>
+            }
+          </div>
+
+          <section class="table-card">
+            <div
+              class="table-wrapper"
+              role="region"
+              aria-label="Archived user accounts"
+              tabindex="0"
+            >
+              <table class="archive-directory-table account-archive-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Select</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Role</th>
+                    <th scope="col">Status Before Restore</th>
+                    <th scope="col">Date Archived</th>
+                    <th scope="col">Action</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  @for (account of filteredArchivedAccounts(); track account.uid) {
+                    <tr [class.selected-concern-row]="isArchivedAccountSelected(account.uid)">
+                      <td class="concern-selection">
+                        <input
+                          type="checkbox"
+                          [checked]="isArchivedAccountSelected(account.uid)"
+                          [disabled]="!!restoring()"
+                          [attr.aria-label]="'Select ' + account.name"
+                          (change)="toggleArchivedAccountSelection(account, $event)"
+                        />
+                      </td>
+
+                      <td>{{ account.name }}</td>
+                      <td>{{ account.email || 'Not recorded' }}</td>
+                      <td>{{ account.role | titlecase }}</td>
+                      <td>{{ account.status | titlecase }}</td>
+
+                      <td>
+                        {{
+                          account.archiveChangedAt
+                            ? (account.archiveChangedAt | date:'MMM d, y, h:mm a':'GMT+08:00')
+                            : 'Not recorded'
+                        }}
+                      </td>
+
+                      <td>
+                        <button
+                          type="button"
+                          class="restore-button"
+                          [disabled]="!!restoring()"
+                          [attr.aria-busy]="isRestoring('user:' + account.uid)"
+                          (click)="restoreArchivedAccount(account)"
+                        >
+                          {{
+                            isRestoring('user:' + account.uid)
+                              ? 'Restoring...'
+                              : 'Restore Account'
+                          }}
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+        }
       </section>
     }
-  </section>
-}
-
-}
+  }
 </main>

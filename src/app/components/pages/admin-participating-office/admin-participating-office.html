@@ -1,12 +1,28 @@
 <main class="offices-page">
   @if (!creatingOffice() && !selectedId() && !personnelOfficeId()) {
     <header class="page-heading">
-      <p class="eyebrow">ADMINISTRATOR PORTAL</p>
-      <h1 #viewHeading tabindex="-1">Participating Offices</h1>
-      <p>
-        Maintain office information and view assigned
-        categories and authorized personnel.
-      </p>
+      <div class="page-heading-copy">
+        <p class="eyebrow">ADMINISTRATOR PORTAL</p>
+        <h1 #viewHeading tabindex="-1">Participating Offices</h1>
+        <p class="page-description">
+          Maintain office information and view assigned
+          categories and authorized personnel.
+        </p>
+      </div>
+
+      @if (!offices.loading() && !offices.error()) {
+        <div class="directory-actions">
+          <button
+            type="button"
+            class="primary"
+            (click)="addOffice()"
+            [disabled]="saving()"
+          >
+            <span aria-hidden="true">+</span>
+            Add Office
+          </button>
+        </div>
+      }
     </header>
   }
 
@@ -34,18 +50,6 @@
           </button>
         </section>
       } @else {
-        <div class="directory-actions">
-          <button
-            type="button"
-            class="primary"
-            (click)="addOffice()"
-            [disabled]="saving()"
-          >
-            <span aria-hidden="true">+</span>
-            Add Office
-          </button>
-        </div>
-
         <section class="records-card" aria-labelledby="directory-title">
           <div class="section-heading">
             <h2 id="directory-title">Office Directory</h2>
@@ -208,8 +212,6 @@
                         >
                           Add Personnel
                         </button>
-
-                        
 
                         <button
                           type="button"

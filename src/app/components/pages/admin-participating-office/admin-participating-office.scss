@@ -19,7 +19,16 @@
 }
 
 .page-heading {
-  margin-bottom: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 22px;
+
+  .page-heading-copy {
+    min-width: 0;
+  }
 
   .eyebrow {
     margin: 0 0 8px;
@@ -37,7 +46,7 @@
     line-height: 1.35;
   }
 
-  > p:last-child {
+  .page-description {
     margin: 0;
     color: #617267;
     font-size: 13px;
@@ -138,7 +147,6 @@
 .directory-actions {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 16px;
 }
 
 .bulk-archive-toolbar {
@@ -567,6 +575,15 @@ input[type='checkbox']:focus-visible,
 @media (max-width: 600px) {
   .offices-page {
     padding: 16px 12px;
+  }
+
+  .page-heading {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .directory-actions {
+    width: 100%;
   }
 
   .page-heading h1 {

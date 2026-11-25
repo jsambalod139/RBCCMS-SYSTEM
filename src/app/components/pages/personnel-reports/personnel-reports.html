@@ -9,11 +9,13 @@
     <div class="actions">
       <button
         type="button"
+        class="secondary"
         (click)="printReport()"
         [disabled]="loading() || !!error()"
       >
         Print / Save PDF
       </button>
+
       <button
         type="button"
         class="primary"
@@ -36,6 +38,7 @@
           required
         />
       </label>
+
       <label>
         Date To
         <input
@@ -45,6 +48,7 @@
           required
         />
       </label>
+
       <button type="submit" class="primary">Generate Report</button>
 
       @if (validation()) {
@@ -62,6 +66,7 @@
     >
       Concern Summary
     </button>
+
     <button
       type="button"
       [class.active]="tab() === 'offices'"
@@ -70,6 +75,7 @@
     >
       Responsible Offices
     </button>
+
     <button
       type="button"
       [class.active]="tab() === 'locations'"
@@ -106,26 +112,44 @@
     } @else if (tab() === 'residents' && canManageResidents()) {
       <h2>Resident Accounts</h2>
 
-      <div class="summary-strip">
-        <div>
-          Accounts
-          <strong>{{ residentTotals().total }}</strong>
+      <section class="summary-grid" aria-label="Resident account totals">
+        <div class="summary-card">
+          <i class="pi pi-users summary-icon" aria-hidden="true"></i>
+          <div class="summary-information">
+            <span>Accounts</span>
+            <strong>{{ residentTotals().total }}</strong>
+          </div>
         </div>
-        <div>
-          Verified
-          <strong>{{ residentTotals().verified }}</strong>
+
+        <div class="summary-card">
+          <i class="pi pi-check-circle summary-icon" aria-hidden="true"></i>
+          <div class="summary-information">
+            <span>Verified</span>
+            <strong>{{ residentTotals().verified }}</strong>
+          </div>
         </div>
-        <div>
-          Not Verified
-          <strong>
-            {{ residentTotals().total - residentTotals().verified }}
-          </strong>
+
+        <div class="summary-card">
+          <i
+            class="pi pi-exclamation-circle summary-icon pending-icon"
+            aria-hidden="true"
+          ></i>
+          <div class="summary-information">
+            <span>Not Verified</span>
+            <strong>
+              {{ residentTotals().total - residentTotals().verified }}
+            </strong>
+          </div>
         </div>
-        <div>
-          Approved
-          <strong>{{ residentTotals().approved }}</strong>
+
+        <div class="summary-card">
+          <i class="pi pi-check summary-icon" aria-hidden="true"></i>
+          <div class="summary-information">
+            <span>Approved</span>
+            <strong>{{ residentTotals().approved }}</strong>
+          </div>
         </div>
-      </div>
+      </section>
 
       <h3>Accounts by Purok</h3>
 
@@ -191,18 +215,54 @@
         <span>{{ periodLabel() }}</span>
       </div>
 
-      <div class="summary-strip">
-        <div>
-          Total
-          <strong>{{ totals().total }}</strong>
+      <section
+        class="summary-grid"
+        aria-label="Concern totals for the selected reporting period"
+      >
+        <div class="summary-card">
+          <i class="pi pi-file summary-icon" aria-hidden="true"></i>
+          <div class="summary-information">
+            <span>Total Concerns</span>
+            <strong>{{ totals().total }}</strong>
+          </div>
         </div>
+
         @for (status of statuses; track status) {
-          <div>
-            {{ status }}
-            <strong>{{ totals().counts[status] }}</strong>
+          <div class="summary-card">
+            @switch (status) {
+              @case ('Pending') {
+                <i
+                  class="pi pi-clock summary-icon pending-icon"
+                  aria-hidden="true"
+                ></i>
+              }
+              @case ('In Progress') {
+                <i
+                  class="pi pi-sync summary-icon progress-icon"
+                  aria-hidden="true"
+                ></i>
+              }
+              @case ('Resolved') {
+                <i
+                  class="pi pi-check-circle summary-icon"
+                  aria-hidden="true"
+                ></i>
+              }
+              @case ('Rejected') {
+                <i
+                  class="pi pi-times-circle summary-icon rejected-icon"
+                  aria-hidden="true"
+                ></i>
+              }
+            }
+
+            <div class="summary-information">
+              <span>{{ status }}</span>
+              <strong>{{ totals().counts[status] }}</strong>
+            </div>
           </div>
         }
-      </div>
+      </section>
 
       @if (tab() === 'locations') {
         <p class="note footnote">
