@@ -1,5 +1,4 @@
 import { CommonModule } from '@angular/common';
-
 import {
   Component,
   ElementRef,
@@ -7,16 +6,15 @@ import {
   OnDestroy,
   ViewChild,
   afterNextRender,
+  computed,
   inject,
   signal,
 } from '@angular/core';
-
 import { FormsModule, NgForm } from '@angular/forms';
 import { getAuth } from 'firebase/auth';
 import Swal from 'sweetalert2';
 
 import { firebaseApp } from '../../../core/firebase.config';
-
 import {
   ParticipatingOffice,
   ParticipatingOfficeService,
@@ -47,6 +45,37 @@ export class AdminParticipatingOffice implements OnDestroy {
   readonly success = signal('');
   readonly error = signal('');
   readonly deletingId = signal('');
+  readonly selectedOfficeIds = signal<Set<string>>(new Set());
+  readonly archiving = signal(false);
+
+  readonly archiveableOffices = computed(() =>
+    this.offices.records().filter(
+      office => this.canArchiveOffice(office)
+    )
+  );
+
+  readonly selectedOffices = computed(() => {
+    const ids = this.selectedOfficeIds();
+
+    return this.archiveableOffices().filter(
+      office => ids.has(office.office_id)
+    );
+  });
+
+  readonly selectedOfficeCount = computed(
+    () => this.selectedOffices().length
+  );
+
+  readonly allOfficesSelected = computed(() =>
+    this.archiveableOffices().length > 0 &&
+    this.selectedOfficeCount() ===
+      this.archiveableOffices().length
+  );
+
+  readonly partiallySelectedOffices = computed(() =>
+    this.selectedOfficeCount() > 0 &&
+    !this.allOfficesSelected()
+  );
 
   officeName = '';
   categoryName = '';
@@ -80,6 +109,171 @@ export class AdminParticipatingOffice implements OnDestroy {
     }
 
     return '';
+  }
+
+  canArchiveOffice(
+    office: ParticipatingOffice
+  ): boolean {
+    return (
+      office.office_id !== 'barangay-office' &&
+      !office.is_archived
+    );
+  }
+
+  isOfficeSelected(officeId: string): boolean {
+    return this.selectedOfficeIds().has(officeId);
+  }
+
+  toggleOfficeSelection(
+    office: ParticipatingOffice,
+    event: Event
+  ): void {
+    if (this.saving() || !this.canArchiveOffice(office)) {
+      return;
+    }
+
+    const checked =
+      (event.target as HTMLInputElement).checked;
+
+    this.selectedOfficeIds.update(ids => {
+      const next = new Set(ids);
+
+      if (checked) {
+        next.add(office.office_id);
+      } else {
+        next.delete(office.office_id);
+      }
+
+      return next;
+    });
+  }
+
+  toggleAllOffices(event: Event): void {
+    if (this.saving()) return;
+
+    const checked =
+      (event.target as HTMLInputElement).checked;
+
+    this.selectedOfficeIds.set(
+      checked
+        ? new Set(
+            this.archiveableOffices().map(
+              office => office.office_id
+            )
+          )
+        : new Set()
+    );
+  }
+
+  clearOfficeSelection(): void {
+    if (!this.saving()) {
+      this.selectedOfficeIds.set(new Set());
+    }
+  }
+
+  async archiveOffice(
+    office: ParticipatingOffice
+  ): Promise<void> {
+    await this.archiveOffices([office]);
+  }
+
+  async archiveSelectedOffices(): Promise<void> {
+    await this.archiveOffices(this.selectedOffices());
+  }
+
+  private async archiveOffices(
+    selected: ParticipatingOffice[]
+  ): Promise<void> {
+    if (this.saving() || !selected.length) return;
+
+    const offices = selected.filter(
+      office => this.canArchiveOffice(office)
+    );
+
+    if (!offices.length) return;
+
+    const decision = await Swal.fire({
+      title:
+        offices.length === 1
+          ? 'Archive Participating Office'
+          : 'Archive Selected Offices',
+      text:
+        offices.length === 1
+          ? `Archive ${offices[0].office_name}? It will be unavailable for new concern routing until restored.`
+          : `Archive ${offices.length} selected offices? They will be unavailable for new concern routing until restored.`,
+      icon: 'warning',
+      iconColor: '#b7791f',
+      showCancelButton: true,
+      reverseButtons: true,
+      confirmButtonText: 'Yes, archive',
+      cancelButtonText: 'Cancel',
+      buttonsStyling: false,
+      focusCancel: true,
+      width: 460,
+      padding: '28px 24px 24px',
+      background: '#ffffff',
+      color: '#21372a',
+      backdrop: 'rgba(16, 34, 24, 0.45)',
+      customClass: {
+        popup: 'rbccms-confirm-popup',
+        icon: 'rbccms-confirm-icon',
+        title: 'rbccms-confirm-title',
+        htmlContainer: 'rbccms-confirm-message',
+        actions: 'rbccms-confirm-actions',
+        confirmButton: 'rbccms-confirm-danger',
+        cancelButton: 'rbccms-confirm-cancel',
+      },
+    });
+
+    if (!decision.isConfirmed || this.destroyed) return;
+
+    this.saving.set(true);
+    this.archiving.set(true);
+    this.success.set('');
+    this.error.set('');
+
+    const archived = new Set<string>();
+    let firstError = '';
+
+    try {
+      for (const office of offices) {
+        try {
+          await this.offices.archiveOffice(
+            office.office_id,
+            crypto.randomUUID()
+          );
+
+          archived.add(office.office_id);
+        } catch (error: unknown) {
+          firstError ||= this.message(error);
+        }
+      }
+
+      if (archived.size) {
+        this.success.set(
+          archived.size === 1
+            ? 'The office was archived successfully and recorded in Audit Logs.'
+            : `${archived.size} offices were archived successfully and recorded in Audit Logs.`
+        );
+      }
+
+      const failed = offices.length - archived.size;
+
+      if (failed) {
+        this.error.set(
+          `${failed} office(s) were not archived. ${firstError}`
+        );
+      }
+    } finally {
+      this.selectedOfficeIds.update(ids =>
+        new Set(
+          [...ids].filter(id => !archived.has(id))
+        )
+      );
+
+      this.archiving.set(false);
+      this.saving.set(false);
+    }
   }
 
   async deleteOffice(
@@ -156,7 +350,6 @@ export class AdminParticipatingOffice implements OnDestroy {
 
       const decision = await Swal.fire({
         title: 'Confirm Office Deletion',
-
         text:
           `Please confirm the permanent deletion of "${check.officeName}".` +
           (
@@ -167,24 +360,19 @@ export class AdminParticipatingOffice implements OnDestroy {
               : ''
           ) +
           ' This action cannot be undone.',
-
         icon: 'warning',
         iconColor: '#b7791f',
-
         showCancelButton: true,
         reverseButtons: true,
         confirmButtonText: 'Yes, delete',
         cancelButtonText: 'Cancel',
-
         buttonsStyling: false,
         focusCancel: true,
-
         width: 440,
         padding: '28px 24px 24px',
         background: '#ffffff',
         color: '#21372a',
         backdrop: 'rgba(16, 34, 24, 0.45)',
-
         customClass: {
           popup: 'rbccms-confirm-popup',
           icon: 'rbccms-confirm-icon',
@@ -329,11 +517,9 @@ export class AdminParticipatingOffice implements OnDestroy {
       action: this.creatingOffice()
         ? 'create-office'
         : 'update-office',
-
       categoryName: this.creatingOffice()
         ? this.categoryName.trim()
         : '',
-
       officeId: this.selectedId(),
       name: this.officeName.trim(),
       description: this.description.trim(),
@@ -493,6 +679,8 @@ export class AdminParticipatingOffice implements OnDestroy {
   }
 
   private closeEditors(): void {
+    this.selectedOfficeIds.set(new Set());
+
     this.creatingOffice.set(false);
     this.selectedId.set('');
     this.personnelOfficeId.set('');

@@ -13,7 +13,7 @@
         placeholder="Search name or email..."
         maxlength="200"
         [ngModel]="searchTerm()"
-        (ngModelChange)="searchTerm.set($event); page.set(1)"
+        (ngModelChange)="searchTerm.set($event); page.set(1); clearAccountSelection()"
       />
     </label>
 
@@ -21,7 +21,7 @@
       Role
       <select
         [ngModel]="selectedRole()"
-        (ngModelChange)="selectedRole.set($event); page.set(1)"
+        (ngModelChange)="selectedRole.set($event); page.set(1); clearAccountSelection()"
       >
         @for (role of roleOptions; track role) {
           <option [value]="role">{{ roleLabel(role) }}</option>
@@ -33,7 +33,7 @@
       Status
       <select
         [ngModel]="selectedStatus()"
-        (ngModelChange)="selectedStatus.set($event); page.set(1)"
+        (ngModelChange)="selectedStatus.set($event); page.set(1); clearAccountSelection()"
       >
         @for (status of statusOptions; track status) {
           <option [value]="status">{{ status | titlecase }}</option>
@@ -46,9 +46,14 @@
     <p class="feedback" role="status">{{ feedback() }}</p>
   }
 
+  @if (archiveError()) {
+    <p class="feedback error" role="alert">{{ archiveError() }}</p>
+  }
+
   <section class="records-card" aria-labelledby="accounts-title">
     <div class="section-heading">
       <h2 id="accounts-title">Account Records</h2>
+
       @if (!loading() && !error()) {
         <span>{{ filteredAccounts().length }} account(s)</span>
       }
@@ -64,6 +69,49 @@
     } @else if (filteredAccounts().length === 0) {
       <p class="notice">No accounts match your filters.</p>
     } @else {
+      @if (archiveableAccounts().length) {
+        <section
+          class="bulk-archive-toolbar"
+          aria-label="Select accounts to archive"
+        >
+          <label class="select-all-label">
+            <input
+              type="checkbox"
+              [checked]="allAccountsSelected()"
+              [indeterminate]="partiallySelectedAccounts()"
+              [disabled]="!!savingUid()"
+              (change)="toggleAllAccounts($event)"
+            />
+            Select All
+          </label>
+
+          <span class="selected-count" aria-live="polite">
+            {{ selectedAccountCount() }} selected
+          </span>
+
+          @if (selectedAccountCount() > 0 || archiving()) {
+            <div class="bulk-actions">
+              <button
+                type="button"
+                (click)="clearAccountSelection()"
+                [disabled]="!!savingUid()"
+              >
+                Clear Selection
+              </button>
+
+              <button
+                type="button"
+                class="primary archive-selected-button"
+                (click)="archiveSelectedAccounts()"
+                [disabled]="!!savingUid() || selectedAccountCount() === 0"
+              >
+                {{ archiving() ? 'Archiving...' : 'Archive Selected' }}
+              </button>
+            </div>
+          }
+        </section>
+      }
+
       <div
         class="table-wrapper"
         role="region"
@@ -73,6 +121,7 @@
         <table>
           <thead>
             <tr>
+              <th scope="col">Select</th>
               <th scope="col">Name</th>
               <th scope="col">Email</th>
               <th scope="col">Role</th>
@@ -84,7 +133,25 @@
 
           <tbody>
             @for (account of visibleAccounts(); track account.uid) {
-              <tr>
+              <tr
+                [class.selected-account-row]="
+                  isAccountSelected(account.uid)
+                "
+              >
+                <td class="selection-cell">
+                  @if (canArchive(account)) {
+                    <input
+                      type="checkbox"
+                      [checked]="isAccountSelected(account.uid)"
+                      [disabled]="!!savingUid()"
+                      [attr.aria-label]="'Select ' + account.name"
+                      (change)="toggleAccountSelection(account, $event)"
+                    />
+                  } @else {
+                    <span class="muted">—</span>
+                  }
+                </td>
+
                 <td>{{ account.name }}</td>
                 <td>{{ account.email || 'Not recorded' }}</td>
                 <td>{{ roleLabel(account.role) }}</td>
@@ -130,6 +197,8 @@
                               : 'Restore'
                         }}
                       </button>
+
+                     
                     } @else {
                       <span class="muted">
                         {{

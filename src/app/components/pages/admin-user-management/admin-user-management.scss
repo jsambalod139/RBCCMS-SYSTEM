@@ -158,6 +158,39 @@ select:focus-visible,
   }
 }
 
+.bulk-archive-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border: 1px solid #dfe7e2;
+  border-radius: 9px;
+  background: #f8fbf9;
+}
+
+.select-all-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.selected-count,
+.selection-cell {
+  color: #718078;
+  font-size: 12px;
+}
+
+.bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
 .table-wrapper {
   max-width: 100%;
   overflow-x: auto;
@@ -235,6 +268,11 @@ tbody tr {
   color: #fff;
 }
 
+.archive {
+  border-color: #d4bd8f;
+  color: #8a5c12;
+}
+
 .muted {
   color: #718078;
   font-size: 11px;
@@ -256,6 +294,12 @@ tbody tr {
   font-size: 13px;
   line-height: 1.7;
   overflow-wrap: anywhere;
+}
+
+.feedback.error {
+  border-color: #efc0c0;
+  background: #fff4f4;
+  color: #a33737;
 }
 
 .pagination {
@@ -465,12 +509,12 @@ dl {
   /* Each user becomes a card */
   .users-page table tbody tr {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas:
-      "name status"
-      "email email"
-      "role date"
-      "actions actions";
+      "select name status"
+      "email email email"
+      "role date date"
+      "actions actions actions";
 
     gap: 13px 12px;
     min-width: 0;
@@ -501,8 +545,19 @@ dl {
     text-transform: uppercase;
   }
 
-  /* Name */
+  /* Selection */
   .users-page table tbody td:nth-child(1) {
+    grid-area: select;
+    align-self: start;
+    padding-top: 3px;
+
+    &::before {
+      display: none;
+    }
+  }
+
+  /* Name */
+  .users-page table tbody td:nth-child(2) {
     grid-area: name;
     color: #21372a;
     font-size: 15px;
@@ -514,7 +569,7 @@ dl {
   }
 
   /* Email */
-  .users-page table tbody td:nth-child(2) {
+  .users-page table tbody td:nth-child(3) {
     grid-area: email;
 
     &::before {
@@ -523,7 +578,7 @@ dl {
   }
 
   /* Role */
-  .users-page table tbody td:nth-child(3) {
+  .users-page table tbody td:nth-child(4) {
     grid-area: role;
 
     &::before {
@@ -532,7 +587,7 @@ dl {
   }
 
   /* Account Status */
-  .users-page table tbody td:nth-child(4) {
+  .users-page table tbody td:nth-child(5) {
     grid-area: status;
     justify-self: end;
     text-align: right;
@@ -543,7 +598,7 @@ dl {
   }
 
   /* Date Created */
-  .users-page table tbody td:nth-child(5) {
+  .users-page table tbody td:nth-child(6) {
     grid-area: date;
 
     &::before {
@@ -552,7 +607,7 @@ dl {
   }
 
   /* Action */
-  .users-page table tbody td:nth-child(6) {
+  .users-page table tbody td:nth-child(7) {
     grid-area: actions;
     padding-top: 12px;
     border-top: 1px solid #e7ece8;
@@ -573,6 +628,20 @@ dl {
     min-width: 0;
     min-height: 44px;
     font-weight: 600;
+  }
+
+  .users-page .bulk-archive-toolbar {
+    align-items: stretch;
+  }
+
+  .users-page .bulk-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .users-page .bulk-actions button {
+    flex: 1 1 140px;
+    min-height: 44px;
   }
 }
 
@@ -623,5 +692,129 @@ dl {
 
   .users-page .pagination > div > span {
     text-align: center;
+  }
+}
+
+/* Match Admin Concerns archive-selection feedback */
+
+.bulk-archive-toolbar {
+  animation: user-archive-toolbar-in 250ms ease-out both;
+}
+
+.bulk-actions {
+  animation: user-archive-actions-in 220ms ease-out both;
+}
+
+.select-all-label input,
+.selection-cell input {
+  accent-color: #087b49;
+  cursor: pointer;
+}
+
+.select-all-label input:checked,
+.selection-cell input:checked {
+  animation: user-checkbox-pop 200ms ease-out;
+}
+
+tbody tr.selected-account-row {
+  background: #eaf6ee;
+  box-shadow: inset 3px 0 0 #16814c;
+  animation: user-row-selected 220ms ease-out both;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  tbody tr.selected-account-row:hover {
+    background: #dff1e5;
+  }
+}
+
+@keyframes user-archive-toolbar-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes user-archive-actions-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes user-row-selected {
+  from {
+    background: #ffffff;
+    box-shadow: inset 0 0 0 transparent;
+  }
+
+  to {
+    background: #eaf6ee;
+    box-shadow: inset 3px 0 0 #16814c;
+  }
+}
+
+@keyframes user-checkbox-pop {
+  0% {
+    transform: scale(0.85);
+  }
+
+  60% {
+    transform: scale(1.12);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bulk-archive-toolbar,
+  .bulk-actions,
+  tbody tr.selected-account-row,
+  .select-all-label input:checked,
+  .selection-cell input:checked {
+    animation: none;
+  }
+}
+
+/* Match the smaller green checkboxes in Admin Concerns */
+
+.users-page .select-all-label input[type='checkbox'],
+.users-page .selection-cell input[type='checkbox'] {
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
+  min-height: 16px;
+  padding: 0;
+  margin: 0;
+  accent-color: #087b49;
+  cursor: pointer;
+}
+
+/* Green Archive Selected button */
+
+.users-page .archive-selected-button {
+  border-color: #087b49;
+  background: #087b49;
+  color: #fff;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .users-page .archive-selected-button:hover:not(:disabled) {
+    border-color: #06643b;
+    background: #06643b;
+    color: #fff;
+    box-shadow: 0 4px 10px rgb(8 123 73 / 14%);
   }
 }

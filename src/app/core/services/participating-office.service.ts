@@ -10,6 +10,7 @@ import {
 } from 'firebase/auth';
 
 import {
+  Timestamp,
   collection,
   doc,
   getFirestore,
@@ -41,6 +42,10 @@ export interface ParticipatingOffice {
   office_name: string;
   description: string;
   is_active: boolean;
+  is_archived: boolean;
+  archived_was_active: boolean;
+  archive_changed_at: string | null;
+  archive_revision: number;
 }
 
 export interface OfficeDeletionCheck {
@@ -61,6 +66,9 @@ export class ParticipatingOfficeService
     'https://nlwjwvhjojnjrmlaykym.supabase.co/functions/v1/manage-offices';
 
   readonly records =
+    signal<ParticipatingOffice[]>([]);
+
+  readonly archivedRecords =
     signal<ParticipatingOffice[]>([]);
 
   readonly categories =
@@ -175,7 +183,7 @@ export class ParticipatingOfficeService
             result => {
               if (!current()) return;
 
-              this.records.set(
+              const rows =
                 result.docs
                   .map(item => {
                     const data = item.data();
@@ -195,13 +203,47 @@ export class ParticipatingOfficeService
 
                       is_active:
                         data['is_active'] !== false,
+
+                      is_archived:
+                        data['is_archived'] === true,
+
+                      archived_was_active:
+                        typeof data['archived_was_active'] ===
+                        'boolean'
+                          ? data['archived_was_active']
+                          : data['is_active'] !== false,
+
+                      archive_changed_at:
+                        data['archive_changed_at'] instanceof Timestamp
+                          ? data['archive_changed_at']
+                              .toDate()
+                              .toISOString()
+                          : null,
+
+                      archive_revision:
+                        Number.isSafeInteger(
+                          data['archive_revision']
+                        )
+                          ? data['archive_revision']
+                          : 0,
                     };
                   })
                   .sort((a, b) =>
                     a.office_name.localeCompare(
                       b.office_name
                     )
-                  )
+                  );
+
+              this.records.set(
+                rows.filter(
+                  office => !office.is_archived
+                )
+              );
+
+              this.archivedRecords.set(
+                rows.filter(
+                  office => office.is_archived
+                )
               );
 
               finish('offices');
@@ -211,6 +253,7 @@ export class ParticipatingOfficeService
               if (!current()) return;
 
               this.records.set([]);
+              this.archivedRecords.set([]);
 
               finish(
                 'offices',
@@ -282,20 +325,20 @@ export class ParticipatingOfficeService
 
               this.personnel.set(
                 result.docs
+                  .filter(
+                    item => item.data()['is_archived'] !== true
+                  )
                   .map(item => {
                     const data = item.data();
 
-                    const text = (
-                      key: string
-                    ): string =>
+                    const text = (key: string): string =>
                       typeof data[key] === 'string'
                         ? data[key]
                         : '';
 
                     return {
                       uid: item.id,
-                      name:
-                        text('name') || 'Personnel',
+                      name: text('name') || 'Personnel',
                       email: text('email'),
                       officeId: text('officeId'),
                       status: text('accountStatus'),
@@ -459,6 +502,28 @@ export class ParticipatingOfficeService
     });
   }
 
+  async archiveOffice(
+    officeId: string,
+    requestId: string
+  ): Promise<void> {
+    await this.request({
+      action: 'archive-office',
+      officeId,
+      requestId,
+    });
+  }
+
+  async restoreOffice(
+    officeId: string,
+    requestId: string
+  ): Promise<void> {
+    await this.request({
+      action: 'restore-office',
+      officeId,
+      requestId,
+    });
+  }
+
   private async request(
     body: object
   ): Promise<Record<string, unknown>> {
@@ -567,6 +632,7 @@ export class ParticipatingOfficeService
     this.stops = [];
 
     this.records.set([]);
+    this.archivedRecords.set([]);
     this.categories.set([]);
     this.personnel.set([]);
   }

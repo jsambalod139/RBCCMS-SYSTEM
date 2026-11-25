@@ -40,6 +40,9 @@ interface AccountRecord {
   contactNumber: string;
   verified: boolean;
   incomplete: boolean;
+  isArchived: boolean;
+  archiveChangedAt: string | null;
+  archiveRevision: number;
 }
 
 @Component({
@@ -69,11 +72,14 @@ export class AdminUserManagement implements OnDestroy {
   readonly error = signal('');
   readonly feedback = signal('');
   readonly savingUid = signal('');
+  readonly archiveError = signal('');
+  readonly archiving = signal(false);
 
   readonly searchTerm = signal('');
   readonly selectedRole = signal('All Roles');
   readonly selectedStatus = signal('All Status');
   readonly selectedUid = signal('');
+  readonly selectedAccountUids = signal<Set<string>>(new Set());
 
   readonly page = signal(1);
   readonly pageSize = 10;
@@ -142,6 +148,35 @@ export class AdminUserManagement implements OnDestroy {
     );
   });
 
+  readonly archiveableAccounts = computed(() =>
+    this.filteredAccounts().filter(
+      account => this.canArchive(account)
+    )
+  );
+
+  readonly selectedAccounts = computed(() => {
+    const ids = this.selectedAccountUids();
+
+    return this.archiveableAccounts().filter(
+      account => ids.has(account.uid)
+    );
+  });
+
+  readonly selectedAccountCount = computed(
+    () => this.selectedAccounts().length
+  );
+
+  readonly allAccountsSelected = computed(() =>
+    this.archiveableAccounts().length > 0 &&
+    this.selectedAccountCount() ===
+      this.archiveableAccounts().length
+  );
+
+  readonly partiallySelectedAccounts = computed(() =>
+    this.selectedAccountCount() > 0 &&
+    !this.allAccountsSelected()
+  );
+
   constructor() {
     this.stopAuth = onAuthStateChanged(
       this.auth,
@@ -158,8 +193,10 @@ export class AdminUserManagement implements OnDestroy {
     this.authorized.set(false);
     this.error.set('');
     this.feedback.set('');
+    this.archiveError.set('');
     this.loading.set(true);
     this.selectedUid.set('');
+    this.selectedAccountUids.set(new Set());
     this.page.set(1);
 
     const user = this.auth.currentUser;
@@ -241,12 +278,33 @@ export class AdminUserManagement implements OnDestroy {
                       data['residencyVerified'] === true,
                     incomplete:
                       data['registrationState'] === 'incomplete',
+
+                    isArchived:
+                      data['is_archived'] === true,
+
+                    archiveChangedAt:
+                      data['archive_changed_at'] instanceof Timestamp
+                        ? data['archive_changed_at']
+                            .toDate()
+                            .toISOString()
+                        : null,
+
+                    archiveRevision:
+                      Number.isSafeInteger(
+                        data['archive_revision']
+                      )
+                        ? data['archive_revision']
+                        : 0,
+
                     createdAt:
                       data['createdAt'] instanceof Timestamp
                         ? data['createdAt'].toDate().toISOString()
                         : null,
                   };
                 })
+                .filter(
+                  account => !account.isArchived
+                )
                 .sort(
                   (a, b) =>
                     a.name.localeCompare(b.name) ||
@@ -301,6 +359,7 @@ export class AdminUserManagement implements OnDestroy {
   canChange(account: AccountRecord): boolean {
     return (
       this.authorized() &&
+      !account.isArchived &&
       account.uid !== this.currentUid() &&
       ['resident', 'personnel'].includes(account.role) &&
       !account.incomplete &&
@@ -317,11 +376,259 @@ export class AdminUserManagement implements OnDestroy {
     );
   }
 
+  canArchive(account: AccountRecord): boolean {
+    return this.canChange(account);
+  }
+
+  isAccountSelected(uid: string): boolean {
+    return this.selectedAccountUids().has(uid);
+  }
+
+  toggleAccountSelection(
+    account: AccountRecord,
+    event: Event
+  ): void {
+    if (this.savingUid() || !this.canArchive(account)) {
+      return;
+    }
+
+    const checked =
+      (event.target as HTMLInputElement).checked;
+
+    this.selectedAccountUids.update(ids => {
+      const next = new Set(ids);
+
+      if (checked) {
+        next.add(account.uid);
+      } else {
+        next.delete(account.uid);
+      }
+
+      return next;
+    });
+  }
+
+  toggleAllAccounts(event: Event): void {
+    if (this.savingUid()) return;
+
+    const checked =
+      (event.target as HTMLInputElement).checked;
+
+    this.selectedAccountUids.set(
+      checked
+        ? new Set(
+            this.archiveableAccounts().map(
+              account => account.uid
+            )
+          )
+        : new Set()
+    );
+  }
+
+  clearAccountSelection(): void {
+    if (!this.savingUid()) {
+      this.selectedAccountUids.set(new Set());
+    }
+  }
+
   resetFilters(): void {
     this.searchTerm.set('');
     this.selectedRole.set('All Roles');
     this.selectedStatus.set('All Status');
     this.page.set(1);
+    this.clearAccountSelection();
+  }
+
+  async archiveAccount(
+    account: AccountRecord
+  ): Promise<void> {
+    await this.archiveAccounts([account]);
+  }
+
+  async archiveSelectedAccounts(): Promise<void> {
+    await this.archiveAccounts(this.selectedAccounts());
+  }
+
+  private async archiveAccounts(
+    selected: AccountRecord[]
+  ): Promise<void> {
+    if (this.savingUid() || !selected.length) return;
+
+    const accounts = selected.filter(
+      account => this.canArchive(account)
+    );
+
+    if (!accounts.length) return;
+
+    const decision = await Swal.fire({
+      title:
+        accounts.length === 1
+          ? 'Archive Account'
+          : 'Archive Selected Accounts',
+      text:
+        accounts.length === 1
+          ? `Archive ${accounts[0].name}'s account? The account will not be able to access RBCCMS until restored.`
+          : `Archive ${accounts.length} selected accounts? They will not be able to access RBCCMS until restored.`,
+      icon: 'warning',
+      iconColor: '#b7791f',
+      input: 'textarea',
+      inputLabel: 'Reason for archiving',
+      inputPlaceholder: 'Enter a reason (3–500 characters)',
+      inputAttributes: { maxlength: '500' },
+      inputValidator: value => {
+        const length = (value || '').trim().length;
+
+        return length < 3 || length > 500
+          ? 'Please enter a reason containing 3–500 characters.'
+          : undefined;
+      },
+      showCancelButton: true,
+      reverseButtons: true,
+      confirmButtonText: 'Yes, archive',
+      cancelButtonText: 'Cancel',
+      buttonsStyling: false,
+      focusCancel: true,
+      width: 460,
+      padding: '28px 24px 24px',
+      background: '#ffffff',
+      color: '#21372a',
+      backdrop: 'rgba(16, 34, 24, 0.45)',
+      customClass: {
+        popup: 'rbccms-confirm-popup',
+        icon: 'rbccms-confirm-icon',
+        title: 'rbccms-confirm-title',
+        htmlContainer: 'rbccms-confirm-message',
+        actions: 'rbccms-confirm-actions',
+        confirmButton: 'rbccms-confirm-danger',
+        cancelButton: 'rbccms-confirm-cancel',
+        input: 'rbccms-confirm-input',
+        inputLabel: 'rbccms-confirm-input-label',
+        validationMessage: 'rbccms-confirm-validation',
+      },
+    });
+
+    if (!decision.isConfirmed || this.destroyed) return;
+
+    this.archiving.set(true);
+    this.archiveError.set('');
+    this.feedback.set('');
+
+    const archived = new Set<string>();
+    let firstError = '';
+
+    try {
+      for (const account of accounts) {
+        this.savingUid.set(account.uid);
+
+        try {
+          await this.requestAccountAction(
+            account.uid,
+            'archive',
+            String(decision.value).trim()
+          );
+          archived.add(account.uid);
+        } catch (error: unknown) {
+          firstError ||= this.errorMessage(error);
+        }
+      }
+
+      if (archived.size) {
+        this.feedback.set(
+          archived.size === 1
+            ? 'The account was archived successfully and recorded in Audit Logs.'
+            : `${archived.size} accounts were archived successfully and recorded in Audit Logs.`
+        );
+      }
+
+      const failed = accounts.length - archived.size;
+
+      if (failed) {
+        this.archiveError.set(
+          `${failed} account(s) were not archived. ${firstError}`
+        );
+      }
+    } finally {
+      this.selectedAccountUids.update(ids =>
+        new Set(
+          [...ids].filter(id => !archived.has(id))
+        )
+      );
+      this.savingUid.set('');
+      this.archiving.set(false);
+    }
+  }
+
+  private async requestAccountAction(
+    targetUid: string,
+    action: 'archive' | 'restore-archive',
+    reason: string
+  ): Promise<void> {
+    const uid = this.currentUid();
+    const generation = this.generation;
+    const user = this.auth.currentUser;
+
+    if (
+      !uid ||
+      !user ||
+      user.uid !== uid ||
+      !this.authorized()
+    ) {
+      throw new Error('Please sign in with an administrator account.');
+    }
+
+    const token = await user.getIdToken();
+
+    if (
+      this.destroyed ||
+      generation !== this.generation ||
+      this.auth.currentUser?.uid !== uid
+    ) {
+      throw new Error('Your login changed. Refresh before continuing.');
+    }
+
+    let response: Response;
+
+    try {
+      response = await fetch(
+        'https://nlwjwvhjojnjrmlaykym.supabase.co/functions/v1/manage-users',
+        {
+          method: 'POST',
+          cache: 'no-store',
+          credentials: 'omit',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            uid: targetUid,
+            action,
+            reason,
+            requestId: crypto.randomUUID(),
+          }),
+          signal: AbortSignal.timeout(30000),
+        }
+      );
+    } catch {
+      throw new Error(
+        'Unable to contact the account-management service. Check your connection and try again.'
+      );
+    }
+
+    const body = await response.json().catch(() => null);
+
+    if (!response.ok || body?.saved !== true) {
+      throw new Error(
+        typeof body?.error === 'string'
+          ? body.error
+          : 'The account change was not confirmed. Refresh before retrying.'
+      );
+    }
+  }
+
+  private errorMessage(error: unknown): string {
+    return error instanceof Error
+      ? error.message
+      : 'The account change was not confirmed.';
   }
 
   async changeAccess(account: AccountRecord): Promise<void> {

@@ -141,6 +141,40 @@
   margin-bottom: 16px;
 }
 
+.bulk-archive-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border: 1px solid #dfe7e2;
+  border-radius: 9px;
+  background: #f8fbf9;
+}
+
+.select-all-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #21372a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.selected-count,
+.selection-cell {
+  color: #617267;
+  font-size: 12px;
+}
+
+.bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
 .table-wrapper {
   max-width: 100%;
   overflow-x: auto;
@@ -469,8 +503,7 @@ textarea {
   flex: 0 0 16px;
   width: 16px;
   height: 16px;
-  border-color:
-    rgb(255 255 255 / 35%);
+  border-color: rgb(255 255 255 / 35%);
   border-top-color: #fff;
 }
 
@@ -495,14 +528,11 @@ input[type='checkbox']:focus-visible,
     border-color: #06643b;
     background: #06643b;
     color: #fff;
-
-    box-shadow:
-      0 4px 10px rgb(8 123 73 / 14%);
+    box-shadow: 0 4px 10px rgb(8 123 73 / 14%);
   }
 
   .back-button:hover:not(:disabled) {
-    box-shadow:
-      0 3px 9px rgb(33 55 42 / 8%);
+    box-shadow: 0 3px 9px rgb(33 55 42 / 8%);
 
     span {
       transform: translateX(-3px);
@@ -616,9 +646,7 @@ input[type='checkbox']:focus-visible,
   &:hover:not(:disabled) {
     background: #fff1f1;
     border-color: #bd3a3a;
-
-    box-shadow:
-      0 3px 8px rgb(150 40 40 / 10%);
+    box-shadow: 0 3px 8px rgb(150 40 40 / 10%);
   }
 
   &:active:not(:disabled) {
@@ -655,12 +683,7 @@ input[type='checkbox']:focus-visible,
   .row-actions .delete-office:active:not(:disabled) {
     transform: none;
   }
-}   
-
-
-/* =========================================
-   ADMIN PARTICIPATING OFFICES - RESPONSIVE
-   ========================================= */
+}
 
 @media (max-width: 1100px) {
   .offices-page {
@@ -711,13 +734,12 @@ input[type='checkbox']:focus-visible,
 
   .offices-page table tbody tr {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas:
-      "office status"
-      "categories categories"
-      "personnel personnel"
-      "actions actions";
-
+      "select office status"
+      "categories categories categories"
+      "personnel personnel personnel"
+      "actions actions actions";
     gap: 15px 12px;
     min-width: 0;
     padding: 18px;
@@ -747,8 +769,17 @@ input[type='checkbox']:focus-visible,
     text-transform: uppercase;
   }
 
-  /* Office */
   .offices-page table tbody td:nth-child(1) {
+    grid-area: select;
+    align-self: start;
+    padding-top: 3px;
+
+    &::before {
+      display: none;
+    }
+  }
+
+  .offices-page table tbody td:nth-child(2) {
     grid-area: office;
     font-size: 15px;
     line-height: 1.45;
@@ -768,8 +799,7 @@ input[type='checkbox']:focus-visible,
     }
   }
 
-  /* Status */
-  .offices-page table tbody td:nth-child(2) {
+  .offices-page table tbody td:nth-child(3) {
     grid-area: status;
     justify-self: end;
     text-align: right;
@@ -779,8 +809,7 @@ input[type='checkbox']:focus-visible,
     }
   }
 
-  /* Assigned Categories */
-  .offices-page table tbody td:nth-child(3) {
+  .offices-page table tbody td:nth-child(4) {
     grid-area: categories;
     padding: 12px;
     border-radius: 9px;
@@ -791,8 +820,7 @@ input[type='checkbox']:focus-visible,
     }
   }
 
-  /* Assigned Personnel */
-  .offices-page table tbody td:nth-child(4) {
+  .offices-page table tbody td:nth-child(5) {
     grid-area: personnel;
     padding: 12px;
     border: 1px solid #e8eee9;
@@ -803,8 +831,7 @@ input[type='checkbox']:focus-visible,
     }
   }
 
-  /* Action buttons */
-  .offices-page table tbody td:nth-child(5) {
+  .offices-page table tbody td:nth-child(6) {
     grid-area: actions;
     padding-top: 12px;
     border-top: 1px solid #e7ece8;
@@ -847,7 +874,6 @@ input[type='checkbox']:focus-visible,
   }
 }
 
-/* MOBILE SCREEN */
 @media (max-width: 600px) {
   .offices-page .records-card,
   .offices-page .editor-card {
@@ -866,5 +892,112 @@ input[type='checkbox']:focus-visible,
   .offices-page .directory-actions .primary {
     width: 100%;
     min-height: 44px;
+  }
+
+  .bulk-archive-toolbar {
+    align-items: stretch;
+  }
+
+  .bulk-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .bulk-actions button {
+    flex: 1 1 140px;
+    min-height: 44px;
+  }
+}
+
+/* Archive selection animation — same visual feedback as Concerns */
+
+.bulk-archive-toolbar {
+  animation: office-archive-toolbar-in 250ms ease-out both;
+}
+
+.bulk-actions {
+  animation: office-archive-actions-in 220ms ease-out both;
+}
+
+.select-all-label input,
+.selection-cell input {
+  accent-color: #087b49;
+  cursor: pointer;
+}
+
+.select-all-label input:checked,
+.selection-cell input:checked {
+  animation: office-checkbox-pop 200ms ease-out;
+}
+
+tbody tr.selected-office-row {
+  background: #eaf6ee;
+  box-shadow: inset 3px 0 0 #16814c;
+  animation: office-row-selected 220ms ease-out both;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  tbody tr.selected-office-row:hover {
+    background: #dff1e5;
+  }
+}
+
+@keyframes office-archive-toolbar-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes office-archive-actions-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes office-row-selected {
+  from {
+    background: #ffffff;
+    box-shadow: inset 0 0 0 transparent;
+  }
+
+  to {
+    background: #eaf6ee;
+    box-shadow: inset 3px 0 0 #16814c;
+  }
+}
+
+@keyframes office-checkbox-pop {
+  0% {
+    transform: scale(0.85);
+  }
+
+  60% {
+    transform: scale(1.12);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bulk-archive-toolbar,
+  .bulk-actions,
+  tbody tr.selected-office-row,
+  .select-all-label input:checked,
+  .selection-cell input:checked {
+    animation: none;
   }
 }

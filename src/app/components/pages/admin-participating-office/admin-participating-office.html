@@ -13,6 +13,7 @@
   @if (success()) {
     <p class="feedback success" role="status">{{ success() }}</p>
   }
+
   @if (error()) {
     <p class="feedback error" role="alert">{{ error() }}</p>
   }
@@ -28,7 +29,9 @@
         <section class="notice" role="alert">
           <h2>Office information unavailable</h2>
           <p>{{ offices.error() }}</p>
-          <button type="button" (click)="offices.reload()">Try Again</button>
+          <button type="button" (click)="offices.reload()">
+            Try Again
+          </button>
         </section>
       } @else {
         <div class="directory-actions">
@@ -49,6 +52,50 @@
             <span>{{ offices.records().length }} office(s)</span>
           </div>
 
+          @if (archiveableOffices().length) {
+            <section
+              class="bulk-archive-toolbar"
+              aria-label="Select participating offices to archive"
+            >
+              <label class="select-all-label">
+                <input
+                  type="checkbox"
+                  [checked]="allOfficesSelected()"
+                  [indeterminate]="partiallySelectedOffices()"
+                  [disabled]="saving()"
+                  (change)="toggleAllOffices($event)"
+                />
+                Select All
+              </label>
+
+              <span class="selected-count" aria-live="polite">
+                {{ selectedOfficeCount() }} selected
+              </span>
+
+              @if (selectedOfficeCount() > 0 || archiving()) {
+                <div class="bulk-actions">
+                  <button
+                    type="button"
+                    class="secondary"
+                    (click)="clearOfficeSelection()"
+                    [disabled]="saving()"
+                  >
+                    Clear Selection
+                  </button>
+
+                  <button
+                    type="button"
+                    class="primary"
+                    (click)="archiveSelectedOffices()"
+                    [disabled]="saving() || selectedOfficeCount() === 0"
+                  >
+                    {{ archiving() ? 'Archiving...' : 'Archive Selected' }}
+                  </button>
+                </div>
+              }
+            </section>
+          }
+
           <div
             class="table-wrapper"
             tabindex="0"
@@ -58,6 +105,7 @@
             <table>
               <thead>
                 <tr>
+                  <th scope="col">Select</th>
                   <th scope="col">Office</th>
                   <th scope="col">Status</th>
                   <th scope="col">Assigned Categories</th>
@@ -65,15 +113,35 @@
                   <th scope="col">Actions</th>
                 </tr>
               </thead>
+
               <tbody>
                 @for (office of offices.records(); track office.office_id) {
-                  <tr>
+                  <tr
+                    [class.selected-office-row]="
+                      isOfficeSelected(office.office_id)
+                    "
+                  >
+                    <td class="selection-cell">
+                      @if (canArchiveOffice(office)) {
+                        <input
+                          type="checkbox"
+                          [checked]="isOfficeSelected(office.office_id)"
+                          [disabled]="saving()"
+                          [attr.aria-label]="'Select ' + office.office_name"
+                          (change)="toggleOfficeSelection(office, $event)"
+                        />
+                      } @else {
+                        <span class="muted">Protected</span>
+                      }
+                    </td>
+
                     <td class="office-name">
                       <strong>{{ office.office_name }}</strong>
                       <p class="muted">
                         {{ office.description || 'No description provided.' }}
                       </p>
                     </td>
+
                     <td>
                       <span
                         class="badge"
@@ -83,6 +151,7 @@
                         {{ office.is_active ? 'Active' : 'Inactive' }}
                       </span>
                     </td>
+
                     <td>
                       <ul class="assignment-list">
                         @for (
@@ -100,6 +169,7 @@
                         }
                       </ul>
                     </td>
+
                     <td>
                       <ul class="assignment-list personnel-list">
                         @for (
@@ -118,6 +188,7 @@
                         }
                       </ul>
                     </td>
+
                     <td>
                       <div class="row-actions">
                         <button
@@ -128,6 +199,7 @@
                         >
                           Edit Office
                         </button>
+
                         <button
                           type="button"
                           class="primary"
@@ -136,6 +208,9 @@
                         >
                           Add Personnel
                         </button>
+
+                        
+
                         <button
                           type="button"
                           class="danger delete-office"
@@ -172,7 +247,7 @@
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="5" class="empty">
+                    <td colspan="6" class="empty">
                       No participating offices available.
                     </td>
                   </tr>
@@ -190,9 +265,11 @@
       <header class="editor-heading">
         <div>
           <p class="eyebrow">ADMINISTRATOR PORTAL</p>
+
           <h1 id="edit-title" #viewHeading tabindex="-1">
             {{ creatingOffice() ? 'Add Office' : 'Edit Office Information' }}
           </h1>
+
           <p class="view-description">
             {{
               creatingOffice()
@@ -201,6 +278,7 @@
             }}
           </p>
         </div>
+
         <button
           type="button"
           class="secondary back-button"
@@ -234,7 +312,10 @@
               maxlength="1000"
               rows="4"
             ></textarea>
-            <small class="character-count">{{ description.length }}/1000</small>
+
+            <small class="character-count">
+              {{ description.length }}/1000
+            </small>
           </div>
 
           @if (creatingOffice()) {
@@ -248,6 +329,7 @@
                 required
                 maxlength="150"
               />
+
               @if (
                 (categoryControl.touched || officeForm.submitted) &&
                 !categoryName.trim()
@@ -276,6 +358,7 @@
             >
               Cancel
             </button>
+
             <button
               type="submit"
               class="primary"
@@ -290,6 +373,7 @@
               @if (saving()) {
                 <span class="button-spinner" aria-hidden="true"></span>
               }
+
               {{
                 saving()
                   ? 'Saving...'
@@ -314,13 +398,16 @@
       <header class="editor-heading">
         <div>
           <p class="eyebrow">ADMINISTRATOR PORTAL</p>
+
           <h1 id="personnel-title" #viewHeading tabindex="-1">
             Add Personnel
           </h1>
+
           <p class="view-description">
             Create an authorized personnel account for the selected office.
           </p>
         </div>
+
         <button
           type="button"
           class="secondary back-button"
@@ -355,6 +442,7 @@
                 maxlength="150"
                 autocomplete="name"
               />
+
               @if (
                 (nameControl.invalid || !personnelName.trim()) &&
                 (nameControl.touched || personnelForm.submitted)
@@ -380,11 +468,14 @@
                 autocapitalize="none"
                 spellcheck="false"
               />
+
               @if (
                 emailControl.invalid &&
                 (emailControl.touched || personnelForm.submitted)
               ) {
-                <small class="field-error">Enter a valid email address.</small>
+                <small class="field-error">
+                  Enter a valid email address.
+                </small>
               }
             </div>
 
@@ -402,10 +493,12 @@
                 autocomplete="new-password"
                 aria-describedby="password-help"
               />
+
               <small id="password-help" class="muted">
                 Use 8–128 characters. Firebase
                 password-policy requirements also apply.
               </small>
+
               @if (
                 passwordControl.invalid &&
                 (passwordControl.touched || personnelForm.submitted)
@@ -429,11 +522,14 @@
                 maxlength="128"
                 autocomplete="new-password"
               />
+
               @if (
                 (confirmControl.touched || personnelForm.submitted) &&
                 personnelPassword !== confirmPassword
               ) {
-                <small class="field-error">The passwords do not match.</small>
+                <small class="field-error">
+                  The passwords do not match.
+                </small>
               }
             </div>
           </div>
@@ -462,6 +558,7 @@
             >
               Cancel
             </button>
+
             <button
               type="submit"
               class="primary"

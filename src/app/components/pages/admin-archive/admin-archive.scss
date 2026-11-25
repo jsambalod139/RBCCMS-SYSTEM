@@ -1,4 +1,3 @@
-
 :host {
   display: block;
   min-width: 0;
@@ -11,10 +10,6 @@
 *::after {
   box-sizing: border-box;
 }
-
-/* =========================================
-   MAIN PAGE
-========================================= */
 
 .admin-archive-page {
   width: 100%;
@@ -52,19 +47,13 @@ h1 {
   line-height: 1.7;
 }
 
-/* =========================================
-   SEARCH AND FILTER
-========================================= */
-
 .toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 14px;
-
   margin: 0 0 26px;
   padding: 0;
-
   background: transparent;
   border: 0;
   border-radius: 0;
@@ -76,14 +65,11 @@ h1 {
   align-items: center;
   flex: 1 1 240px;
   min-width: 0;
-
   gap: 10px;
   padding: 0 13px;
-
   border: 1px solid #dce5de;
   border-radius: 7px;
   background: #fff;
-
   transition:
     border-color 160ms ease,
     box-shadow 160ms ease;
@@ -97,22 +83,17 @@ h1 {
     width: 100%;
     min-width: 0;
     height: 42px;
-
     border: 0;
     outline: 0;
-
     background: transparent;
     color: #26352c;
-
     font: inherit;
     font-size: 12px;
   }
 
   &:focus-within {
     border-color: #527b60;
-
-    box-shadow:
-      0 0 0 3px rgb(82 123 96 / 12%);
+    box-shadow: 0 0 0 3px rgb(82 123 96 / 12%);
   }
 }
 
@@ -130,38 +111,27 @@ h1 {
     min-width: 145px;
     height: 42px;
     padding: 0 10px;
-
     border: 1px solid #dce5de;
     border-radius: 7px;
-
     background: #fff;
     color: #26352c;
-
     font: inherit;
     font-size: 12px;
   }
 }
-
-/* =========================================
-   BUTTONS
-========================================= */
 
 .secondary-button,
 .view-button,
 .clear-selection-button {
   min-height: 40px;
   padding: 10px 14px;
-
   border: 1px solid #cbd9cf;
   border-radius: 6px;
-
   background: #fff;
   color: #33483a;
-
   font: inherit;
   font-size: 12px;
   font-weight: 600;
-
   cursor: pointer;
 }
 
@@ -169,7 +139,6 @@ h1 {
   min-height: 34px;
   margin: 0;
   padding: 8px 11px;
-
   font-size: 11px;
   white-space: nowrap;
 }
@@ -191,26 +160,14 @@ button {
   }
 }
 
-/* =========================================
-   ARCHIVED CONCERNS HEADING
-========================================= */
-
 .results-heading {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-
   gap: 12px;
-
   margin: 0 0 14px;
   padding: 0;
-
-  border: 0;
-  border-radius: 0;
-
-  background: transparent;
-  box-shadow: none;
 
   h2 {
     margin: 0;
@@ -225,45 +182,28 @@ button {
   }
 }
 
-/* =========================================
-   BULK RESTORE TOOLBAR
-========================================= */
-
 .bulk-archive-toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-
   gap: 12px;
-
   min-height: 60px;
-
   margin: 0 0 16px;
   padding: 12px 14px;
-
-  background: #ffffff;
-
+  background: #fff;
   border: 1px solid #dce7df;
   border-radius: 10px;
-
-  box-shadow: none;
 }
-
-/* SELECT ALL AND INDIVIDUAL CHECKBOXES */
 
 .select-all-label,
 .concern-selection {
   display: inline-flex;
   align-items: center;
-
   gap: 8px;
   min-width: 0;
-
   color: #21372a;
-
   font-size: 13px;
   font-weight: 600;
-
   cursor: pointer;
 }
 
@@ -271,14 +211,10 @@ button {
 .concern-selection input {
   width: 18px;
   height: 18px;
-
   flex: 0 0 18px;
-
   margin: 0;
-
   accent-color: #087c48;
   cursor: pointer;
-
   transition: transform 180ms ease;
 }
 
@@ -298,121 +234,80 @@ button {
   outline-offset: 3px;
 }
 
-/* SELECTED COUNT */
-
 .selected-count {
   margin-right: auto;
-
   color: #68776e;
   font-size: 12px;
 }
-
-/* BULK ACTION BUTTONS */
 
 .bulk-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-
   gap: 10px;
-
   animation: bulkActionsIn 250ms ease-out both;
 }
-
-/* RESTORE SELECTED BUTTON */
 
 .bulk-archive-button {
   min-height: 40px;
   padding: 10px 14px;
-
   border: 1px solid #087c48;
   border-radius: 7px;
-
   background: #087c48;
-  color: #ffffff;
-
+  color: #fff;
   font: inherit;
   font-size: 12px;
   font-weight: 600;
-
   cursor: pointer;
 }
-
-/* CLEAR SELECTION BUTTON */
 
 .clear-selection-button {
   border-radius: 7px;
 }
 
-/* =========================================
-   TABLE CONTAINER
-========================================= */
-
 .table-card {
   width: 100%;
   min-width: 0;
-
   margin: 0;
   padding: 0;
-
   overflow: hidden;
-
   border: 1px solid #dfe8e2;
   border-radius: 12px;
-
   background: #fff;
-
-  box-shadow:
-    0 3px 14px rgb(33 55 42 / 4%);
+  box-shadow: 0 3px 14px rgb(33 55 42 / 4%);
 }
 
 .table-wrapper {
   width: 100%;
   max-width: 100%;
-
   margin: 0;
   padding: 0;
-
   overflow-x: auto;
-
   scrollbar-width: thin;
   scrollbar-color: #b8cbbf #f5f8f6;
 }
 
-/* =========================================
-   ARCHIVED CONCERNS TABLE
-========================================= */
-
 table {
   width: 100%;
   min-width: 800px;
-
   border-collapse: collapse;
-
   font-size: 12px;
 
   th {
     padding: 14px 12px;
-
     background: #f3f7f4;
     color: #536158;
-
     text-align: left;
-
     font-size: 11px;
     font-weight: 700;
-
     white-space: nowrap;
   }
 
   td {
     padding: 13px 12px;
-
     border-bottom: 1px solid #e7ece8;
-
     color: #46554b;
     line-height: 1.6;
-
     vertical-align: middle;
     overflow-wrap: anywhere;
   }
@@ -434,33 +329,23 @@ table {
 
   tbody tr.selected-concern-row {
     background: #eaf6ee;
-
-    box-shadow:
-      inset 3px 0 0 #16814c;
+    box-shadow: inset 3px 0 0 #16814c;
   }
 }
 
 .location-cell {
   min-width: 150px;
   max-width: 240px;
-
   overflow-wrap: anywhere;
 }
 
-/* =========================================
-   STATUS BADGES
-========================================= */
-
 .status-badge {
   display: inline-block;
-
   padding: 4px 9px;
   border-radius: 20px;
-
   font-size: 11px;
   font-weight: 600;
   line-height: 1.5;
-
   white-space: nowrap;
 }
 
@@ -489,19 +374,12 @@ table {
   color: #536158;
 }
 
-/* =========================================
-   SUCCESS AND ERROR MESSAGES
-========================================= */
-
 .page-notice,
 .empty-state {
   padding: 24px;
-
   border: 1px solid #dfe7e1;
   border-radius: 10px;
-
   background: #fff;
-
   font-size: 13px;
   line-height: 1.7;
 }
@@ -513,7 +391,6 @@ table {
 .empty-state {
   margin: 0;
   padding: 40px 20px;
-
   text-align: center;
 }
 
@@ -521,47 +398,32 @@ table {
   border-color: #edcccc;
   background: #fff5f5;
   color: #a12f2f;
-
   animation: bulkToolbarIn 250ms ease-out;
 }
 
 .archive-success {
   padding: 14px 18px;
-
   color: #176239;
   background: #edf8f0;
-
   border: 1px solid #c5e5ce;
   border-radius: 8px;
-
   animation: bulkToolbarIn 250ms ease-out;
 }
 
-/* =========================================
-   CONCERN DETAILS PAGE
-========================================= */
-
 .details-page {
   padding: 26px;
-
   border: 1px solid #dfe8e2;
   border-radius: 12px;
-
   background: #fff;
-
-  box-shadow:
-    0 3px 14px rgb(33 55 42 / 4%);
-
+  box-shadow: 0 3px 14px rgb(33 55 42 / 4%);
   animation: archiveDetailsIn 350ms ease-out;
 }
 
 .details-header {
   display: flex;
   flex-wrap: wrap;
-
   justify-content: space-between;
   align-items: flex-start;
-
   gap: 18px;
   margin-bottom: 20px;
 }
@@ -569,33 +431,23 @@ table {
 .read-only-note {
   margin: 0 0 24px;
   padding: 11px 13px;
-
   border-radius: 6px;
-
   background: #f2f6f3;
   color: #617168;
-
   font-size: 12px;
   line-height: 1.7;
 }
 
 .information-heading {
   margin: 0 0 22px;
-
   text-align: center;
   font-size: 16px;
 }
 
-/* CONCERN INFORMATION */
-
 .detail-grid {
   display: grid;
-
-  grid-template-columns:
-    repeat(3, minmax(0, 1fr));
-
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 25px;
-
   margin: 0 0 26px;
 
   > div {
@@ -604,36 +456,27 @@ table {
 
   dt {
     margin-bottom: 8px;
-
     color: #718078;
     font-size: 12px;
   }
 
   dd {
     margin: 0;
-
     font-size: 13px;
     line-height: 1.7;
-
     overflow-wrap: anywhere;
   }
 }
-
-/* =========================================
-   DESCRIPTION, PHOTO AND HISTORY
-========================================= */
 
 .description-section,
 .photo-section,
 .history-section {
   margin-top: 24px;
   padding-top: 22px;
-
   border-top: 1px solid #e2e9e4;
 
   h2 {
     margin: 0 0 15px;
-
     font-size: 16px;
   }
 
@@ -649,28 +492,18 @@ table {
   overflow-wrap: anywhere;
 }
 
-/* =========================================
-   ATTACHED PHOTO
-========================================= */
-
 .photo-section > a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   padding: 10px 14px;
-
   background: #087c48;
-  color: #ffffff;
-
+  color: #fff;
   border: 1px solid #087c48;
   border-radius: 6px;
-
   font-size: 12px;
   font-weight: 600;
-
   text-decoration: none;
-
   transition:
     transform 200ms ease,
     background-color 200ms ease,
@@ -678,58 +511,40 @@ table {
 }
 
 .photo-section > a:visited {
-  color: #ffffff;
+  color: #fff;
 }
 
 .photo-section > a:hover {
   background: #09663d;
-  color: #ffffff;
-
+  color: #fff;
   transform: translateY(-2px);
-
-  box-shadow:
-    0 4px 12px rgb(8 124 72 / 16%);
+  box-shadow: 0 4px 12px rgb(8 124 72 / 16%);
 }
 
 .concern-photo {
   display: block;
-
   width: 440px;
   max-width: 100%;
-
   height: auto;
   max-height: 480px;
-
   margin-top: 12px;
-
   border: 1px solid #e1e9e3;
   border-radius: 8px;
-
   background: #f5f8f6;
-
   object-fit: contain;
   object-position: left;
 }
 
-/* =========================================
-   STATUS HISTORY
-========================================= */
-
 .history-item {
   display: flex;
   justify-content: space-between;
-
   gap: 20px;
-
   margin-top: 12px;
   padding: 16px;
-
   border: 1px solid #e1e8e3;
   border-left: 3px solid #b4cebd;
   border-radius: 8px;
-
   background: #fbfdfb;
-
   transition:
     background-color 200ms ease,
     border-color 200ms ease,
@@ -745,7 +560,6 @@ table {
 
   time {
     flex-shrink: 0;
-
     color: #718078;
     font-size: 11px;
   }
@@ -756,8 +570,6 @@ table {
   color: #718078;
 }
 
-/* Existing details action container */
-
 .archive-details-actions {
   display: flex;
   justify-content: flex-end;
@@ -765,36 +577,131 @@ table {
 }
 
 .archive-button {
-  margin: 4px 0 4px 8px;
   min-height: 36px;
+  margin: 4px 0 4px 8px;
 }
 
-/* =========================================
-   HOVER ANIMATIONS
-========================================= */
+.archive-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  margin: 0 0 24px;
+  padding: 4px;
+  border: 1px solid #dce7df;
+  border-radius: 9px;
+  background: #f2f6f3;
+
+  button {
+    min-height: 40px;
+    padding: 9px 12px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #52675a;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      background-color 160ms ease,
+      color 160ms ease,
+      box-shadow 160ms ease;
+
+    &.active {
+      background: #21372a;
+      color: #fff;
+      box-shadow: 0 2px 7px rgb(33 55 42 / 16%);
+    }
+  }
+}
+
+.archive-directory {
+  display: grid;
+  gap: 18px;
+}
+
+.archive-directory-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+
+  h2 {
+    margin: 0 0 5px;
+    font-size: 19px;
+  }
+
+  p,
+  > span {
+    margin: 0;
+    color: #617267;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+}
+
+.archive-search-field {
+  display: grid;
+  gap: 7px;
+  color: #52675a;
+  font-size: 12px;
+  font-weight: 600;
+
+  input {
+    width: 100%;
+    min-height: 42px;
+    padding: 10px 12px;
+    border: 1px solid #d4dfd7;
+    border-radius: 7px;
+    background: #fff;
+    color: #21372a;
+    font: inherit;
+  }
+}
+
+.archive-directory-table {
+  min-width: 760px;
+
+  td strong {
+    display: block;
+    color: #21372a;
+  }
+
+  td .muted {
+    margin: 5px 0 0;
+  }
+}
+
+.restore-button {
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid #087b49;
+  border-radius: 6px;
+  background: #087b49;
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
 
 @media (hover: hover) and (pointer: fine) {
-
   .secondary-button:hover:not(:disabled),
   .view-button:hover:not(:disabled),
   .clear-selection-button:hover:not(:disabled) {
     border-color: #8eaa97;
     background: #edf5ef;
-
     transform: translateY(-2px);
-
-    box-shadow:
-      0 4px 10px rgb(33 55 42 / 8%);
+    box-shadow: 0 4px 10px rgb(33 55 42 / 8%);
   }
 
-  .bulk-archive-button:hover:not(:disabled) {
+  .bulk-archive-button:hover:not(:disabled),
+  .restore-button:hover:not(:disabled) {
     background: #09663d;
     border-color: #09663d;
-
     transform: translateY(-2px);
-
-    box-shadow:
-      0 4px 12px rgb(8 124 72 / 18%);
+    box-shadow: 0 4px 12px rgb(8 124 72 / 18%);
   }
 
   table tbody tr:hover {
@@ -808,17 +715,9 @@ table {
   .history-item:hover {
     background: #f1f8f3;
     border-left-color: #16814c;
-
-    box-shadow:
-      0 3px 12px rgb(33 55 42 / 5%);
+    box-shadow: 0 3px 12px rgb(33 55 42 / 5%);
   }
 }
-
-/* =========================================
-   KEYFRAME ANIMATIONS
-========================================= */
-
-/* Main page entrance */
 
 @keyframes archiveSlideIn {
   from {
@@ -832,8 +731,6 @@ table {
   }
 }
 
-/* Opening concern details */
-
 @keyframes archiveDetailsIn {
   from {
     opacity: 0;
@@ -845,8 +742,6 @@ table {
     transform: translateX(0);
   }
 }
-
-/* Going back to the Archive list */
 
 @keyframes archiveBackIn {
   from {
@@ -860,8 +755,6 @@ table {
   }
 }
 
-/* Success message entrance */
-
 @keyframes bulkToolbarIn {
   from {
     opacity: 0;
@@ -874,8 +767,6 @@ table {
   }
 }
 
-/* Restore Selected button appearance */
-
 @keyframes bulkActionsIn {
   from {
     opacity: 0;
@@ -887,8 +778,6 @@ table {
     transform: translateX(0);
   }
 }
-
-/* Checkbox selection */
 
 @keyframes checkboxPop {
   0% {
@@ -904,18 +793,13 @@ table {
   }
 }
 
-/* =========================================
-   LIST ENTRANCE AND BACK ANIMATIONS
-========================================= */
-
 .page-header,
 .toolbar,
 .results-heading,
 .bulk-archive-toolbar,
 .table-card,
 .empty-state {
-  animation:
-    archiveBackIn 350ms ease-out backwards;
+  animation: archiveBackIn 350ms ease-out backwards;
 }
 
 .toolbar {
@@ -934,10 +818,6 @@ table {
   animation-delay: 120ms;
 }
 
-/* =========================================
-   KEYBOARD ACCESSIBILITY
-========================================= */
-
 button:focus-visible,
 select:focus-visible,
 a:focus-visible,
@@ -946,12 +826,7 @@ a:focus-visible,
   outline-offset: 3px;
 }
 
-/* =========================================
-   RESPONSIVE TABLET AND CARD VIEW
-========================================= */
-
 @media (max-width: 1100px) {
-
   .admin-archive-page,
   .table-card,
   .toolbar,
@@ -962,115 +837,79 @@ a:focus-visible,
 
   .table-card {
     padding: 0;
-
     border: 0;
     border-radius: 0;
-
     background: transparent;
     box-shadow: none;
-
     overflow: visible;
   }
 
   .table-wrapper {
     width: 100%;
     max-width: 100%;
-
     overflow: visible;
-
     border: 0;
     border-radius: 0;
   }
 
   table {
     display: block;
-
     width: 100%;
     min-width: 0;
   }
 
-  /* Hide desktop table header visually */
-
   table thead {
     position: absolute;
-
     width: 1px;
     height: 1px;
-
     margin: -1px;
     padding: 0;
-
     overflow: hidden;
     clip-path: inset(50%);
-
     white-space: nowrap;
     border: 0;
   }
 
-  /* Responsive card container */
-
   table tbody {
     display: grid;
-
-    grid-template-columns:
-      repeat(
-        auto-fit,
-        minmax(min(100%, 400px), 1fr)
-      );
-
+    grid-template-columns: repeat(
+      auto-fit,
+      minmax(min(100%, 400px), 1fr)
+    );
     gap: 14px;
     min-width: 0;
   }
 
-  /* Each concern becomes a card */
-
   table tbody tr {
     display: grid;
-
-    grid-template-columns:
-      minmax(0, 1fr) auto;
-
+    grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
       "id status"
       "category category"
       "location location"
       "reported archived"
       "actions actions";
-
     gap: 14px 12px;
     min-width: 0;
-
     padding: 17px;
-
     border: 1px solid #dce7df;
     border-radius: 13px;
-
     background: #fff;
-
-    box-shadow:
-      0 3px 12px rgb(33 55 42 / 5%);
+    box-shadow: 0 3px 12px rgb(33 55 42 / 5%);
   }
-
-  /* Selected concern card */
 
   table tbody tr.selected-concern-row {
     background: #edf7f0;
     border-color: #85b99a;
-
     box-shadow: 0 0 0 1px #85b99a;
   }
 
-  /* Card fields */
-
   table tbody td {
     display: block;
-
     min-width: 0;
     width: auto;
-
     padding: 0;
     border: 0;
-
     line-height: 1.6;
     overflow-wrap: anywhere;
   }
@@ -1078,25 +917,17 @@ a:focus-visible,
   table tbody td::before {
     display: block;
     margin-bottom: 5px;
-
     color: #708176;
-
     font-size: 10px;
     font-weight: 700;
-
     letter-spacing: 0.5px;
     line-height: 1.4;
-
     text-transform: uppercase;
   }
 
-  /* CONCERN ID */
-
   table tbody td:nth-child(1) {
     grid-area: id;
-
     color: #21372a;
-
     font-size: 16px;
     font-weight: 700;
 
@@ -1104,8 +935,6 @@ a:focus-visible,
       content: "Concern ID";
     }
   }
-
-  /* CATEGORY */
 
   table tbody td:nth-child(2) {
     grid-area: category;
@@ -1115,16 +944,11 @@ a:focus-visible,
     }
   }
 
-  /* LOCATION */
-
   table tbody td:nth-child(3) {
     grid-area: location;
-
     max-width: none;
     min-width: 0;
-
     padding: 11px 12px;
-
     background: #f5f8f6;
     border-radius: 9px;
 
@@ -1132,8 +956,6 @@ a:focus-visible,
       content: "Location";
     }
   }
-
-  /* DATE REPORTED */
 
   table tbody td:nth-child(4) {
     grid-area: reported;
@@ -1143,11 +965,8 @@ a:focus-visible,
     }
   }
 
-  /* STATUS */
-
   table tbody td:nth-child(5) {
     grid-area: status;
-
     justify-self: end;
     text-align: right;
 
@@ -1155,8 +974,6 @@ a:focus-visible,
       content: "Status";
     }
   }
-
-  /* DATE ARCHIVED */
 
   table tbody td:nth-child(6) {
     grid-area: archived;
@@ -1166,71 +983,138 @@ a:focus-visible,
     }
   }
 
-  /* ACTION */
-
   table tbody td:nth-child(7) {
     grid-area: actions;
-
     display: flex;
     flex-wrap: wrap;
-
     gap: 8px;
-
     padding-top: 12px;
-
     border-top: 1px solid #e7ece8;
 
     &::before {
       content: "Action";
-
       flex: 0 0 100%;
     }
   }
 
-  /* View Details button */
-
   table tbody td:nth-child(7) button {
     flex: 1 1 130px;
-
     min-width: 0;
     min-height: 44px;
-
     margin: 0;
-
     white-space: normal;
   }
-
 }
-
-/* =========================================
-   TABLET DETAILS VIEW
-========================================= */
 
 @media (max-width: 1000px) {
-
   .detail-grid {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
 }
 
-/* =========================================
-   MOBILE SCREEN
-========================================= */
+@media (max-width: 700px) {
+  .archive-tabs {
+    grid-template-columns: 1fr;
+  }
+
+  .archive-tabs button {
+    min-height: 44px;
+  }
+
+  .archive-directory-table {
+    min-width: 0;
+  }
+
+  .archive-directory .table-wrapper {
+    overflow: visible;
+    border: 0;
+  }
+
+  .archive-directory-table,
+  .archive-directory-table tbody {
+    display: grid;
+    width: 100%;
+  }
+
+  .archive-directory-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .archive-directory-table tbody {
+    gap: 12px;
+  }
+
+  .archive-directory-table tbody tr {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid #dce7df;
+    border-radius: 12px;
+    background: #fff;
+  }
+
+  .archive-directory-table tbody td {
+    display: grid;
+    gap: 4px;
+    padding: 0;
+    border: 0;
+  }
+
+  .archive-directory-table tbody td::before {
+    color: #6c8072;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+  }
+
+  .archive-directory-table tbody tr td:nth-child(1)::before {
+    content: 'Name';
+  }
+
+  .archive-directory-table tbody tr td:nth-child(2)::before {
+    content: 'Email / availability';
+  }
+
+  .archive-directory-table tbody tr td:nth-child(3)::before {
+    content: 'Role / date archived';
+  }
+
+  .archive-directory-table tbody tr td:nth-child(4)::before {
+    content: 'Status before restore';
+  }
+
+  .archive-directory-table tbody tr td:nth-child(5)::before {
+    content: 'Date archived';
+  }
+
+  .archive-directory-table tbody tr td:last-child {
+    padding-top: 12px;
+    border-top: 1px solid #e7ece8;
+  }
+
+  .archive-directory-table tbody tr td:last-child::before {
+    content: 'Action';
+  }
+
+  .restore-button {
+    width: 100%;
+    min-height: 44px;
+  }
+}
 
 @media (max-width: 600px) {
-
   .admin-archive-page {
     padding: 16px 12px;
   }
 
-  /* Search and status filter */
-
   .toolbar {
     flex-direction: column;
     align-items: stretch;
-
     padding: 0;
     gap: 12px;
   }
@@ -1251,22 +1135,16 @@ a:focus-visible,
 
     select {
       flex: 1;
-
       min-width: 0;
       height: 44px;
-
       font-size: 16px;
     }
   }
-
-  /* Archive heading */
 
   .results-heading {
     padding: 0;
     margin-bottom: 14px;
   }
-
-  /* Selection toolbar */
 
   .bulk-archive-toolbar {
     gap: 10px;
@@ -1284,22 +1162,17 @@ a:focus-visible,
     min-height: 44px;
   }
 
-  /* Single-column concern cards */
-
   .table-card {
     padding: 0;
   }
 
   table tbody {
-    grid-template-columns:
-      minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
   }
 
   table tbody tr {
     padding: 15px;
   }
-
-  /* Buttons */
 
   .secondary-button,
   .view-button {
@@ -1307,12 +1180,10 @@ a:focus-visible,
   }
 
   .archive-button {
+    min-height: 44px;
     margin-left: 0;
     margin-right: 6px;
-    min-height: 44px;
   }
-
-  /* Concern details */
 
   .details-page {
     padding: 16px 12px;
@@ -1336,15 +1207,9 @@ a:focus-visible,
     max-width: 100%;
     height: auto;
   }
-
 }
 
-/* =========================================
-   REDUCED MOTION ACCESSIBILITY
-========================================= */
-
 @media (prefers-reduced-motion: reduce) {
-
   .admin-archive-page,
   .page-header,
   .toolbar,
@@ -1376,5 +1241,142 @@ a:focus-visible,
   .photo-section > a:hover {
     transform: none;
   }
+}
 
+/* Office and account Archive tabs */
+
+.archive-directory-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  margin: 0;
+}
+
+.archive-search-field {
+  flex: 1 1 320px;
+}
+
+.archive-filter-field {
+  display: grid;
+  flex: 0 1 190px;
+  min-width: 150px;
+  gap: 7px;
+  color: #52675a;
+  font-size: 12px;
+  font-weight: 600;
+
+  select {
+    width: 100%;
+    min-height: 42px;
+    padding: 10px 12px;
+    border: 1px solid #d4dfd7;
+    border-radius: 7px;
+    background: #fff;
+    color: #21372a;
+    font: inherit;
+  }
+}
+
+.archive-directory-table {
+  .concern-selection {
+    width: 44px;
+  }
+}
+
+@media (max-width: 700px) {
+  .archive-directory-toolbar {
+    align-items: stretch;
+  }
+
+  .archive-search-field,
+  .archive-filter-field {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .office-archive-table tbody tr td:nth-child(1)::before {
+    content: 'Select';
+  }
+
+  .office-archive-table tbody tr td:nth-child(2)::before {
+    content: 'Office';
+  }
+
+  .office-archive-table tbody tr td:nth-child(3)::before {
+    content: 'Previous availability';
+  }
+
+  .office-archive-table tbody tr td:nth-child(4)::before {
+    content: 'Date archived';
+  }
+
+  .account-archive-table tbody tr td:nth-child(1)::before {
+    content: 'Select';
+  }
+
+  .account-archive-table tbody tr td:nth-child(2)::before {
+    content: 'Name';
+  }
+
+  .account-archive-table tbody tr td:nth-child(3)::before {
+    content: 'Email';
+  }
+
+  .account-archive-table tbody tr td:nth-child(4)::before {
+    content: 'Role';
+  }
+
+  .account-archive-table tbody tr td:nth-child(5)::before {
+    content: 'Status before restore';
+  }
+
+  .account-archive-table tbody tr td:nth-child(6)::before {
+    content: 'Date archived';
+  }
+}
+
+.archive-search-field {
+  display: flex;
+  flex: 1 1 320px;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid #d4dfd7;
+  border-radius: 7px;
+  background: #fff;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+
+  &:focus-within {
+    border-color: #527b60;
+    box-shadow: 0 0 0 3px rgb(82 123 96 / 12%);
+  }
+
+  .pi {
+    flex: 0 0 auto;
+    color: #718078;
+    font-size: 13px;
+  }
+
+  input {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    min-height: 40px;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #21372a;
+    font: inherit;
+  }
+}
+
+.search-box > .pi {
+  flex: 0 0 auto;
+  color: #77857b;
+  font-size: 13px;
 }
