@@ -16,6 +16,7 @@ import {
 } from '@angular/forms';
 
 import {
+  ActivatedRoute,
   Router,
   RouterLink,
 } from '@angular/router';
@@ -57,7 +58,9 @@ export class ResidentSettings implements OnDestroy {
 
   readonly activeTab =
     signal<'account' | 'preferences' | 'privacy'>(
-      'account'
+      inject(ActivatedRoute).snapshot.queryParamMap.get('tab') === 'privacy'
+        ? 'privacy'
+        : 'account'
     );
 
   private readonly auth = getAuth(firebaseApp);

@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 
 import { FormsModule, NgForm } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import {
   EmailAuthProvider,
@@ -43,8 +43,11 @@ export class AdminSettings implements OnDestroy {
   readonly account = inject(SettingsService);
 
   readonly activeTab =
-    signal<'account' | 'preferences' | 'privacy' | 'backup'
->('account');
+    signal<'account' | 'preferences' | 'privacy' | 'backup'>(
+      inject(ActivatedRoute).snapshot.queryParamMap.get('tab') === 'privacy'
+        ? 'privacy'
+        : 'account'
+    );
 
   private readonly auth = getAuth(firebaseApp);
   private readonly router = inject(Router);

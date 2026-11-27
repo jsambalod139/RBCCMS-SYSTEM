@@ -473,7 +473,13 @@
             </p>
           </section>
         </div>
-        <a class="privacy-help" routerLink="/contact">Open Help &amp; Contact</a>
+        <a
+          class="privacy-help"
+          routerLink="/contact"
+          [queryParams]="{ from: 'personnel-privacy' }"
+        >
+          Open Help &amp; Contact
+        </a>
       </section>
     }
   } @else {

@@ -3,9 +3,12 @@ import { CommonModule } from '@angular/common';
 import {
   Component,
   OnDestroy,
+  computed,
   inject,
   signal,
 } from '@angular/core';
+
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import {
   FormsModule,
@@ -42,6 +45,23 @@ export class LoginComponents implements OnDestroy {
 
   readonly isContactPage =
     this.route.snapshot.data['contactPage'] === true;
+
+  private readonly contactQueryParams = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
+
+  readonly privacyReturnPath = computed(() => {
+    switch (this.contactQueryParams().get('from')) {
+      case 'admin-privacy':
+        return '/ad-dashboard/admin-settings';
+      case 'personnel-privacy':
+        return '/perso-dashboard/personnel-settings';
+      case 'resident-privacy':
+        return '/res-dashboard/resident-settings';
+      default:
+        return null;
+    }
+  });
 
   email = '';
   password = '';

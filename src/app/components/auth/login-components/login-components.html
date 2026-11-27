@@ -68,9 +68,10 @@
 
       <a
         class="back-button"
-        routerLink="/login-components"
+        [routerLink]="privacyReturnPath() ?? '/login-components'"
+        [queryParams]="privacyReturnPath() ? { tab: 'privacy' } : null"
       >
-        Back to Login
+        {{ privacyReturnPath() ? 'Back to Privacy' : 'Back to Login' }}
       </a>
     </section>
   </main>
